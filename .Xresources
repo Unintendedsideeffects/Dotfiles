@@ -1,0 +1,47 @@
+!
+! t3h n0wz
+!
+
+
+URxvt.font: -*-*-*-*-*-*-12-*-*-*-*-*-*-*
+URxvt.boldFont: -*-*-*-*-*-*-12-*-*-*-*-*-*-*
+URxvt.scrollBar: false
+URxvt.background: #000000
+URxvt.foreground: #a0a0a0
+
+!BLK
+URxvt.color0:     #000000
+URxvt.color8:     #000000
+
+!RED
+URxvt.color9:     #6666cc
+URxvt.color1:     #6666cc
+
+!GRN
+URxvt.color10:    #00779f
+URxvt.color2:     #00779f
+
+!BLU
+URxvt.color12:    #217199
+URxvt.color4:     #217199
+
+!YEL
+URxvt.color11:    #3b6bcc
+URxvt.color3:     #3b6bcc
+
+!CYN
+URxvt.color14:    #493b8b
+URxvt.color6:     #493b8b
+
+!MAG
+URxvt.color13:    #4068a5
+URxvt.color5:     #4068a5
+
+!WHT
+URxvt.color7:     #a0a0a0
+URxvt.color15:    #a0a0a0
+
+
+URxvt.colorIT:    #6666cc
+URxvt.colorBD:    #3b6bcc
+URxvt.colorUL:    #493b8b
