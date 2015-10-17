@@ -4,8 +4,7 @@
 
 set $mod Mod4
 set $feh exec --no-startup-id feh --bg-scale
-
-
+set $pictures /home/malcolm/Pictures/Wallpapers/i3-wallpaper
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
@@ -15,12 +14,6 @@ font pango:monospace 8
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
 #font pango:DejaVu Sans Mono 8
 
-# Before i3 v4.8, we used to recommend this one as the default:
-# font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
-# The font above is very space-efficient, that is, it looks good, sharp and
-# clear in small sizes. However, its unicode glyph coverage is limited, the old
-# X core fonts rendering does not support right-to-left and this being a bitmap
-# font, it doesn’t scale on retina/hidpi displays.
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -34,11 +27,6 @@ bindsym $mod+Shift+q kill
 
 # start dmenu (a program launcher)
 bindsym $mod+d exec --no-startup-id j4-dmenu-desktop
-#-nb '#1F1F1F' -nf '#C0B18B' -sb '#C0B18B' -sf '#1F1F1F'
-# There also is the (new) i3-dmenu-desktop which only displays applications
-# shipping a .desktop file. It is a wrapper around dmenu, so you need that
-# installed.
-# bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
 
 # change focus
 bindsym $mod+j focus left
@@ -104,16 +92,16 @@ set $tag9 "IX"
 set $tag0 "X"
 
 # switch to workspace
-bindsym $mod+1 workspace $tag1;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/1.jpg
-bindsym $mod+2 workspace $tag2;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/2.png
-bindsym $mod+3 workspace $tag3;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/3.jpg
-bindsym $mod+4 workspace $tag4;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/4.jpg
-bindsym $mod+5 workspace $tag5;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/5.jpg
-bindsym $mod+6 workspace $tag6;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/6.jpg
-bindsym $mod+7 workspace $tag7;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/7.jpg
-bindsym $mod+8 workspace $tag8;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/8.jpg
-bindsym $mod+9 workspace $tag9;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/9.jpg
-bindsym $mod+0 workspace $tag0;    $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/0.jpg
+bindsym $mod+1 workspace $tag1;     $feh $pictures/1.jpg
+bindsym $mod+2 workspace $tag2;     $feh $pictures/2.png
+bindsym $mod+3 workspace $tag3;     $feh $pictures/3.jpg
+bindsym $mod+4 workspace $tag4;     $feh $pictures/4.jpg
+bindsym $mod+5 workspace $tag5;     $feh $pictures/5.jpg
+bindsym $mod+6 workspace $tag6;     $feh $pictures/6.jpg
+bindsym $mod+7 workspace $tag7;     $feh $pictures/7.jpg
+bindsym $mod+8 workspace $tag8;     $feh $pictures/8.jpg
+bindsym $mod+9 workspace $tag9;     $feh $pictures/9.jpg
+bindsym $mod+0 workspace $tag0;    $feh $pictures/0.jpg
 
 # move focused container to workspace
 
@@ -126,7 +114,7 @@ bindsym $mod+Shift+6 move container to workspace $tag6
 bindsym $mod+Shift+7 move container to workspace $tag7
 bindsym $mod+Shift+8 move container to workspace $tag8
 bindsym $mod+Shift+9 move container to workspace $tag9
-bindsym $mod+Shift+0 move container to workspace $tag0e
+bindsym $mod+Shift+0 move container to workspace $tag0
 
 #other set of workspaces(experimental)
 
@@ -141,16 +129,16 @@ bindsym $mod+Shift+Control+8 move container to workspace 8
 bindsym $mod+Shift+Control+9 move container to workspace 9
 bindsym $mod+Shift+Control+0 move container to workspace 0
 
-bindsym $mod+Control+1 workspace 1;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/1.jpg
-bindsym $mod+Control+2 workspace 2;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/2.png
-bindsym $mod+Control+3 workspace 3;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/3.jpg
-bindsym $mod+Control+4 workspace 4;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/4.jpg
-bindsym $mod+Control+5 workspace 5;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/5.jpg
-bindsym $mod+Control+6 workspace 6;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/6.jpg
-bindsym $mod+Control+7 workspace 7;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/7.jpg
-bindsym $mod+Control+8 workspace 8;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/8.jpg
-bindsym $mod+Control+9 workspace 9;     $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/9.jpg
-bindsym $mod+Control+0 workspace 0;    $feh /home/malcolm/Pictures/Wallpapers/i3-wallpaper/0.jpg
+bindsym $mod+Control+1 workspace 1;     $feh $pictures/11.jpg
+bindsym $mod+Control+2 workspace 2;     $feh $pictures/12.png
+bindsym $mod+Control+3 workspace 3;     $feh $pictures/13.jpg
+bindsym $mod+Control+4 workspace 4;     $feh $pictures/14.jpg
+bindsym $mod+Control+5 workspace 5;     $feh $pictures/15.jpg
+bindsym $mod+Control+6 workspace 6;     $feh $pictures/16.jpg
+bindsym $mod+Control+7 workspace 7;     $feh $pictures/17.jpg
+bindsym $mod+Control+8 workspace 8;     $feh $pictures/18.jpg
+bindsym $mod+Control+9 workspace 9;     $feh $pictures/19.jpg
+bindsym $mod+Control+0 workspace 0;     $feh $pictures/20.jpg
 
 # Make the currently focused window a scratchpad
 bindsym $mod+Shift+minus move scratchpad
@@ -194,17 +182,19 @@ bindsym $mod+r mode "resize"
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
 bar {
-        status_command  i3status
-        position                top
+        status_command   i3status
+        position                bottom
+        font                    pango:DejaVu Sans Mono, Icons 8
         colors
 	{
                 background                      #000000
-                statusline                      #C0B18B
-                focused_workspace       #C0B18B #C0B18B #1F1F1F
-                inactive_workspace      #1F1F1F #1F1F1F #C0B18B
+                statusline                      #2fccbc
+		separator 		#000000
+                focused_workspace       #000000 #000000 #2fccbc
+                inactive_workspace      #000000 #000000 #1F1F1F
         }
 
-  	mode hide
+  	mode dock
     	hidden_state hide
     	modifier $mod
 }
