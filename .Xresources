@@ -1,47 +1,93 @@
-!
-! t3h n0wz
-!
-
-
-URxvt.font: -*-*-*-*-*-*-12-*-*-*-*-*-*-*
-URxvt.boldFont: -*-*-*-*-*-*-12-*-*-*-*-*-*-*
+URxvt.intensityStyles: false
 URxvt.scrollBar: false
-URxvt.background: #000000
-URxvt.foreground: #a0a0a0
+URxvt.keysym.Shift-Up: command:\033]720;1\007
+URxvt.keysym.Shift-Down: command:\033]721;1\007
+URxvt.resize-font.smaller: C-Down
+URxvt.resize-font.bigger: C-Up
+URxvt.iso14755: false
+URxvt.iso14755_52: false
 
-!BLK
-URxvt.color0:     #000000
-URxvt.color8:     #000000
+! font
+URxvt*font: xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true,xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true
 
-!RED
-URxvt.color9:     #6666cc
-URxvt.color1:     #6666cc
+! terminal padding
+URxvt.internalBorder: 25
 
-!GRN
-URxvt.color10:    #00779f
-URxvt.color2:     #00779f
+! uncomment for transparent terminal if you are ready to be made fun of in #rice
+! URxvt.transparent:    true
+! URxvt.shading:                15
 
-!BLU
-URxvt.color12:    #217199
-URxvt.color4:     #217199
+! make otf / ttf fonts look pretty.  does not matter if you are using a bitmap font.
+Xft.autohint: 0
+Xft.lcdfilter:  lcddefault
+Xft.hintstyle:  hintslight
+Xft.hinting: 1
+Xft.antialias: 1
+Xft.rgba: rgb
 
-!YEL
-URxvt.color11:    #3b6bcc
-URxvt.color3:     #3b6bcc
+! clickable links, clipboard support, mouse wheel support, and on the fly font resizing
+! you will need to install the relevent perl extensions for these to work
+URxvt.perl-ext-common: default,matcher,clipboard,vtwheel,resize-font
+URxvt.url-launcher: /usr/bin/firefox
+URxvt.matcher.button: 1
+URxvt.matcher.rend.0: Uline Bold fg5
 
-!CYN
-URxvt.color14:    #493b8b
-URxvt.color6:     #493b8b
-
-!MAG
-URxvt.color13:    #4068a5
-URxvt.color5:     #4068a5
-
-!WHT
-URxvt.color7:     #a0a0a0
-URxvt.color15:    #a0a0a0
-
-
-URxvt.colorIT:    #6666cc
-URxvt.colorBD:    #3b6bcc
-URxvt.colorUL:    #493b8b
+! colors
+*.cursorColor:  #b3bdcb
+*.background: #404552
+*.foreground: #b3bdcb
+! Black + DarkGrey
+*.color0:  #404552
+*.color8:  #2a303b
+! DarkRed + Red
+*.color1:  #cc575d
+*.color9:  #a3464a
+! DarkGreen + Green
+*.color2:  #2679db
+*.color10: #75a9e8
+! DarkYellow + Yellow
+*.color3:  #b3bdcb
+*.color11: #CAD1DB
+! DarkBlue + Blue
+*.color4:  #5294e2
+*.color12: #97bfee
+! DarkMagenta + Magenta
+*.color5:  #404552
+*.color13: #686d79
+! DarkCyan + Cyan
+*.color6:  #b3bdcb
+*.color14: #383c4a
+! LightGrey + White
+*.color7:  #E1E5EA
+*.color15: #ffffff
+! for 256 color stuff
+*.color24:  #076678
+*.color66:  #427b58
+*.color88:  #9d0006
+*.color96:  #8f3f71
+*.color100: #79740e
+*.color108: #8ec07c
+*.color109: #83a598
+*.color130: #af3a03
+*.color136: #b57614
+*.color142: #b8bb26
+*.color167: #fb4934
+*.color175: #d3869b
+*.color208: #fe8019
+*.color214: #fabd2f
+*.color223: #ebdbb2
+*.color228: #f4e8ba
+*.color229: #fdf4c1
+*.color230: #ffffc8
+*.color234: #1d2021
+*.color235: #404552
+*.color236: #32302f
+*.color237: #3c3836
+*.color239: #504945
+*.color241: #665c54
+*.color243: #7c6f64
+*.color244: #928374
+*.color245: #928374
+*.color246: #a89984
+*.color248: #bdae93
+*.color250: #d5c4a1
