@@ -138,7 +138,7 @@ bindsym $mod+Control+6 workspace 6;     $feh $pictures/16.jpg
 bindsym $mod+Control+7 workspace 7;     $feh $pictures/17.jpg
 bindsym $mod+Control+8 workspace 8;     $feh $pictures/18.jpg
 bindsym $mod+Control+9 workspace 9;     $feh $pictures/19.jpg
-bindsym $mod+Control+0 workspace 0;     $feh $pictures/20.jpg
+bindsym $mod+Control+0 workspace 0;    $feh $pictures/20.jpg
 
 # Make the currently focused window a scratchpad
 bindsym $mod+Shift+minus move scratchpad
@@ -182,8 +182,8 @@ bindsym $mod+r mode "resize"
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
 bar {
-        status_command   i3status
-        position                bottom
+        status_command   i3blocks
+        position                top
         font                    pango:DejaVu Sans Mono, Icons 8
         colors
 	{
@@ -196,7 +196,6 @@ bar {
 
   	mode dock
     	hidden_state hide
-    	modifier $mod
 }
 # Disable title bar
 new_window 1pixel
@@ -205,9 +204,9 @@ for_window [class="^.*"] border pixel 0
 
 
 #commands
-exec setxkbmap -layout it
+exec --no-startup-id setxkbmap -layout it
 exec --no-startup-id xbindkeys
-exec sh ~/.fehbg &
+exec --no-startup-id feh 
 exec --no-startup-id compton -b -f  -c --inactive-opacity-override --inactive-opacity=0.8 --shadow-opacity=1
 exec --no-startup-id nm-applet
 
