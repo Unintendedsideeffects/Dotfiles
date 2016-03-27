@@ -11,11 +11,8 @@ URxvt.iso14755_52: false
 URxvt*font: xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true,xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true
 
 ! terminal padding
-URxvt.internalBorder: 25
+URxvt.internalBorder: 255
 
-! uncomment for transparent terminal if you are ready to be made fun of in #rice
-! URxvt.transparent:    true
-! URxvt.shading:                15
 
 ! make otf / ttf fonts look pretty.  does not matter if you are using a bitmap font.
 Xft.autohint: 0
