@@ -1,7 +1,6 @@
 #!/bin/sh
 
 alias ls='ls --color=auto'
-alias startx='startx > /tmp/disregard.txt'
 PS1='\h > '
 
 
