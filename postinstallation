@@ -1,0 +1,4 @@
+add archlinuxfr to pacman.conf
+install yaourt
+add infinality to pacman.conf
+add and sign infinality key (962DDE58)
