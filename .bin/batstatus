@@ -1,7 +1,9 @@
 #!/bin/bash
+
+#reads battery level
 if [[ -e "/sys/class/power_supply/BAT0/capacity" ]]; then
-  level=$(cat /sys/class/power_supply/BAT0/capacity)
-  ac=$(cat /sys/class/power_supply/AC/online)
+  level=$(cat /sys/class/power_supply/BAT0/capacity)  #this is the file that stores the int value for the battery when not plugged
+  ac=$(cat /sys/class/power_supply/AC/online)  #while plugged
 fi
 
 if [[ $level != "" ]]; then
