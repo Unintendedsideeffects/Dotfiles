@@ -1,0 +1,3 @@
+shell adb sideload 
+shell adb sideload
+rename update.zip
