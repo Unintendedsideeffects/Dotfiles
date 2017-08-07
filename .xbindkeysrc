@@ -1,11 +1,3 @@
-#needs light, a backlight utility, also works on macbooks
-#might need to tweak the keys
-"light -U 5"
-m:0x0 + c:67
-
-"light -A 5"
-m:0x0 + c:68
-
 "chromium"
 m:0x0 + c:180
 
@@ -14,9 +6,17 @@ m:0x0 + c:180
 "chromium --kiosk inbox.google.com"
 m:0x0 + c:163
 #needs scrot package, takes a screenshot
-"scrot"
-m:0x40 + c:118
+"scrot -m -e 'mv $f ~/Picures/screenshots'
+Print
 
 #toggle bar in i3 form console, really useful.
 "i3-msg bar mode toggle"
 m:0x0 +  c:135
+
+#lock
+"sh ./.lock.sh"
+m:0x10 + c:78
+
+#vertical monitor
+"sh .screenlayout/Vertical+Horizontal.sh"
+Control + Return
