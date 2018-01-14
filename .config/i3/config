@@ -177,11 +177,11 @@ hide_edge_borders both
 
 
 #commands
-exec --no-startup-id .screenlayout/Vertical+Horizontal.sh
+exec --no-startup-id .screenlayout/threetwoverticals.sh
 exec --no-startup-id setxkbmap -layout it
 exec --no-startup-id xbindkeys
 exec_always --no-startup-id nm-applet
-exec_always --no-startup-id feh --randomize --no-xinerama --bg-fill $pictures/*
+exec_always --no-startup-id feh --no-xinerama --bg-fill $pictures/*
 exec_always --no-startup-id compton
 exec_always --no-startup-id dunst
 exec --no-startup-id ntpd -qg
@@ -249,6 +249,6 @@ mode "$mode_gaps_outer" {
         bindsym Return mode "default"
         bindsym Escape mode "default"
 }
-gaps inner 10
+gaps inner 5
 gaps outer 1
 smart_gaps on
