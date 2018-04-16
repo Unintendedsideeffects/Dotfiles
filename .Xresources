@@ -1,33 +1,63 @@
-URxvt.intensityStyles: false
-URxvt.scrollBar: false
-URxvt.keysym.Shift-Up: command:\033]720;1\007
-URxvt.keysym.Shift-Down: command:\033]721;1\007
-URxvt.resize-font.smaller: C-Down
-URxvt.resize-font.bigger: C-Up
-URxvt.iso14755: false
-URxvt.iso14755_52: false
+!Urxvt settings
+URxvt*scrollTtyOutput: false
+URxvt*scrollWithBuffer: true
+URxvt*scrollTtyKeypress: true
+URxvt.secondaryScreen: 1
+URxvt.secondaryScroll: 0
 
-! font
-URxvt*font: xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true,xft:Source\ Code\ Pro\ for\ Powerline:size=10:antialias=true:hinting=true
-
-! terminal padding
-URxvt.internalBorder: 255
-
-
-! make otf / ttf fonts look pretty.  does not matter if you are using a bitmap font.
+URxvt.font: xft:Inconsolata:size=12
+!Xft*dpi: 96
+!Xft*antialias: true
+Xft.dpi: 120
 Xft.autohint: 0
 Xft.lcdfilter:  lcddefault
-Xft.hintstyle:  hintslight
+Xft.hintstyle:  hintfull
 Xft.hinting: 1
 Xft.antialias: 1
 Xft.rgba: rgb
 
-! clickable links, clipboard support, mouse wheel support, and on the fly font resizing
-! you will need to install the relevent perl extensions for these to work
-URxvt.perl-ext-common: default,matcher,clipboard,vtwheel,resize-font
-URxvt.url-launcher: /usr/bin/firefox
+URxvt*scrollBar: false
+urxvt*transparent: false
+
+!perl extensions
+URxvt*perl-ext-common: default,matcher,tabbed,clipboard
+!urls
+URxvt.url-launcher: chromium
 URxvt.matcher.button: 1
-URxvt.matcher.rend.0: Uline Bold fg5
+
+!tabs
+URxvt.tabbed.autohide:  yes
+URxvt.tabbed.tabbar-fg: #ffffff
+URxvt.tabbed.tabbar-bg: #212121
+!clipboard
+URxvt.keysym.Shift-Control-V: perl:clipboard:paste
+URxvt.iso14755: False
+URxvt.perl-ext-common: default,clipboard
+
+! Urxvt color settings
+!urxvt*background: #212121
+!urxvt*foreground: #DCDCDC
+
+! rofi color settings
+rofi.modi: run
+rofi.opacity: 80
+!rofi.width:   3840
+!rofi.height:  2160
+rofi.lines:   19
+rofi.font:    Inconsolata Powerline 16
+rofi.bw:      0
+rofi.location: 0
+rofi.padding: 200
+rofi.terminal: termite
+rofi.hide-scrollbar: true
+rofi.fullscreen:     true
+rofi.color-enabled: true
+rofi.separator-style: none
+rofi.color-window: argb:6F000000, argb:00000000, argb:00000000
+rofi.color-normal: argb:00000000, #FFFFFF, argb:000095FF, #000000, #FFFFFF
+rofi.color-active: argb:00000000, #268bd2, #eee8d5, #268bd2, #fdf6e3
+rofi.color-urgent: argb:00000000, #dc322f, #eee8d5, #dc322f, #fdf6e3
+rofi.prompt: 	"applications"
 
 ! colors
 *.cursorColor:  #b3bdcb

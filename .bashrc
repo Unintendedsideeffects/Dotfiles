@@ -1,9 +1,5 @@
 #!/bin/sh
 
-alias ls='ls --color=auto'
-PS1='\h > '
-
-
 if [ "$TERM" = "linux" ]; then
   /bin/echo -e "
   \e]P0000000

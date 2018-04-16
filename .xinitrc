@@ -25,5 +25,6 @@ if [ -f "$usermodmap" ]; then
     xmodmap "$usermodmap"
 fi
 
-#change i3 to your preferred WM
+# start some nice programs
+
 exec i3
