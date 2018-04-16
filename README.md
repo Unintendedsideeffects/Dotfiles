@@ -1,1 +1,2 @@
-Dotfiles for Arch Linux
+
+Arch linux configuration
