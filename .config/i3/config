@@ -1,39 +1,36 @@
- # i3 config file (v4)
+# i3 config file (v4)
 #
 # Please see http://i3wm.org/docs/userguide.html for a complete reference!
 
 set $mod Mod4
-set $feh exec --no-startup-id feh --bg-scale
-set $pictures /home/malcolm/Pictures/Wallpapers
+set $wallpapers Pictures/Wallpapers
+set $feh exec --no-startup-id feh --randomize --bg-fill
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-#font pango:monospace 8
+font pango:monospace 8
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
-font pango:DejaVu Sans Mono 8
+#font pango:DejaVu Sans Mono 8
 
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+Return exec termite
+bindsym $mod+Return exec i3-sensible-terminal
 #xterm had to be installed, find out how did i3 choose the default terminal
 
 # kill focused window
 bindsym $mod+Shift+q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+d exec rofi -show run
-#bindsym $mod+d exec rofi -show run -width 3840 -height 2160 -fg "#B0E670" -bg "#14161F" -hlfg "#14161F" -hlbg "#B0E670" -bc "#14161F" -location 0 -lines 18 -bw 0 -font "MonacoB 16" -padding 300 -separator-style none -opacity 80
-#bindsym $mod+d exec i3-dmenu-desktop --dmenu='rofi -dmenu -width 2560 -fg "#B0E670" -bg "#14161F" -hlfg "#14161F" -hlbg "#B0E670" -bc "#14161F" -location 0 -lines 18 -bw 0 -font "MonacoB 16" -padding 450 -separator-style none -opacity 80'
+bindsym $mod+d exec --no-startup-id rofi -show run
 
-# Floating mode
-floating_modifier $mod
+#random wallpaper
+bindsym Control+Escape exec feh --bg-fill --randomize Pictures/Wallpapers/*
 
-# bindsym $mod+d exec --no-startup-id j4-dmenu-desktop
 # change focus
 bindsym $mod+j focus left
 bindsym $mod+k focus down
@@ -85,11 +82,6 @@ bindsym $mod+a focus parent
 # focus the child container
 #bindsym $mod+d focus child
 
-#stick this
-bindsym $mod+y floating toggle; resize set 600 300; sticky enable;
-
-
-
 # Name the workspaces
 set $tag1 "1"
 set $tag2 "2"
@@ -103,16 +95,16 @@ set $tag9 "9"
 set $tag0 "10"
 
 # switch to workspace
-bindsym $mod+1 workspace $tag1;
-bindsym $mod+2 workspace $tag2;
-bindsym $mod+3 workspace $tag3;
-bindsym $mod+4 workspace $tag4;
-bindsym $mod+5 workspace $tag5;
-bindsym $mod+6 workspace $tag6;
-bindsym $mod+7 workspace $tag7;
-bindsym $mod+8 workspace $tag8;
-bindsym $mod+9 workspace $tag9;
-bindsym $mod+0 workspace $tag0;
+bindsym $mod+1 workspace $tag1;     $feh $pictures/1.jpg
+bindsym $mod+2 workspace $tag2;     $feh $pictures/2.png
+bindsym $mod+3 workspace $tag3;     $feh $pictures/3.jpg
+bindsym $mod+4 workspace $tag4;     $feh $pictures/4.jpg
+bindsym $mod+5 workspace $tag5;     $feh $pictures/5.jpg
+bindsym $mod+6 workspace $tag6;     $feh $pictures/6.jpg
+bindsym $mod+7 workspace $tag7;     $feh $pictures/7.jpg
+bindsym $mod+8 workspace $tag8;     $feh $pictures/8.jpg
+bindsym $mod+9 workspace $tag9;     $feh $pictures/9.jpg
+bindsym $mod+0 workspace $tag0;    $feh $pictures/0.jpg
 
 # move focused container to workspace
 
@@ -126,10 +118,12 @@ bindsym $mod+Shift+7 move container to workspace $tag7
 bindsym $mod+Shift+8 move container to workspace $tag8
 bindsym $mod+Shift+9 move container to workspace $tag9
 bindsym $mod+Shift+0 move container to workspace $tag0
-
-
-
-#Makes currently focused window a scratchpad
+ 
+# workspace next
+bindsym $mod+Tab workspace next
+# workspace previous
+bindsym $mod+Shift+Tab workspace prev_on_output
+# Make the currently focused window a scratchpad
 bindsym $mod+Shift+minus move scratchpad
 
 # Show the first scratchpad window
@@ -141,8 +135,6 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 # exit i3 (logs you out of your X session)
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Exit i3?' -b 'Yes, exit i3' 'i3-msg exit'"
-#
-bindsym $mod+Shift+a  exec rofi -show window -lines 10 -location 2 -xoffset 0
 
 # resize window (you can also use the mouse for that)
 mode "resize" {
@@ -170,47 +162,37 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+# Start i3bar to display a workspace bar (plus the system information i3status
+# finds out, if available)
 # Disable title bar
 new_window 1pixel
-for_window [class="^.*"] border pixel 1
-hide_edge_borders both
+for_window [class="^.*"] border pixel 0
+hide_edge_borders smart
 
 
 #commands
-exec --no-startup-id .screenlayout/threetwoverticals.sh
 exec --no-startup-id setxkbmap -layout it
 exec --no-startup-id xbindkeys
-exec_always --no-startup-id nm-applet
-exec_always --no-startup-id feh --no-xinerama --bg-fill $pictures/*
-exec_always --no-startup-id compton
-exec_always --no-startup-id dunst
-exec --no-startup-id ntpd -qg
-exec_always --no-startup-id yabar
-#start universal remote
-exec --no-startup-id /opt/urserver/urserver --daemon
+exec --no-startup-id dunst
+exec --no-startup-id compton --config .config/compton/compton.conf
+#exec --no-startup-id nm-applet
+exec --no-startup-id feh --bg-fill --randomize Pictures/Wallpapers/*
+exec --no-startup-id .screenlayout/lateral.sh
+#exec --no-startup-id ~/.config/scripts/blurme &
+
+
 #Multimedia Keys
 # increase volume
-bindsym XF86AudioRaiseVolume exec --no-startup-id amixer -q set Master 5%+ unmute
+bindsym XF86AudioRaiseVolume exec amixer -q set Master 5%+ unmute
 # decrease volume
-bindsym XF86AudioLowerVolume exec --no-startup-id amixer -q set Master 5%- unmute
+bindsym XF86AudioLowerVolume exec amixer -q set Master 5%- unmute
 # mute volume
-bindsym XF86AudioMute exec --no-startup-id amixer -q set Master mute
+bindsym XF86AudioMute exec amixer -q set Master mute
 # pause / play / next / previous
-bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
-bindsym XF86AudioNext exec --no-startup-id playerctl next
-bindsym XF86AudioPrev exec --no-startup-id playerctl previous
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
 
-
-#wallpapers
-bindsym $mod+Escape exec --no-startup-id feh --randomize --no-xinerama --bg-fill $pictures/*
-
-
-#border colors:        border: bg:     text:   indicator:
-#client.focused         #006ECF #453452 #FFFFFF #523445
-client.focused          #006ECF #394042 #FFFFFF #4F4E43
-client.focused_inactive #4F4E43 #49483E #BFBFBF #49483E
-client.unfocused        #662B32 #000000 #888888 #000000
-client.urgent           #662B32 #58252B #F4BF75 #58252B
 
 #gaps
 set $mode_gaps Gaps: (o) outer, (i) inner
@@ -226,29 +208,29 @@ mode "$mode_gaps" {
 }
 
 mode "$mode_gaps_inner" {
-        bindsym plus  gaps inner current plus 1
-        bindsym minus gaps inner current minus 1
+        bindsym plus  gaps inner current plus 5
+        bindsym minus gaps inner current minus 5
         bindsym 0     gaps inner current set 0
 
-        bindsym Shift+plus  gaps inner all plus 1
-        bindsym Shift+minus gaps inner all minus 1
+        bindsym Shift+plus  gaps inner all plus 5
+        bindsym Shift+minus gaps inner all minus 5
         bindsym Shift+0     gaps inner all set 0
 
         bindsym Return mode "default"
         bindsym Escape mode "default"
 }
 mode "$mode_gaps_outer" {
-        bindsym plus  gaps outer current plus 1
-        bindsym minus gaps outer current minus 1
+        bindsym plus  gaps outer current plus 5
+        bindsym minus gaps outer current minus 5
         bindsym 0     gaps outer current set 0
 
-        bindsym Shift+plus  gaps outer all plus 1
-        bindsym Shift+minus gaps outer all minus 1
+        bindsym Shift+plus  gaps outer all plus 5
+        bindsym Shift+minus gaps outer all minus 5
         bindsym Shift+0     gaps outer all set 0
 
         bindsym Return mode "default"
         bindsym Escape mode "default"
 }
-gaps inner 5
-gaps outer 1
+gaps inner 15
+gaps outer 5
 smart_gaps on
