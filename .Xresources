@@ -39,29 +39,10 @@ URxvt.perl-ext-common: default,clipboard
 !urxvt*foreground: #DCDCDC
 
 ! rofi color settings
-rofi.modi: run
-rofi.opacity: 80
-!rofi.width:   3840
-!rofi.height:  2160
-rofi.lines:   19
-rofi.font:    Inconsolata Powerline 16
-rofi.bw:      0
-rofi.location: 0
-rofi.padding: 200
-rofi.terminal: termite
-rofi.hide-scrollbar: true
-rofi.fullscreen:     true
-rofi.color-enabled: true
-rofi.separator-style: none
-rofi.color-window: argb:6F000000, argb:00000000, argb:00000000
-rofi.color-normal: argb:00000000, #FFFFFF, argb:000095FF, #000000, #FFFFFF
-rofi.color-active: argb:00000000, #268bd2, #eee8d5, #268bd2, #fdf6e3
-rofi.color-urgent: argb:00000000, #dc322f, #eee8d5, #dc322f, #fdf6e3
-rofi.prompt: 	"applications"
-
 ! colors
 *.cursorColor:  #b3bdcb
-*.background: #404552
+!*.background: #404552
+*.background: #303642
 *.foreground: #b3bdcb
 ! Black + DarkGrey
 *.color0:  #404552
