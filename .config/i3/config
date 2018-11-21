@@ -4,7 +4,7 @@
 
 set $mod Mod4
 set $wallpapers Pictures/Wallpapers
-set $feh exec --no-startup-id feh --randomize --bg-fill
+set $feh exec --no-startup-id feh --randomize --bg-fill 
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
@@ -19,17 +19,16 @@ font pango:monospace 8
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Return exec --no-startup-id  i3-sensible-terminal
 #xterm had to be installed, find out how did i3 choose the default terminal
 
 # kill focused window
 bindsym $mod+Shift+q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+d exec --no-startup-id rofi -show run
-
+bindsym $mod+d exec --no-startup-id rofi -show drun  -config .config/rofi/config
 #random wallpaper
-bindsym Control+Escape exec feh --bg-fill --randomize Pictures/Wallpapers/*
+bindsym Control+Escape $feh Pictures/Wallpapers/*
 
 # change focus
 bindsym $mod+j focus left
@@ -48,6 +47,8 @@ bindsym $mod+Shift+j move left
 bindsym $mod+Shift+k move down
 bindsym $mod+Shift+l move up
 bindsym $mod+Shift+semicolon move right
+
+focus_follows_mouse no
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Shift+Left move left
@@ -82,6 +83,10 @@ bindsym $mod+a focus parent
 # focus the child container
 #bindsym $mod+d focus child
 
+#create a floating window
+bindsym $mod+y floating enable, resize set 800 600
+
+
 # Name the workspaces
 set $tag1 "1"
 set $tag2 "2"
@@ -95,16 +100,16 @@ set $tag9 "9"
 set $tag0 "10"
 
 # switch to workspace
-bindsym $mod+1 workspace $tag1;     $feh $pictures/1.jpg
-bindsym $mod+2 workspace $tag2;     $feh $pictures/2.png
-bindsym $mod+3 workspace $tag3;     $feh $pictures/3.jpg
-bindsym $mod+4 workspace $tag4;     $feh $pictures/4.jpg
-bindsym $mod+5 workspace $tag5;     $feh $pictures/5.jpg
-bindsym $mod+6 workspace $tag6;     $feh $pictures/6.jpg
-bindsym $mod+7 workspace $tag7;     $feh $pictures/7.jpg
-bindsym $mod+8 workspace $tag8;     $feh $pictures/8.jpg
-bindsym $mod+9 workspace $tag9;     $feh $pictures/9.jpg
-bindsym $mod+0 workspace $tag0;    $feh $pictures/0.jpg
+bindsym $mod+1 workspace $tag1;    
+bindsym $mod+2 workspace $tag2;    
+bindsym $mod+3 workspace $tag3;    
+bindsym $mod+4 workspace $tag4;    
+bindsym $mod+5 workspace $tag5;    
+bindsym $mod+6 workspace $tag6;    
+bindsym $mod+7 workspace $tag7;    
+bindsym $mod+8 workspace $tag8;    
+bindsym $mod+9 workspace $tag9;    
+bindsym $mod+0 workspace $tag0;    
 
 # move focused container to workspace
 
@@ -166,7 +171,7 @@ bindsym $mod+r mode "resize"
 # finds out, if available)
 # Disable title bar
 new_window 1pixel
-for_window [class="^.*"] border pixel 0
+for_window [class="^.*"] border pixel 5
 hide_edge_borders smart
 
 
@@ -176,8 +181,8 @@ exec --no-startup-id xbindkeys
 exec --no-startup-id dunst
 exec --no-startup-id compton --config .config/compton/compton.conf
 #exec --no-startup-id nm-applet
-exec --no-startup-id feh --bg-fill --randomize Pictures/Wallpapers/*
-exec --no-startup-id .screenlayout/lateral.sh
+exec --no-startup-id feh --bg-fill --randomize Pictures/Wallpapers/*  Pictures/Wallpapers/*
+exec --no-startup-id .screenlayout/current.sh
 #exec --no-startup-id ~/.config/scripts/blurme &
 
 
