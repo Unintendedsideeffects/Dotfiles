@@ -1,4 +1,4 @@
-Dotfiles
+<h1>Dotfiles</h1>
 
 <b>Terminal</b>: Termite + Powerline
 
