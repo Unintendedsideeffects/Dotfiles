@@ -1,21 +1,20 @@
+Dotfiles
 
-Arch linux configuration
+<b>Terminal</b>: Termite + Powerline
 
-Terminal: Termite + Powerline
+<b>Shell</b>: Zsh
 
-Shell: Zsh
+<b>Aur helper</b>: yay
 
-Aur helper: yay
+<b>GUI Editor</b>: Atom, Visual Studio Code, Android Studio
 
-GUI Editor: Atom, Visual Studio Code, Android Studio
+<b>CLI Editor</b>: Vim
 
-CLI Editor: Vim
+<b>Messanger</b>: Telegram
 
-Messanger: Telegram
+<b>Git client</b>: Gitkraken
 
-Git client: Gitkraken
+<b>Pdf Viewer</b>: Zathura with MuPDF backend
 
-Pdf Viewer: Zathura with MuPDF backend
-
-Launcher: Rofi
+<b>Launcher</b>: Rofi
 
