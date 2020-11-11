@@ -1,0 +1,64 @@
+/* 2>nul || title MicMute.bat by AveYo v2019.04.06
+@echo off
+goto :start
+
+:: To undo, open CMD as admin and enter:
+reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AppKey\15 /f
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Keyboard Layout" /v "Scancode Map" /f 
+
+:start
+:: Compile MicMute.cs snippet
+mkdir %APPDATA%\AveYo 2>nul
+pushd %APPDATA%\AveYo
+del /f /q MicMute.exe >nul 2>nul
+for /f "tokens=* delims=" %%v in ('dir /b /s /a:-d /o:-n "%Windir%\Microsoft.NET\Framework\*csc.exe"') do set "csc="%%v""
+%csc% /out:MicMute.exe /target:winexe /platform:anycpu /optimize /nologo "%~f0"
+if not exist MicMute.exe echo ERROR! Failed compiling c# snippet & timeout /t -1 & exit /b
+
+:: Override APPCOMMAND_LAUNCH_MAIL to toggle MicMute
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AppKey\15 /v ShellExecute /d "\"%APPDATA%\AveYo\MicMute.exe\"" /f 
+
+:: Override ScrollLock key to act as APPCOMMAND_LAUNCH_MAIL
+echo YOU NEED TO RUN THE SCRIPT AS ADMINISTRATOR TO REMAP SCROLLLOCK TO LAUNCH_MAIL
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Keyboard Layout" /v "Scancode Map" /d 0000000000000000020000006ce0460000000000 /t reg_binary /f 
+echo.
+
+echo Now Sign-Off to apply ScrollLock / Launch Mail = MicMute
+timeout /t 5 >nul
+
+:: Done!
+exit/b 
+
+MicMute.cs */
+using System;
+using System.Runtime.InteropServices;
+using System.Reflection;
+
+[assembly:AssemblyTitle("MicMute")]
+[assembly:AssemblyCompanyAttribute("AveYo")]
+[assembly:AssemblyVersionAttribute("2019.04.06")]
+
+namespace MicMute
+{
+  class Program
+  {
+    private const int WM_APPCOMMAND = 0x319;
+    private const int APPCOMMAND_MICROPHONE_VOLUME_MUTE = 0x180000;
+    [DllImport("user32.dll", SetLastError = false)]
+    public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll", SetLastError = false)]
+    public static extern IntPtr SendMessageW(IntPtr hWnd,int Msg,IntPtr wParam,IntPtr lParam);
+    static void Main(string[] args)
+    {
+      try
+      { 
+        IntPtr h = GetForegroundWindow();
+        SendMessageW(h,WM_APPCOMMAND,IntPtr.Zero,(IntPtr)APPCOMMAND_MICROPHONE_VOLUME_MUTE);
+      }
+      catch (Exception)
+      {
+      }
+    }
+  }
+}
+/*_*/
