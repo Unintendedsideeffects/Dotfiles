@@ -11,10 +11,9 @@ scrollback_lines = 10000
 cursor_blink = system
 
 [colors]
-
-cursor = #b3bdcb
-
-background = #303642
+#you can use rgba here but remember to convert from hex to rgb, the last value is transparency
+cursor = #b3bdcbb
+background = rgba(27, 27, 27, 1)
 foreground = #F5F6F7
 
 # Black + DarkGrey
@@ -30,10 +29,10 @@ color10 = #75a9e8
 color3 =  #b3bdcb
 color11 = #CAD1DB
 # DarkBlue + Blue
-color4 =  #5294e2
+color4 =  #03A9F4
 color12 = #97bfee
 # DarkMagenta + Magenta
-color5 =  #404570
+color5 =  #8E24AA
 color13 = #686FEF
 # DarkCyan + Cyan
 color6 =  #b3bdcb
