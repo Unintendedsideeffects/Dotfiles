@@ -1,0 +1,7 @@
+#Thanks to u/LonelyContext for the steps, this script is useful in case of a dependency cycle between Pacman and yay, essentially reinstalls yay.
+yay -G yay #clones new yay from git
+yay -R yay #removes old yay
+sudo pacman -Syu
+cd yay/
+makepkg -si #install the yay you cloned
+yay
