@@ -1,0 +1,31 @@
+{
+    "aururl": "https://aur.archlinux.org",
+    "aurrpcurl": "https://aur.archlinux.org/rpc?",
+    "buildDir": "/home/malcolm/.cache/yay",
+    "editor": "nvim",  // set your preferred editor
+    "makepkgbin": "makepkg",
+    "pacmanbin": "pacman",
+    "pacmanconf": "/etc/pacman.conf",
+    "redownload": "no",
+    "answerclean": "All",     // auto-clean build deps
+    "answerdiff": "None",     // skip diff viewing
+    "answeredit": "None",     // skip PKGBUILD editing
+    "answerupgrade": "None",  // skip upgrade confirmation
+    "sortby": "popularity",   // better than votes
+    "searchby": "name-desc",
+    "gitflags": "--depth 1",  // shallow clones = faster
+    "removemake": "yes",      // clean build deps
+    "sudoloop": true,        // maintain sudo timestamp
+    "cleanAfter": true,      // clean after build
+    "combinedupgrade": true, // system + AUR updates together
+    "batchinstall": true,    // install packages in batches
+    "maxconcurrentdownloads": 8,  // parallel downloads
+    "bottomup": false,       // show important stuff first
+    "cleanmenu": false,      // skip cleaning menu
+    "diffmenu": false,      // skip diff menu
+    "editmenu": false,      // skip edit menu
+    "useask": false,        // don't use pacman --ask
+    "singlelineresults": true, // compact output
+    "timeupdate": true,     // check pkg age
+    "devel": true          // check -git package updates
+}

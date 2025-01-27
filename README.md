@@ -18,3 +18,5 @@
 
 <b>Launcher</b>: Rofi
 
+
+This is an experimental branch with crostini specific optimizations.
