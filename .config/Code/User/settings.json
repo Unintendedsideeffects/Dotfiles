@@ -1,0 +1,10 @@
+{
+    "editor.fontFamily": "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Inconsolata', monospace",
+    "editor.fontLigatures": true,
+    "terminal.integrated.fontFamily": "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Inconsolata', monospace",
+    "terminal.integrated.gpuAcceleration": "on",
+    "workbench.colorCustomizations": {
+        "terminal.background": "#303642",
+        "terminal.foreground": "#b3bdcb"
+    }
+} 
