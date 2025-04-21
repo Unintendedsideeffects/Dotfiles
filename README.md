@@ -1,20 +1,182 @@
-<h1>Dotfiles</h1>
+# Arch Linux on Crostini Configuration
 
-<b>Terminal</b>: Termite + Powerline
+A comprehensive guide and configuration for running Arch Linux in Crostini on a Google Pixelbook. This repository contains both installation instructions and configuration files for setting up a development environment in Chrome OS's Linux container.
 
-<b>Shell</b>: Zsh
+## Overview
 
-<b>Aur helper</b>: yay
+This repository provides:
+- Step-by-step installation guide for Arch Linux in Crostini
+- Configuration files for a development environment
+- Package management setup
+- System configuration for Chrome OS integration
+- Development tools and utilities setup
 
-<b>GUI Editor</b>: Atom, Visual Studio Code, Android Studio
+## Prerequisites
 
-<b>CLI Editor</b>: Vim
+- Google Pixelbook with Linux (Beta) enabled in Chrome OS settings
+- Terminal access to Chrome OS (crosh)
+- The default Debian container should be set up first (we'll replace it)
 
-<b>Messanger</b>: Telegram
+## Installation Guide
 
-<b>Git client</b>: Gitkraken
+### 1. Initial Container Setup
 
-<b>Pdf Viewer</b>: Zathura with MuPDF backend
+1. Open Chrome OS terminal (`Ctrl+Alt+t`)
+2. Enter termina:
+   ```bash
+   vsh termina
+   ```
+3. Configure LXC remotes:
+   ```bash
+   lxc remote remove images
+   lxc remote add images https://images.lxd.canonical.com/ --protocol=simplestreams
+   ```
+4. Create Arch container:
+   ```bash
+   lxc launch images:archlinux arch --config security.privileged=true
+   ```
+5. Start and enter container:
+   ```bash
+   lxc start arch
+   lxc exec arch -- bash
+   ```
 
-<b>Launcher</b>: Rofi
+### 2. System Configuration
 
+1. Update system and install base tools:
+   ```bash
+   sudo pacman -Syu
+   sudo pacman -Sy --needed git base-devel
+   ```
+
+2. Configure network if needed:
+   ```bash
+   sudo systemctl disable systemd-networkd
+   sudo systemctl disable systemd-resolved
+   sudo pacman -S dhclient
+   sudo dhclient eth0
+   sudo systemctl enable dhclient@eth0
+   sudo systemctl start dhclient@eth0
+   ```
+
+3. Install AUR helper:
+   ```bash
+   mkdir -p /tmp/yay_install
+   cd /tmp/yay_install
+   git clone https://aur.archlinux.org/yay.git
+   cd yay
+   makepkg -si
+   ```
+
+### 3. Chrome OS Integration
+
+1. Fix Chrome OS integration:
+   ```bash
+   sudo mkdir -p /usr/lib/openssh/
+   sudo ln -s /usr/lib/ssh/sftp-server /usr/lib/openssh/sftp-server
+   sudo setcap cap_net_raw+ep /usr/bin/ping
+   ```
+
+2. Install Crostini tools:
+   ```bash
+   yay -S cros-container-guest-tools-git wayland xorg-xwayland
+   ```
+
+## Configuration Files
+
+This repository includes the following configuration files:
+
+```
+.
+├── .config/          # Application configurations
+├── .devcontainer/    # VS Code devcontainer configuration
+├── .scripts/         # Custom shell scripts
+├── .bashrc          # Bash configuration
+├── .xbindkeysrc     # X11 key bindings
+├── .xinitrc         # X11 initialization
+├── .Xresources      # X11 resources
+├── .zprofile        # ZSH profile configuration
+├── .zshrc           # ZSH configuration
+└── packages.txt     # List of installed packages
+```
+
+## Development Environment Setup
+
+### 1. Shell Configuration
+
+```bash
+# Install ZSH and Powerline
+yay -S zsh powerline powerline-fonts
+
+# Configure Powerline for ZSH
+echo 'powerline-daemon -q
+. /usr/share/powerline/bindings/zsh/powerline.zsh' >> ~/.zshrc
+
+# Set ZSH as default shell
+chsh -s /usr/bin/zsh
+```
+
+### 2. Development Tools
+
+```bash
+# Install essential development tools
+yay -S neovim cursor-bin-patched obsidian
+
+# Configure Git
+git config --global user.name "$(whoami)"
+git config --global user.email "$(whoami)@pixelbook"
+git config --global init.defaultBranch main
+git config --global core.editor "nvim"
+```
+
+### 3. System Utilities
+
+```bash
+# Install system utilities
+yay -S neofetch catimg feh chafa imagemagick ghostscript ranger zathura zathura-pdf-mupdf
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Apps Not Opening (Infinite Spinner)**
+   ```bash
+   # In termina:
+   lxc stop penguin
+   lxc start penguin
+   ```
+
+2. **Audio Issues**
+   ```bash
+   mkdir -p ~/.config/pulse
+   cp -r /etc/skel/.config/pulse ~/.config/
+   ```
+
+3. **Firefox Performance**
+   ```bash
+   MOZ_ENABLE_WAYLAND=1 firefox
+   ```
+
+4. **Network Issues**
+   - Check `ip -4 a show dev eth0`
+   - Verify DHCP client is running
+   - Ensure systemd networking is disabled
+
+## Making Arch the Default Container
+
+To make Arch the default container:
+
+1. Exit to termina:
+   ```bash
+   exit
+   ```
+
+2. Stop and rename containers:
+   ```bash
+   lxc stop --force penguin
+   lxc stop --force arch
+   lxc rename penguin debian
+   lxc rename arch penguin
+   lxc start penguin
+   ```
