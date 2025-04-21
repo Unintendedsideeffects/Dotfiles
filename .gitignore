@@ -1,0 +1,64 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Local configuration
+*.local
+*.local.*
+.env
+.secrets
+*.secret
+
+# Cache directories
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Package files
+node_modules/
+vendor/
+*.gem
+*.rbc
+
+# Build output
+dist/
+build/
+*.o
+*.a
+*.so
+*.dylib
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+*.pem
+*.p12
+*.key
+*.crt
+*.csr
+*.srl 
