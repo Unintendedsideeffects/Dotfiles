@@ -136,6 +136,31 @@ git config --global core.editor "nvim"
 yay -S neofetch catimg feh chafa imagemagick ghostscript ranger zathura zathura-pdf-mupdf
 ```
 
+### 4. Modern CLI Tools
+
+This configuration includes several modern CLI tools that enhance productivity:
+
+```bash
+# Install modern CLI tools
+yay -S starship fzf exa bat ripgrep zoxide
+```
+
+These tools provide the following improvements:
+
+- **Starship**: A blazing-fast, customizable cross-shell prompt
+- **fzf**: A command-line fuzzy finder for interactive filtering
+- **exa**: A modern replacement for `ls` with icons and better formatting
+- **bat**: A `cat` clone with syntax highlighting and Git integration
+- **ripgrep**: A faster alternative to `grep` with better defaults
+- **zoxide**: A smarter `cd` command that learns your habits
+
+The configuration automatically sets up aliases and integrations for these tools in your shell. For example:
+- `ls` is aliased to `exa` with icons and directory-first sorting
+- `cat` is aliased to `bat` with syntax highlighting
+- `grep` is aliased to `ripgrep` for faster searching
+- `cd` is aliased to `zoxide` for intelligent directory jumping
+
+
 ## Troubleshooting
 
 ### Common Issues

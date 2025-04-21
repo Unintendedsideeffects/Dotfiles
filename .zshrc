@@ -69,3 +69,19 @@ powerline-daemon -q
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Modern CLI Tools Integration
+# Initialize Starship
+eval "$(starship init zsh)"
+
+# Source alias configuration
+if [ -f ~/.alias/config ]; then
+    source ~/.alias/config
+fi
+
+# Use fzf for fuzzy finding
+if command -v fzf &> /dev/null; then
+    source /usr/share/fzf/key-bindings.zsh
+    source /usr/share/fzf/completion.zsh
+    export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+fi
