@@ -1,0 +1,14 @@
+{
+    "window.commandCenter": 1,
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "workbench.settings.applyToAllProfiles": [
+        "editor.fontFamily"
+    ],
+    "editor.fontFamily": "'JetBrainsMonoNL Nerd Font', 'Symbols Nerd Font Mono', monospace",
+    "terminal.integrated.fontFamily": "'JetBrainsMonoNL Nerd Font', 'Symbols Nerd Font Mono', monospace",
+    "editor.fontLigatures": true,
+    "terminal.integrated.gpuAcceleration": "on",
+    "terminal.integrated.fontLigatures": true
+}
