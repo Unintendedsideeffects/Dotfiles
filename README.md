@@ -160,7 +160,46 @@ The configuration automatically sets up aliases and integrations for these tools
 - `grep` is aliased to `ripgrep` for faster searching
 - `cd` is aliased to `zoxide` for intelligent directory jumping
 
+## Font Setup for Powerline/Nerd Font Symbols
 
+To ensure proper rendering of Powerline symbols and icons in terminals and editors:
+
+1. Install the required fonts:
+   ```bash
+   # On Arch Linux
+   yay -S ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols
+   
+   # On Ubuntu/Debian
+   apt install fonts-jetbrains-mono-nerd fonts-nerd-fonts-symbols
+   
+   # On macOS
+   brew tap homebrew/cask-fonts
+   brew install --cask font-jetbrains-mono-nerd-font font-symbols-only-nerd-font
+   ```
+
+2. Update Cursor settings:
+   ```json
+   {
+     "editor.fontFamily": "'JetBrainsMonoNL Nerd Font', 'Symbols Nerd Font Mono', monospace",
+     "terminal.integrated.fontFamily": "'JetBrainsMonoNL Nerd Font', 'Symbols Nerd Font Mono', monospace",
+     "editor.fontLigatures": true,
+     "terminal.integrated.fontLigatures": true
+   }
+   ```
+
+3. Clear font cache and restart:
+   ```bash
+   # Rebuild font cache
+   fc-cache -f -v
+   
+   # Restart your terminal/editor
+   ```
+
+4. Verify installation:
+   ```bash
+   # Test Powerline symbols
+   echo -e "\ue0b0 \ue0b1 \ue0b2 \ue0b3"
+   ```
 ## Troubleshooting
 
 ### Common Issues
