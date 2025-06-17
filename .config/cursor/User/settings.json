@@ -1,0 +1,14 @@
+{
+    "workbench.colorTheme": "Lich theme",
+    "window.zoomLevel": 3,
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "diffEditor.renderSideBySide": false,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "cursor.cmdk.useThemedDiffBackground": true,
+    "git.confirmSync": false,
+    "window.customTitleBarVisibility": "windowed",
+    "cursor.cpp.disabledLanguages": [
+        "plaintext"
+    ]
+}
