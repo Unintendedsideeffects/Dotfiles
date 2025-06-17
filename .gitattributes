@@ -9,37 +9,55 @@
 # Configuration files
 *.conf text eol=lf
 *.config text eol=lf
+*.ini text eol=lf
+*.json text eol=lf
 *.toml text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
-*.json text eol=lf
-
-# Source code
-*.c text eol=lf
-*.cpp text eol=lf
-*.h text eol=lf
-*.py text eol=lf
-*.js text eol=lf
-*.ts text eol=lf
-*.rs text eol=lf
-*.go text eol=lf
 
 # Documentation
 *.md text eol=lf
 *.txt text eol=lf
 *.rst text eol=lf
 
+# Source code
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+
 # Binary files
 *.png binary
 *.jpg binary
+*.jpeg binary
 *.gif binary
 *.ico binary
 *.pdf binary
-*.ttf binary
-*.woff binary
-*.woff2 binary
-*.eot binary
-*.otf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.rar binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+
+# Executable scripts
+bin/* text eol=lf executable
 
 # Windows specific
 *.cmd text eol=crlf

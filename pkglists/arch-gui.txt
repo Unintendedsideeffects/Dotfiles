@@ -1,0 +1,59 @@
+# ===== Wayland desktop (Sway) =====
+sway
+waybar
+grim                 # screenshots
+slurp                # region selector for grim
+swaybg               # wallpapers
+swaylock
+swayidle
+wlroots              # pulls 0.19 from extra
+xwayland
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+
+# ===== Terminals & launchers =====
+kitty
+kitty-terminfo
+ghostty              # AUR
+rofi
+dunst
+flameshot            # screenshots with GUI
+feh                  # image viewer / wallpaper
+
+# ===== Audio / PipeWire stack ====
+pipewire
+pipewire-audio
+pipewire-pulse
+wireplumber
+pavucontrol
+
+# ===== Networking, bluetooth =====
+networkmanager
+bluez
+bluez-utils
+avahi
+
+# ===== Fonts & theming ===========
+adwaita-icon-theme
+adwaita-icon-theme-legacy
+hicolor-icon-theme
+adobe-source-code-pro-fonts
+cantarell-fonts
+ttf-liberation
+
+# ===== Everyday desktop apps =====
+firefox
+google-chrome        # AUR
+obsidian             # AUR
+visual-studio-code-bin  # AUR
+discord              # AUR
+telegram-desktop
+mpv                  # media
+flameshot            # already above but harmless
+xdg-utils
+
+# ===== Misc hardware helpers =====
+mesa                 # OpenGL
+vulkan-icd-loader
+nvidia               # comment out on AMD/Intel
+nvidia-utils         # idem 

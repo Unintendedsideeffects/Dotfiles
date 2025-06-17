@@ -1,0 +1,56 @@
+# -----------------  CORE / SHELL  -----------------
+base
+base-devel
+sudo
+zsh
+zsh-completions
+neovim
+tmux
+man-db
+man-pages
+
+# -----------------  NETWORK & VCS  ----------------
+git
+openssh
+curl
+wget
+pass                 # simple password manager
+
+# -----------------  PRODUCTIVITY  -----------------
+ripgrep
+fd
+fzf
+bat
+htop
+btop
+tree
+eza                  # modern ls (AUR)
+direnv
+jq
+yq
+
+# -----------------  LANG RUNTIME  -----------------
+python
+python-pip
+go
+rustup               # installs toolchains on demand
+nodejs
+npm
+pnpm
+
+# -----------------  BUILD TOOLCHAIN  --------------
+gcc
+clang
+lld
+llvm
+make
+cmake
+ninja
+meson
+pkgconf
+
+# -----------------  CONTAINERS / CLOUD ------------
+docker
+docker-compose
+podman
+sudo                 # docker & podman need it 
