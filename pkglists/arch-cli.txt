@@ -28,6 +28,7 @@ eza                  # modern ls (AUR)
 direnv
 jq
 yq
+ranger
 
 # -----------------  LANG RUNTIME  -----------------
 python
