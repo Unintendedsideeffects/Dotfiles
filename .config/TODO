@@ -1,0 +1,43 @@
+# XDG Config Migration Plan
+
+## Current Structure
+- [x] .config/ directory created
+- [x] Basic subdirectories created
+- [x] Configs copied from ~/.config
+
+## Existing XDG Configs
+- [x] clerk/
+- [x] dunst/ (with dunstrc)
+- [x] gtk-3.0/
+- [x] i3/ (with config and TODO)
+- [x] mpd/
+- [x] nvim/ (with init.lua and lazy-lock.json)
+- [x] pianobar/
+- [x] sublime-text-3/
+- [x] yabar/
+- [x] git/ (with ignore)
+- [x] htop/
+- [x] kitty/
+- [x] sway/ (with config and TODO.md)
+- [x] rofi/ (with config and config.rasi)
+
+## Next Steps
+1. [ ] Review and clean up copied configs
+2. [ ] Update scripts in bin/ to reference new paths
+3. [ ] Test on both desktop and WSL
+4. [ ] Update sparse-checkout patterns for WSL
+
+## Script Updates Needed
+- [ ] bin/vol-up.sh
+- [ ] bin/apply2dunst.sh
+- [ ] bin/sys-stats.sh
+- [ ] bin/pull-files.sh
+- [ ] bin/push-files.sh
+- [ ] bin/blocklets/mpdvol
+- [ ] bin/blocklets/mpdblock
+
+## Non-XDG Configs (stay in cli/)
+- [ ] .zshrc
+- [ ] .tmux.conf
+- [ ] common.sh
+- [ ] aliases 

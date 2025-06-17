@@ -1,0 +1,9 @@
+# Sway Configuration TODOs
+
+- [ ] **Keyboard Layout**: The `setxkbmap` command has been commented out. Configure your keyboard layout (e.g., 'it') using sway's `input` directive. Add something like `input * xkb_layout it` to your sway config. Refer to `man 5 sway-input` for details.
+- [ ] **Screen Layout**: The script `.screenlayout/current.sh` (likely using `xrandr`) has been commented out. Configure your display outputs directly in the sway config using `output` commands. For example: `output <Your_Output_Name> resolution 1920x1080 position 0,0`. Refer to `man 5 sway-output` for details.
+- [ ] **Review `xbindkeys` usage**: `xbindkeys` has been commented out as it's X11-specific. If you used it for complex keybindings not easily replicable with sway's `bindsym`, explore Wayland-native alternatives or check if `bindsym` can cover your needs.
+- [ ] **Terminal Review (Optional)**: The config uses `ghostty` as the primary terminal (`$mod+Return`) and `i3-sensible-terminal` for a custom binding (`$redpill`). `i3-sensible-terminal` is an X11 utility. Ensure this is the intended behavior or consider a Wayland-native terminal for all use cases.
+- [ ] **Wallpaper**: The `feh` related configuration (`$feh` variable) was removed. The config already has a `swaybg` binding for random wallpapers (`Control+Escape`). Ensure your wallpaper setup is as intended with Wayland-compatible tools.
+- [ ] **Terminal for `$redpill` binding**: The `$redpill` binding now uses `ghostty` (previously `i3-sensible-terminal`). Confirm this is your desired terminal or update it to your preference.
+- [ ] **Verify `$mod+$mod2+f` binding**: The binding `bindsym $mod+$mod2+f focus parent; fullscreen; focus child` was commented out because `$mod2` was not defined. If this functionality is desired, define `$mod2` (e.g., `set $mod2 Mod1` for Alt) or remove the line. 

@@ -1,0 +1,29 @@
+# Ranger Configuration Integration
+
+## Tasks
+- [x] Create TODO file
+- [x] Create .config/ranger directory
+- [x] Move rc.conf to .config/ranger/
+- [x] Move rifle.conf to .config/ranger/
+- [x] Move scope.sh to .config/ranger/
+- [x] Move commands.py to .config/ranger/
+- [x] Move colorschemes directory to .config/ranger/
+- [x] Move plugins directory to .config/ranger/
+- [x] Add ranger to CLI package lists
+- [x] Verify all files are moved correctly
+- [x] Delete original ranger directory
+- [x] Add missing features and files
+- [x] Test ranger configuration
+
+## Missing Features or Files
+- [x] Consider adding a custom `commands_full.py` for extended commands
+- [x] Consider adding a custom `rc.conf.local` for local overrides
+- [x] Consider adding a custom `rifle.conf.local` for local overrides
+- [x] Consider adding a custom `scope.sh.local` for local overrides
+- [x] Consider adding a custom `colorschemes` directory for local themes
+- [x] Consider adding a custom `plugins` directory for local plugins
+
+## Notes
+- Ensure all file permissions are preserved
+- Verify all paths in configuration files are correct
+- Test all functionality after moving 

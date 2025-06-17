@@ -1,0 +1,32 @@
+# i3 Configuration TODO
+
+## Completed
+- [x] Fixed case-sensitive typos in border commands ($Mod → $mod)
+- [x] Added modern Picom configuration with rounded corners and shadows
+- [x] Added title alignment and default border settings
+- [x] Verified gaps configuration is working with vanilla i3 (≥ 4.22)
+- [x] Added keyboard layout switching (Ctrl+Space)
+- [x] Added flameshot shortcut (Win+Shift+S)
+
+## Future Improvements
+- [ ] Consider switching to i3status-rust or waybar for modern status bar
+- [ ] Replace static .screenlayout/current.sh with autorandr --batch
+- [ ] Consider splitting config into logical pieces (bindings.conf, etc.)
+- [ ] Test and optimize Picom performance
+- [ ] Consider adding workspace indicators to status bar
+- [ ] Review and optimize startup applications
+
+## Notes
+- Current gaps settings: inner 5px, outer 5px
+- Corner radius: 8px
+- Shadow settings: 12px radius, 15% opacity
+- Window opacity: 90%
+
+## Keybindings
+- Ctrl+Space: Switch between IT and US keyboard layouts
+- Win+Shift+S: Launch flameshot GUI
+
+## Design Notes
+- Using Mod4 (Windows key) as main modifier
+- Keeping keybindings intuitive and consistent with common patterns
+- Screenshot tool bound to P for "Picture" 

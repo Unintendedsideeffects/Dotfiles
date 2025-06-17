@@ -1,0 +1,31 @@
+
+# rofi configuration
+rofi.font: SF Pro Display 20
+rofi.color-window: argb:c82d303b
+rofi.color-normal: argb:00000000, #9E9E9E, argb:00000000, argb:00000000, #FFFFFF
+rofi.width: 50
+rofi.lines: 10
+rofi.bw: 0
+rofi.padding: 50
+rofi.line-margin: 10
+rofi.separator-style: none
+rofi.hide-scrollbar: true
+rofi.show-icons: true
+rofi.combi-modi:drun,run
+rofi.modi: combi,window
+rofi.combi-hide-mode-prefix: true
+!rofi.xoffset: -1700
+!rofi.yoffset: 0
+!rofi.fake-transparency: true
+rofi.fake-background: background
+rofi.show-match: false
+#rofi.drun-display-format: name
+rofi.matching: fuzzy
+rofi.sidebar-mode: true
+rofi.run-shell-command: '{terminal} -e \\"{cmd}; read -n 1 -s"'
+#rofi.run-shell-command: termite -e {cmd} 
+rofi.border: 10
+rofi.position: center
+rofi.hide-index: true
+rofi.placeholder: ""
+

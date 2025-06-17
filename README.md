@@ -7,8 +7,15 @@ A portable, reproducible dotfiles setup that works across WSL, servers, and desk
 ```
 .
 ├── bin/          # Executable scripts and CLI tools
-├── cli/          # Shell, git, tmux configurations
-├── gui/          # X11/Wayland configurations
+├── cli/          # Non-XDG shell configurations (.zshrc, .tmux.conf)
+├── .config/      # XDG-compliant configurations
+│   ├── git/      # Git configuration
+│   ├── nvim/     # Neovim configuration
+│   ├── htop/     # htop configuration
+│   ├── kitty/    # Kitty terminal configuration
+│   ├── sway/     # Sway window manager config
+│   ├── rofi/     # Rofi launcher configuration
+│   └── dunst/    # Dunst notification daemon
 ├── vscode/       # VS Code settings and extensions
 ├── pkglists/     # Package manifests per distro
 └── secrets/      # Sensitive data (gitignored)
@@ -34,7 +41,7 @@ A portable, reproducible dotfiles setup that works across WSL, servers, and desk
 4. For WSL or headless servers, use sparse checkout:
    ```bash
    config sparse-checkout init --cone
-   config sparse-checkout set bin cli
+   config sparse-checkout set bin cli .config/git .config/htop .config/nvim
    ```
 
 5. Install Powerlevel10k (once per host):

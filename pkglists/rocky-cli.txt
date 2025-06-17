@@ -1,17 +1,20 @@
 # Essential CLI tools
-zsh
-git
-tmux
-neovim
-fzf
-exa
 bat
-ripgrep
-zoxide
-atuin
-delta
+exa
 fd-find
+fzf
+git
+neofetch
+openssh-clients
+pass
 ripgrep
+rsync
+sudo
+tmux
+wget
+zoxide
+zsh
+ranger
 
 # Development tools
 gcc
@@ -25,16 +28,9 @@ rust
 golang
 
 # System utilities
-sudo
 man-db
 man-pages
 texinfo
-neofetch
-htop
 ncdu
-rsync
-wget
 curl
-openssh-clients
-gnupg2
-pass 
+gnupg2 
