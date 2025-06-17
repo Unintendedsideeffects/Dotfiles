@@ -1,0 +1,40 @@
+# Essential CLI tools
+zsh
+git
+tmux
+neovim
+fzf
+exa
+bat
+ripgrep
+zoxide
+atuin
+delta
+fd-find
+ripgrep
+
+# Development tools
+gcc
+gcc-c++
+make
+python3
+python3-pip
+nodejs
+npm
+rust
+golang
+
+# System utilities
+sudo
+man-db
+man-pages
+texinfo
+neofetch
+htop
+ncdu
+rsync
+wget
+curl
+openssh-clients
+gnupg2
+pass 

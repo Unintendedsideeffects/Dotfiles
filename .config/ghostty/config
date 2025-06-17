@@ -1,7 +1,0 @@
-# Padding
-window-padding-x = 8
-window-padding-y = 4
-window-padding-balance = true
-window-padding-color = extend
-window-decoration = auto
-gtk-titlebar-hide-when-maximized = true

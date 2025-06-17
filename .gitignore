@@ -1,3 +1,24 @@
+# Secrets and sensitive data
+secrets/
+**/secrets/
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.pfx
+**/*.keystore
+**/*.jks
+**/*.env
+**/*.env.*
+!**/.env.example
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -7,17 +28,6 @@
 ehthumbs.db
 Thumbs.db
 
-# Editor directories and files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.project
-.settings/
-*.sublime-workspace
-*.sublime-project
-
 # Temporary files
 *.log
 *.tmp
@@ -25,40 +35,28 @@ Thumbs.db
 *.bak
 *.backup
 
+# Build and dependency directories
+node_modules/
+dist/
+build/
+*.pyc
+__pycache__/
+
 # Local configuration
 *.local
 *.local.*
-.env
-.secrets
-*.secret
+!*.local.example
 
 # Cache directories
 .cache/
-__pycache__/
-*.py[cod]
-*$py.class
+.temp/
+tmp/
+temp/
 
-# Package files
-node_modules/
-vendor/
-*.gem
-*.rbc
+# Powerlevel10k theme (track config but not the theme itself)
+powerlevel10k/
+!powerlevel10k/.gitkeep
 
-# Build output
-dist/
-build/
-*.o
-*.a
-*.so
-*.dylib
-
-# Misc
-*.pid
-*.seed
-*.pid.lock
-*.pem
-*.p12
-*.key
-*.crt
-*.csr
-*.srl 
+# Nested git repositories
+**/.git/
+!/.git/
