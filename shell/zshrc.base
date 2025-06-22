@@ -20,9 +20,6 @@ setopt COMPLETE_ALIASES
 ttyctl -f
 zstyle ':completion:*' rehash true
 
-# Theme
-ZSH_THEME="bullet-train"
-
 # Linux console color scheme
 if [ "$TERM" = "linux" ]; then
   /bin/echo -e "
@@ -53,10 +50,9 @@ elif [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; th
   source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 
-# Powerline (conditional)
-if command -v powerline-daemon >/dev/null 2>&1 && [[ -f /usr/share/powerline/bindings/zsh/powerline.zsh ]]; then
-  powerline-daemon -q
-  . /usr/share/powerline/bindings/zsh/powerline.zsh
+# Initialize starship prompt
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
 fi
 
 # Environment detection
