@@ -1,11 +1,11 @@
 config() {
     # The base command for git with the bare repo setup
-    local git_cmd="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
+    local git_cmd=("/usr/bin/git" "--git-dir=$HOME/.cfg" "--work-tree=$HOME")
 
     # Check if the command is 'pull'
     if [[ "$1" == "pull" && "$#" -eq 1 ]]; then
         # Attempt to pull
-        pull_output=$($git_cmd pull 2>&1)
+        pull_output=$("${git_cmd[@]}" pull 2>&1)
         pull_exit_code=$?
 
         if [[ $pull_exit_code -eq 0 ]]; then
@@ -50,7 +50,7 @@ config() {
 
             echo "Retrying pull..."
             # Attempt to pull again
-            $git_cmd pull
+            "${git_cmd[@]}" pull
             if [[ $? -eq 0 ]]; then
                 echo "Pull successful after backing up local changes."
                 echo "Your conflicting files were moved to $backup_dir"
@@ -67,6 +67,6 @@ config() {
         fi
     else
         # For any other command than 'pull', just pass it to git
-        $git_cmd "$@"
+        "${git_cmd[@]}" "$@"
     fi
 } 
