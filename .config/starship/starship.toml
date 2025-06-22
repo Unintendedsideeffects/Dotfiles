@@ -6,7 +6,11 @@ $os\
 $username\
 [](bg:peach fg:red)\
 $directory\
-[](bg:yellow fg:peach)\
+[](fg:peach)\
+$character"""
+
+right_format = """
+[](yellow)\
 $git_branch\
 $git_status\
 [](fg:yellow bg:green)\
@@ -24,9 +28,7 @@ $conda\
 [](fg:sapphire bg:lavender)\
 $time\
 [ ](fg:lavender)\
-$cmd_duration\
-$line_break\
-$character"""
+$cmd_duration"""
 
 palette = 'adventure_time'
 
