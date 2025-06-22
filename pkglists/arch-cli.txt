@@ -82,3 +82,5 @@ adobe-source-code-pro-fonts
 
 # For X11 font settings
 xorg-xrdb
+
+informant

@@ -48,17 +48,28 @@ install_packages() {
 
     case "$os" in
         "arch")
+            AUR_HELPER=""
+            if command -v yay &> /dev/null; then
+                AUR_HELPER="yay"
+            elif command -v paru &> /dev/null; then
+                AUR_HELPER="paru"
+            fi
+
             while read -r pkg; do
                 [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
                 echo -e "${GREEN}Installing $pkg...${NC}"
-                sudo pacman -S --needed --noconfirm "$pkg"
+                if [[ -n "$AUR_HELPER" ]]; then
+                    "$AUR_HELPER" -S --needed --noconfirm "$pkg" || true
+                else
+                    sudo pacman -S --needed --noconfirm "$pkg" || true
+                fi
             done < "$pkglist"
             ;;
         "rocky"|"rhel"|"fedora")
             while read -r pkg; do
                 [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
                 echo -e "${GREEN}Installing $pkg...${NC}"
-                sudo dnf install -y "$pkg"
+                sudo dnf install -y "$pkg" || true
             done < "$pkglist"
             ;;
         *)
