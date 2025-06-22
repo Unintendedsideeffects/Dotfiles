@@ -104,8 +104,12 @@ symlink_configs() {
     done
 
     # Create symlink for starship.toml
-    if [ -f "$REPO_ROOT/.config/starship.toml" ]; then
-        echo -e "${GREEN}Creating symlink for starship.toml...${NC}"
+    if [ -f "$REPO_ROOT/.config/starship/starship.toml" ]; then
+        echo -e "${GREEN}Creating symlink for starship configuration...${NC}"
+        mkdir -p "$HOME/.config/starship"
+        ln -sf "$REPO_ROOT/.config/starship/starship.toml" "$HOME/.config/starship/starship.toml"
+    elif [ -f "$REPO_ROOT/.config/starship.toml" ]; then
+        echo -e "${GREEN}Creating symlink for starship.toml (legacy location)...${NC}"
         ln -sf "$REPO_ROOT/.config/starship.toml" "$HOME/.config/starship.toml"
     fi
 

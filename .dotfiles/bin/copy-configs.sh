@@ -20,6 +20,7 @@ CONFIGS=(
     "yabar"
     "picom"
     "ranger"
+    "starship"
 )
 
 # Additional dotfiles to copy from home directory
@@ -47,12 +48,6 @@ for config in "${CONFIGS[@]}"; do
         echo "Warning: $HOME/.config/$config does not exist"
     fi
 done
-
-# Copy starship.toml separately since it's a file
-if [ -f "$HOME/.config/starship.toml" ]; then
-    echo "Copying starship.toml..."
-    cp "$HOME/.config/starship.toml" ".config/"
-fi
 
 # Copy dotfiles from home directory
 for dotfile in "${DOTFILES[@]}"; do

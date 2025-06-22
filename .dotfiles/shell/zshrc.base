@@ -52,6 +52,7 @@ fi
 
 # Initialize starship prompt
 if command -v starship >/dev/null 2>&1; then
+  export STARSHIP_CONFIG=~/.config/starship/starship.toml
   eval "$(starship init zsh)"
 fi
 
