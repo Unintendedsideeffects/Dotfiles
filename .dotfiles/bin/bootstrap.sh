@@ -118,9 +118,9 @@ symlink_configs() {
     done
 
     # Create symlink for .Xresources from shell directory
-    if [ -f "$REPO_ROOT/shell/.Xresources" ]; then
+    if [ -f "$REPO_ROOT/.dotfiles/shell/.Xresources" ]; then
         echo -e "${GREEN}Creating symlink for .Xresources...${NC}"
-        ln -sf "$REPO_ROOT/shell/.Xresources" "$HOME/.Xresources"
+        ln -sf "$REPO_ROOT/.dotfiles/shell/.Xresources" "$HOME/.Xresources"
     fi
     echo -e "${GREEN}Symlinks created.${NC}"
 }
