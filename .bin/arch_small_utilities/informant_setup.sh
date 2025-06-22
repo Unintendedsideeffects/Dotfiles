@@ -21,7 +21,18 @@ sudo groupadd -f informant
 echo "Adding user to informant group..."
 sudo usermod -aG informant "$USER"
 
-echo "Creating cache directory..."
+echo "Setting up proper permissions for Informant directories and files..."
+if [ -d "/var/cache/informant" ]; then
+    sudo chmod -R 2750 /var/cache/informant
+    sudo chown -R root:informant /var/cache/informant
+fi
+
+if [ -f "/var/lib/informant.dat" ]; then
+    sudo chmod 640 /var/lib/informant.dat
+    sudo chown root:informant /var/lib/informant.dat
+fi
+
+echo "Creating user cache directory..."
 mkdir -p "$HOME/.cache/informant"
 
 echo "Testing informant installation..."

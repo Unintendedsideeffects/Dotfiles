@@ -1,98 +1,174 @@
-# Dotfiles
+# Malcolm's Dotfiles
 
-A portable, reproducible dotfiles setup that works across WSL, servers, and desktop Linux.
+A comprehensive, portable dotfiles system for Linux environments (WSL, servers, desktop). This repository provides a complete development environment setup with automatic OS detection, package management, and configuration deployment.
+
+## Features
+
+- **Multi-OS Support**: Arch Linux, Rocky Linux/RHEL, with WSL and Crostini detection
+- **Bare Repository Setup**: Uses Git bare repository for clean home directory management
+- **Automatic Bootstrap**: One-command setup with OS-specific package installation
+- **Modular Shell Config**: Environment-aware zsh configuration with platform-specific modules
+- **Safe Operations**: Automatic backup of conflicting files during updates
+- **Modern CLI Tools**: Pre-configured aliases for modern replacements (exa, bat, ripgrep, etc.)
+
+## Quick Start
+
+```bash
+# Set up bare repository
+git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git $HOME/.cfg
+
+# Set up temporary alias for initial checkout
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
+# Checkout files (backup existing if needed)
+config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.backup
+config checkout
+
+# Source the config function from the dotfiles
+source $HOME/cli/config.sh
+
+# Run bootstrap to install packages and configure
+./bin/bootstrap.sh
+```
 
 ## Directory Structure
 
 ```
 .
-├── bin/          # Executable scripts and CLI tools
-├── cli/          # Non-XDG shell configurations (.zshrc, .tmux.conf)
-├── .config/      # XDG-compliant configurations
-│   ├── git/      # Git configuration
-│   ├── nvim/     # Neovim configuration
-│   ├── htop/     # htop configuration
-│   ├── kitty/    # Kitty terminal configuration
-│   ├── sway/     # Sway window manager config
-│   ├── rofi/     # Rofi launcher configuration
-│   └── dunst/    # Dunst notification daemon
-├── vscode/       # VS Code settings and extensions
-├── pkglists/     # Package manifests per distro
-└── secrets/      # Sensitive data (gitignored)
+├── bin/              # Utility scripts and tools
+│   ├── bootstrap.sh  # Main setup script
+│   └── *.sh         # Various utility scripts
+├── cli/              # Shell configurations
+│   ├── aliases      # Modern CLI tool aliases
+│   ├── config.sh    # Safe git pull function
+│   └── common.sh    # Common shell utilities
+├── shell/            # Zsh configuration
+│   ├── install.sh   # Shell config installer
+│   ├── zshrc.base   # Base zsh configuration
+│   └── zshrc.d/     # Environment-specific configs
+│       ├── arch.zsh     # Arch Linux specific
+│       ├── rocky.zsh    # Rocky Linux specific
+│       ├── wsl.zsh      # WSL specific
+│       ├── crostini.zsh # Chrome OS specific
+│       └── enterprise.zsh # Enterprise environments
+├── pkglists/         # Package lists per OS/environment
+│   ├── arch-cli.txt     # Arch CLI packages
+│   ├── arch-gui.txt     # Arch GUI packages
+│   ├── arch-crostini.txt # Crostini-specific packages
+│   ├── rocky-cli.txt    # Rocky Linux CLI packages
+│   └── rocky-gui.txt    # Rocky Linux GUI packages
+├── vscode/           # VS Code configuration
+└── secrets/          # Sensitive data (gitignored)
 ```
 
-## 🚀 Quickstart
+## Environment Detection
 
-1.  **Clone the repository:**
+The system automatically detects and configures for:
 
-    ```bash
-    git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git $HOME/.cfg
-    ```
+- **Arch Linux**: Installs AUR helper (yay), uses pacman/yay for packages
+- **Rocky Linux/RHEL**: Uses dnf for package management
+- **WSL**: Skips GUI packages and X11 configurations
+- **Crostini**: Chrome OS Linux container optimizations
+- **Enterprise**: Corporate environment configurations
 
-2.  **Set up the `config` alias:**
+## Package Management
 
-    Add this to your `.bashrc` or `.zshrc`:
-
-    ```bash
-    alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-    ```
-
-3.  **Checkout the files:**
-   ```bash
-   config checkout
-   ```
-
-4. For WSL or headless servers, use sparse checkout:
-   ```bash
-   config sparse-checkout init --cone
-   config sparse-checkout set bin cli .config/git .config/htop .config/nvim
-   ```
-
-5. Install Powerlevel10k (once per host):
-   ```bash
-   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
-   ```
-
-## Package Installation
+Each environment has curated package lists:
 
 ### Arch Linux
-```bash
-# CLI only
-while read -r p; do sudo pacman -S --needed "$p"; done < pkglists/arch-cli.txt
-
-# Full desktop
-while read -r p; do sudo pacman -S --needed "$p"; done < pkglists/arch-gui.txt
-```
+- **CLI**: Development tools, modern CLI replacements, fonts
+- **GUI**: Desktop environment, applications, themes
+- **Crostini**: Chrome OS optimized packages
 
 ### Rocky Linux
-```bash
-# CLI only
-while read -r p; do sudo dnf install -y "$p"; done < pkglists/rocky-cli.txt
+- **CLI**: Enterprise-friendly development stack
+- **GUI**: Desktop applications and utilities
 
-# Full desktop
-while read -r p; do sudo dnf install -y "$p"; done < pkglists/rocky-gui.txt
+## Shell Configuration
+
+The zsh setup includes:
+
+- **Base Configuration**: Core zsh settings, history, completions
+- **Modern Aliases**: exa (ls), bat (cat), ripgrep (grep), and more
+- **Environment Modules**: Platform-specific customizations
+- **Git Integration**: Enhanced git aliases and prompt
+- **Development Tools**: Docker, Kubernetes, Python, Node.js shortcuts
+
+## Configuration Management
+
+### Safe Updates
+The `config` function provides safe git operations:
+```bash
+config pull  # Automatically backs up conflicting files
+config add <file>
+config commit -m "message"
+config push
 ```
 
-## Maintenance
+### Sparse Checkout for Minimal Environments
+For servers or WSL where you only need CLI tools:
+```bash
+config sparse-checkout init --cone
+config sparse-checkout set bin cli shell pkglists
+```
 
-- Keep secrets in `secrets/` directory (gitignored)
-- Use `config` alias for all git operations
-- Run `chmod +x bin/*` after adding new scripts
-- Ensure all scripts have proper shebangs
+## Manual Installation Steps
 
-## Development
+If you prefer manual setup:
 
-1. Make changes to the files
-2. Use the `config` alias to commit:
+1. **Install Shell Configuration:**
    ```bash
-   config add <file>
-   config commit -m "message"
-   config push
+   ./shell/install.sh
    ```
+
+2. **Install Packages:**
+   ```bash
+   # Arch Linux
+   ./bin/bootstrap.sh
+   
+   # Or manually:
+   yay -S --needed - < pkglists/arch-cli.txt
+   ```
+
+3. **Configure Git:**
+   ```bash
+   # Set up the config alias
+   source cli/config.sh
+   ```
+
+## Customization
+
+- **Local Overrides**: Use `~/.zshrc.local` for machine-specific settings
+- **Secrets**: Store sensitive data in `secrets/` directory
+- **Additional Packages**: Add to appropriate `pkglists/*.txt` file
+- **Environment-Specific**: Modify files in `shell/zshrc.d/`
 
 ## Testing
 
-Run the test script to verify the setup:
+Verify your setup:
 ```bash
 ./bin/test-dotfiles.sh
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Permission Denied**: Run `chmod +x bin/*` to make scripts executable
+2. **Missing Packages**: Check if your OS package list exists in `pkglists/`
+3. **Config Conflicts**: Use `config status` to see uncommitted changes
+
+### Getting Help
+
+- Check existing issues and configurations
+- Ensure your OS is supported (Arch, Rocky Linux)
+- Verify internet connection for package downloads
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Test on your target environments
+4. Submit a pull request
+
+This dotfiles system is designed to be a comprehensive, yet flexible foundation for any Linux development environment.
