@@ -1,0 +1,12 @@
+# Informant configuration file
+# Default pager for displaying news
+pager = less
+
+# Save file location for read items
+file = ~/.cache/informant/readlist
+
+# Cache directory
+cache_dir = ~/.cache/informant
+
+# Debug mode (set to true for verbose output)
+debug = false 
