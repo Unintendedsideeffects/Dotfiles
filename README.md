@@ -21,19 +21,23 @@ A portable, reproducible dotfiles setup that works across WSL, servers, and desk
 └── secrets/      # Sensitive data (gitignored)
 ```
 
-## Quick Start
+## 🚀 Quickstart
 
-1. Clone the repository:
-   ```bash
-   git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git $HOME/.dotfiles
-   ```
+1.  **Clone the repository:**
 
-2. Define the alias in your current shell:
-   ```bash
-   alias config='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-   ```
+    ```bash
+    git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git $HOME/.cfg
+    ```
 
-3. Checkout the actual content from the bare repository to your $HOME:
+2.  **Set up the `config` alias:**
+
+    Add this to your `.bashrc` or `.zshrc`:
+
+    ```bash
+    alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+    ```
+
+3.  **Checkout the files:**
    ```bash
    config checkout
    ```
