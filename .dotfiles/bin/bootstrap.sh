@@ -223,6 +223,59 @@ install_aur_helper() {
     fi
 }
 
+setup_package_manager_configs() {
+    echo -e "${YELLOW}Setting up optimized package manager configurations...${NC}"
+    
+    # Check if configuration files exist
+    if [[ ! -f "$REPO_ROOT/.config/pacman/pacman.conf" ]]; then
+        echo -e "${RED}Package manager configs not found, skipping setup${NC}"
+        return
+    fi
+
+    # Backup existing configurations
+    echo -e "${YELLOW}Backing up existing configurations...${NC}"
+    if [[ -f "/etc/pacman.conf" ]]; then
+        sudo cp /etc/pacman.conf /etc/pacman.conf.backup
+        echo -e "${GREEN}Backed up /etc/pacman.conf${NC}"
+    fi
+
+    if [[ -f "/etc/makepkg.conf" ]]; then
+        sudo cp /etc/makepkg.conf /etc/makepkg.conf.backup
+        echo -e "${GREEN}Backed up /etc/makepkg.conf${NC}"
+    fi
+
+    # Apply optimized configurations
+    echo -e "${YELLOW}Applying optimized pacman configuration...${NC}"
+    sudo cp "$REPO_ROOT/.config/pacman/pacman.conf" /etc/pacman.conf
+
+    echo -e "${YELLOW}Applying optimized makepkg configuration...${NC}"
+    sudo cp "$REPO_ROOT/.config/pacman/makepkg.conf" /etc/makepkg.conf
+
+    # Set up yay configuration
+    echo -e "${YELLOW}Setting up yay configuration...${NC}"
+    mkdir -p ~/.config/yay
+    cp "$REPO_ROOT/.config/yay/config.json" ~/.config/yay/config.json
+
+    # Install ccache if not present
+    if ! command -v ccache &> /dev/null; then
+        echo -e "${YELLOW}Installing ccache for faster builds...${NC}"
+        sudo pacman -S --needed --noconfirm ccache
+    else
+        echo -e "${GREEN}ccache already installed${NC}"
+    fi
+
+    # Create makepkg cache directories
+    echo -e "${YELLOW}Creating makepkg cache directories...${NC}"
+    mkdir -p ~/.cache/makepkg/{packages,sources,srcpackages,logs}
+
+    echo -e "${GREEN}Package manager configuration complete!${NC}"
+    echo -e "${GREEN}Optimizations applied:${NC}"
+    echo "  • Pacman: 8 parallel downloads, color output, progress bars"
+    echo "  • Makepkg: Multi-core builds, ccache, LTO optimization"
+    echo "  • Yay: Safety features and performance settings"
+    echo "  • Cache: User-specific build directories created"
+}
+
 main() {
     echo -e "${YELLOW}Starting bootstrap process...${NC}"
 
@@ -231,6 +284,7 @@ main() {
     echo -e "${GREEN}Detected OS: $OS${NC}"
 
     if [[ "$OS" == "arch" ]]; then
+        setup_package_manager_configs
         install_aur_helper
         if is_crostini; then
             echo -e "${GREEN}Detected Crostini environment. Installing Crostini packages...${NC}"
@@ -269,7 +323,12 @@ main() {
     echo -e "${YELLOW}Next steps:${NC}"
     echo "1. Restart your shell to see the new prompt"
     echo "2. Run '$SCRIPT_DIR/test-dotfiles.sh' to verify the setup"
-    echo "3. For font changes to take full effect, you may need to reboot."
+    if [[ "$OS" == "arch" ]]; then
+        echo "3. Package manager optimizations are now active (pacman/yay/makepkg)"
+        echo "4. For font changes to take full effect, you may need to reboot."
+    else
+        echo "3. For font changes to take full effect, you may need to reboot."
+    fi
 }
 
 main "$@" 
