@@ -25,40 +25,42 @@ config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.
 config checkout
 
 # Source the config function from the dotfiles
-source $HOME/cli/config.sh
+source $HOME/.dotfiles/cli/config.sh
 
 # Run bootstrap to install packages and configure
-./bin/bootstrap.sh
+./.dotfiles/bin/bootstrap.sh
 ```
 
 ## Directory Structure
 
 ```
 .
-├── bin/              # Utility scripts and tools
-│   ├── bootstrap.sh  # Main setup script
-│   └── *.sh         # Various utility scripts
-├── cli/              # Shell configurations
-│   ├── aliases      # Modern CLI tool aliases
-│   ├── config.sh    # Safe git pull function
-│   └── common.sh    # Common shell utilities
-├── shell/            # Zsh configuration
-│   ├── install.sh   # Shell config installer
-│   ├── zshrc.base   # Base zsh configuration
-│   └── zshrc.d/     # Environment-specific configs
-│       ├── arch.zsh     # Arch Linux specific
-│       ├── rocky.zsh    # Rocky Linux specific
-│       ├── wsl.zsh      # WSL specific
-│       ├── crostini.zsh # Chrome OS specific
-│       └── enterprise.zsh # Enterprise environments
-├── pkglists/         # Package lists per OS/environment
-│   ├── arch-cli.txt     # Arch CLI packages
-│   ├── arch-gui.txt     # Arch GUI packages
-│   ├── arch-crostini.txt # Crostini-specific packages
-│   ├── rocky-cli.txt    # Rocky Linux CLI packages
-│   └── rocky-gui.txt    # Rocky Linux GUI packages
-├── vscode/           # VS Code configuration
-└── secrets/          # Sensitive data (gitignored)
+├── .dotfiles/         # Main dotfiles directory
+│   ├── bin/           # Utility scripts and tools
+│   │   ├── bootstrap.sh  # Main setup script
+│   │   └── *.sh       # Various utility scripts
+│   ├── cli/           # Shell configurations
+│   │   ├── aliases    # Modern CLI tool aliases
+│   │   ├── config.sh  # Safe git pull function
+│   │   └── common.sh  # Common shell utilities
+│   ├── shell/         # Zsh configuration
+│   │   ├── install.sh # Shell config installer
+│   │   ├── zshrc.base # Base zsh configuration
+│   │   └── zshrc.d/   # Environment-specific configs
+│   │       ├── arch.zsh     # Arch Linux specific
+│   │       ├── rocky.zsh    # Rocky Linux specific
+│   │       ├── wsl.zsh      # WSL specific
+│   │       ├── crostini.zsh # Chrome OS specific
+│   │       └── enterprise.zsh # Enterprise environments
+│   └── pkglists/      # Package lists per OS/environment
+│       ├── arch-cli.txt     # Arch CLI packages
+│       ├── arch-gui.txt     # Arch GUI packages
+│       ├── arch-crostini.txt # Crostini-specific packages
+│       ├── rocky-cli.txt    # Rocky Linux CLI packages
+│       └── rocky-gui.txt    # Rocky Linux GUI packages
+├── .config/           # Application configurations
+├── secrets/           # Sensitive data (gitignored)
+└── README.md          # This documentation
 ```
 
 ## Environment Detection
@@ -109,7 +111,7 @@ config push
 For servers or WSL where you only need CLI tools:
 ```bash
 config sparse-checkout init --cone
-config sparse-checkout set bin cli shell pkglists
+config sparse-checkout set .dotfiles/bin .dotfiles/cli .dotfiles/shell .dotfiles/pkglists
 ```
 
 ## Manual Installation Steps
@@ -118,44 +120,44 @@ If you prefer manual setup:
 
 1. **Install Shell Configuration:**
    ```bash
-   ./shell/install.sh
+   ./.dotfiles/shell/install.sh
    ```
 
 2. **Install Packages:**
    ```bash
    # Arch Linux
-   ./bin/bootstrap.sh
+   ./.dotfiles/bin/bootstrap.sh
    
    # Or manually:
-   yay -S --needed - < pkglists/arch-cli.txt
+   yay -S --needed - < .dotfiles/pkglists/arch-cli.txt
    ```
 
 3. **Configure Git:**
    ```bash
    # Set up the config alias
-   source cli/config.sh
+   source .dotfiles/cli/config.sh
    ```
 
 ## Customization
 
 - **Local Overrides**: Use `~/.zshrc.local` for machine-specific settings
 - **Secrets**: Store sensitive data in `secrets/` directory
-- **Additional Packages**: Add to appropriate `pkglists/*.txt` file
-- **Environment-Specific**: Modify files in `shell/zshrc.d/`
+- **Additional Packages**: Add to appropriate `.dotfiles/pkglists/*.txt` file
+- **Environment-Specific**: Modify files in `.dotfiles/shell/zshrc.d/`
 
 ## Testing
 
 Verify your setup:
 ```bash
-./bin/test-dotfiles.sh
+./.dotfiles/bin/test-dotfiles.sh
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Permission Denied**: Run `chmod +x bin/*` to make scripts executable
-2. **Missing Packages**: Check if your OS package list exists in `pkglists/`
+1. **Permission Denied**: Run `chmod +x .dotfiles/bin/*` to make scripts executable
+2. **Missing Packages**: Check if your OS package list exists in `.dotfiles/pkglists/`
 3. **Config Conflicts**: Use `config status` to see uncommitted changes
 
 ### Getting Help

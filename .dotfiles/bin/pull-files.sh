@@ -13,7 +13,7 @@ echo "Pulling dotfiles from $HOME_DIR to $DOTFILES_DIR"
 
 # Create necessary directories if they don't exist
 mkdir -p "$DOTFILES_DIR/.config"
-mkdir -p "$DOTFILES_DIR/shell"
+mkdir -p "$DOTFILES_DIR/.dotfiles/shell"
 
 # Function to copy files with error handling
 copy_file() {
@@ -56,11 +56,11 @@ fi
 
 # Copy shell configuration files
 echo "Copying shell configuration files..."
-copy_file "$HOME_DIR/.bashrc" "$DOTFILES_DIR/shell/"
-copy_file "$HOME_DIR/.zshrc" "$DOTFILES_DIR/shell/"
-copy_file "$HOME_DIR/.xinitrc" "$DOTFILES_DIR/shell/"
-copy_file "$HOME_DIR/.Xresources" "$DOTFILES_DIR/shell/"
-copy_file "$HOME_DIR/.zprofile" "$DOTFILES_DIR/shell/"
+copy_file "$HOME_DIR/.bashrc" "$DOTFILES_DIR/.dotfiles/shell/"
+copy_file "$HOME_DIR/.zshrc" "$DOTFILES_DIR/.dotfiles/shell/"
+copy_file "$HOME_DIR/.xinitrc" "$DOTFILES_DIR/.dotfiles/shell/"
+copy_file "$HOME_DIR/.Xresources" "$DOTFILES_DIR/.dotfiles/shell/"
+copy_file "$HOME_DIR/.zprofile" "$DOTFILES_DIR/.dotfiles/shell/"
 
 # Copy other common dotfiles
 echo "Copying other dotfiles..."
@@ -70,7 +70,7 @@ copy_file "$HOME_DIR/.gitignore_global" "$DOTFILES_DIR/" 2>/dev/null || echo "No
 # Copy bin directory (if it exists in home)
 if [[ -d "$HOME_DIR/bin" ]]; then
     echo "Copying bin directory..."
-    copy_dir "$HOME_DIR/bin" "$DOTFILES_DIR/"
+    copy_dir "$HOME_DIR/bin" "$DOTFILES_DIR/.dotfiles/"
 fi
 
 echo "Dotfiles pull completed successfully!"
