@@ -25,7 +25,7 @@ A portable, reproducible dotfiles setup that works across WSL, servers, and desk
 
 1. Clone the repository:
    ```bash
-   git clone --bare https://github.com/yourusername/dotfiles.git $HOME/.dotfiles
+   git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git $HOME/.dotfiles
    ```
 
 2. Define the alias in your current shell:
