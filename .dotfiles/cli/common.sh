@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-# Exit on error
-set -e
-
 # XDG Base Directory Specification
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
 : "${XDG_CACHE_HOME:=$HOME/.cache}"
