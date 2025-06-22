@@ -1,0 +1,19 @@
+# Minimal zshrc bootstrapper - delegates to environment-specific configs
+
+# Source base configuration
+source ~/.zshrc.base
+
+# Source environment-specific configurations
+[[ $IS_CROSTINI == true ]] && source ~/.zshrc.d/crostini.zsh
+[[ $IS_WSL == true ]]      && source ~/.zshrc.d/wsl.zsh
+[[ $IS_ROCKY == true ]]    && source ~/.zshrc.d/rocky.zsh
+[[ $IS_RHEL == true ]]     && source ~/.zshrc.d/rhel.zsh
+[[ $IS_ARCH == true ]]     && source ~/.zshrc.d/arch.zsh
+
+# Source any additional config fragments
+[[ -d ~/.zshrc.d ]] && for f in ~/.zshrc.d/*.zsh; do
+  [[ -f "$f" ]] && source "$f"
+done
+
+# Source local overrides (not versioned in git)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local 
