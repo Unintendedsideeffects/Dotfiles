@@ -1,6 +1,8 @@
 # ~/.zshrc — tracked in the bare repo
 source ~/Dotfiles/shell/zshrc.base
 
+alias config="git --git-dir=$HOME/Dotfiles --work-tree=$HOME"
+
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 if [[ -d ~/Dotfiles/shell/zshrc.d ]]; then
