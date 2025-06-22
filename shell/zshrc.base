@@ -1,0 +1,81 @@
+# Base zsh configuration - shared across all environments
+
+# History configuration
+HISTFILE=~/.histfile
+HISTSIZE=1000
+SAVEHIST=1000
+setopt autocd extendedglob
+setopt HIST_IGNORE_DUPS
+
+# Key bindings
+bindkey -v
+
+# Completion system
+autoload -Uz compinit
+compinit
+autoload -Uz promptinit
+promptinit
+zstyle ':completion:*' menu select
+setopt COMPLETE_ALIASES
+ttyctl -f
+zstyle ':completion:*' rehash true
+
+# Theme
+ZSH_THEME="bullet-train"
+
+# Linux console color scheme
+if [ "$TERM" = "linux" ]; then
+  /bin/echo -e "
+  \e]P0000000
+  \e]P16666cc
+  \e]P200779f
+  \e]P33b6bcc
+  \e]P4217199
+  \e]P54068a5
+  \e]P6493b8b
+  \e]P7a0a0a0
+  \e]P8000000
+  \e]P96666cc
+  \e]PA00779f
+  \e]PB3b6bcc
+  \e]PC217199
+  \e]PD4068a5
+  \e]PE493b8b
+  \e]PFa0a0a0
+  "
+  clear
+fi
+
+# Syntax highlighting (conditional)
+if [[ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# Powerline (conditional)
+if command -v powerline-daemon >/dev/null 2>&1 && [[ -f /usr/share/powerline/bindings/zsh/powerline.zsh ]]; then
+  powerline-daemon -q
+  . /usr/share/powerline/bindings/zsh/powerline.zsh
+fi
+
+# Environment detection
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  export IS_WSL=true
+fi
+
+if [[ "$(uname -r)" == *Crostini* ]]; then
+  export IS_CROSTINI=true
+fi
+
+if [[ -f /etc/rocky-release ]]; then
+  export IS_ROCKY=true
+fi
+
+if [[ -f /etc/redhat-release ]] && ! [[ -f /etc/rocky-release ]]; then
+  export IS_RHEL=true
+fi
+
+if [[ -f /etc/arch-release ]]; then
+  export IS_ARCH=true
+fi 

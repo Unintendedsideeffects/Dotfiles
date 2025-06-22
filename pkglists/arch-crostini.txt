@@ -1,3 +1,4 @@
+# install arch-cli.txt first
 # -----------------  CORE / SHELL  -----------------
 base
 base-devel
@@ -57,4 +58,8 @@ docker-compose
 podman
 sudo                 # docker & podman need it 
 
-starship
+#
+base-devel
+git
+cros-container-guest-tools-git
+nss
