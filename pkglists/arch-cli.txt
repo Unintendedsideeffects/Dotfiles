@@ -58,3 +58,27 @@ podman
 sudo                 # docker & podman need it 
 
 starship
+
+# -----------------  FONTS  ------------------------
+# Recommended
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+noto-fonts-extra
+
+# Optional but highly recommended
+ttf-liberation
+ttf-dejavu
+ttf-roboto
+
+# Monospaced
+ttf-jetbrains-mono
+ttf-fira-code
+ttf-hack
+adobe-source-code-pro-fonts
+
+# From AUR
+# ttf-symbola
+
+# For X11 font settings
+xorg-xrdb

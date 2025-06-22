@@ -12,5 +12,8 @@ alias files="nautilus"
 export CHROMEOS_FILES_DIR="/mnt/chromeos"
 
 # Crostini-specific environment variables
-export DISPLAY=:0
+# Patch for apps requiring X11-style $DISPLAY
+if [[ -z "$DISPLAY" && -n "$WAYLAND_DISPLAY" ]]; then
+  export DISPLAY=:0
+fi
 export PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native 
