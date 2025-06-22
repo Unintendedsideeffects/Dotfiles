@@ -56,11 +56,11 @@ fi
 
 # Copy shell configuration files
 echo "Copying shell configuration files..."
-copy_file "$DOTFILES_DIR/shell/.bashrc" "$HOME_DIR/"
-copy_file "$DOTFILES_DIR/shell/.zshrc" "$HOME_DIR/"
-copy_file "$DOTFILES_DIR/shell/.xinitrc" "$HOME_DIR/"
-copy_file "$DOTFILES_DIR/shell/.Xresources" "$HOME_DIR/"
-copy_file "$DOTFILES_DIR/shell/.zprofile" "$HOME_DIR/"
+copy_file "$DOTFILES_DIR/.dotfiles/shell/.bashrc" "$HOME_DIR/"
+copy_file "$DOTFILES_DIR/.dotfiles/shell/.zshrc" "$HOME_DIR/"
+copy_file "$DOTFILES_DIR/.dotfiles/shell/.xinitrc" "$HOME_DIR/"
+copy_file "$DOTFILES_DIR/.dotfiles/shell/.Xresources" "$HOME_DIR/"
+copy_file "$DOTFILES_DIR/.dotfiles/shell/.zprofile" "$HOME_DIR/"
 
 # Copy other common dotfiles
 echo "Copying other dotfiles..."
@@ -68,15 +68,15 @@ copy_file "$DOTFILES_DIR/.gitconfig" "$HOME_DIR/" 2>/dev/null || echo "No .gitco
 copy_file "$DOTFILES_DIR/.gitignore_global" "$HOME_DIR/" 2>/dev/null || echo "No .gitignore_global found"
 
 # Copy bin directory
-if [[ -d "$DOTFILES_DIR/bin" ]]; then
+if [[ -d "$DOTFILES_DIR/.dotfiles/bin" ]]; then
     echo "Copying bin directory..."
-    copy_dir "$DOTFILES_DIR/bin" "$HOME_DIR/"
+    copy_dir "$DOTFILES_DIR/.dotfiles/bin" "$HOME_DIR/"
 fi
 
 # Copy cli directory
-if [[ -d "$DOTFILES_DIR/cli" ]]; then
+if [[ -d "$DOTFILES_DIR/.dotfiles/cli" ]]; then
     echo "Copying cli directory..."
-    copy_dir "$DOTFILES_DIR/cli" "$HOME_DIR/"
+    copy_dir "$DOTFILES_DIR/.dotfiles/cli" "$HOME_DIR/"
 fi
 
 # Reload X resources if .Xresources was updated
