@@ -89,3 +89,4 @@ adobe-source-code-pro-fonts
 xorg-xrdb
 
 informant
+zoxide
