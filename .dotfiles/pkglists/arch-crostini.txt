@@ -81,6 +81,7 @@ ttf-jetbrains-mono
 ttf-fira-code
 ttf-hack
 adobe-source-code-pro-fonts
+ttf-jetbrains-mono-nerd
 
 # From AUR
 # ttf-symbola
