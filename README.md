@@ -59,6 +59,11 @@ source $HOME/.dotfiles/cli/config.sh
 │       ├── rocky-cli.txt    # Rocky Linux CLI packages
 │       └── rocky-gui.txt    # Rocky Linux GUI packages
 ├── .config/           # Application configurations
+│   ├── pacman/        # Pacman and makepkg configs
+│   │   ├── pacman.conf    # Custom pacman settings
+│   │   └── makepkg.conf   # Build optimization settings
+│   └── yay/           # AUR helper configuration
+│       └── config.json    # Yay preferences and settings
 ├── secrets/           # Sensitive data (gitignored)
 └── README.md          # This documentation
 ```
@@ -85,6 +90,18 @@ Each environment has curated package lists:
 ### Rocky Linux
 - **CLI**: Enterprise-friendly development stack
 - **GUI**: Desktop applications and utilities
+
+### Package Manager Configuration
+
+#### Pacman (Arch Linux)
+- **Optimized Settings**: 8 parallel downloads, color output, progress bars
+- **Build Optimization**: Multi-core compilation, ccache, LTO support
+- **Custom Cache**: User-specific package and build cache directories
+
+#### Yay (AUR Helper)
+- **Smart Defaults**: Clean after build, show diffs, upgrade menu
+- **Performance**: Batch operations, combined upgrades
+- **Security**: PGP verification, dependency checking
 
 ## Shell Configuration
 
@@ -137,6 +154,41 @@ If you prefer manual setup:
    # Set up the config alias
    source .dotfiles/cli/config.sh
    ```
+
+**Note:** On Arch Linux, optimized package manager configurations are automatically applied during bootstrap!
+
+## Package Manager Setup
+
+### Automatic Configuration (Arch Linux)
+
+Package manager optimizations are **automatically applied** when you run the bootstrap script on Arch Linux. The setup includes:
+
+- Backing up existing configurations
+- Applying optimized pacman and makepkg settings
+- Configuring yay with smart defaults
+- Installing ccache for faster builds
+- Creating user-specific cache directories
+
+### Manual Configuration (If Needed)
+
+If you need to apply configurations separately or on an existing system:
+
+```bash
+# Use the dedicated setup script
+./.dotfiles/bin/setup-pacman.sh
+
+# Or apply manually:
+sudo cp .config/pacman/pacman.conf /etc/pacman.conf
+sudo cp .config/pacman/makepkg.conf /etc/makepkg.conf
+mkdir -p ~/.config/yay && cp .config/yay/config.json ~/.config/yay/config.json
+```
+
+### What These Configurations Do
+
+- **Pacman**: Enables 8 parallel downloads, color output, and progress indicators
+- **Makepkg**: Uses all CPU cores, enables ccache and LTO for faster/smaller builds  
+- **Yay**: Configured for safety (diffs, menus) and performance (clean builds)
+- **Cache Directories**: Keeps build artifacts in user directory instead of `/tmp`
 
 ## Customization
 
