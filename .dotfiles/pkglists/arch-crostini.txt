@@ -91,3 +91,4 @@ xorg-xrdb
 
 informant
 zoxide
+ccache
