@@ -14,7 +14,7 @@ ENV SKIP_PKG_INSTALL=1
 # create non-root user
 ARG USER=developer
 ARG UID=1000
-RUN useradd -m -u ${UID} ${USER} && \
+RUN useradd -m -u ${UID} -s /usr/bin/zsh ${USER} && \
     echo "${USER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # copy dotfiles
@@ -25,6 +25,9 @@ USER ${USER}
 WORKDIR /home/${USER}
 
 # bootstrap dotfiles
-RUN bash .dotfiles/bin/bootstrap.sh --skip-gui || true
+RUN bash .dotfiles/bin/bootstrap.sh
+
+# simple verification: ensure default shell is zsh
+RUN grep "^${USER}:.*:/usr/bin/zsh" /etc/passwd
 
 CMD ["zsh"]
