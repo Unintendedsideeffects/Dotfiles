@@ -6,8 +6,10 @@ FROM archlinux:latest
 # ----------------------------------
 
 # install base tools
-RUN pacman -Syu --noconfirm git base-devel sudo yay zsh && \
+RUN pacman -Syu --noconfirm git sudo zsh starship && \
     pacman -Scc --noconfirm
+
+ENV SKIP_PKG_INSTALL=1
 
 # create non-root user
 ARG USER=developer

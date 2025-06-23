@@ -297,17 +297,25 @@ main() {
     fi
 
     # Install CLI packages
-    install_packages "$OS" "cli"
+    if [[ -z "${SKIP_PKG_INSTALL:-}" ]]; then
+        install_packages "$OS" "cli"
+    else
+        echo -e "${YELLOW}SKIP_PKG_INSTALL is set, skipping CLI package installation${NC}"
+    fi
 
     # Install GUI packages if not in WSL
-    if ! is_wsl; then
-        if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-            install_packages "$OS" "gui"
+    if [[ -z "${SKIP_PKG_INSTALL:-}" ]]; then
+        if ! is_wsl; then
+            if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+                install_packages "$OS" "gui"
+            else
+                echo -e "${YELLOW}Skipping GUI packages (no display detected)${NC}"
+            fi
         else
-            echo -e "${YELLOW}Skipping GUI packages (no display detected)${NC}"
+            echo -e "${YELLOW}Skipping GUI packages (WSL detected)${NC}"
         fi
     else
-        echo -e "${YELLOW}Skipping GUI packages (WSL detected)${NC}"
+        echo -e "${YELLOW}SKIP_PKG_INSTALL is set, not considering GUI packages${NC}"
     fi
 
     symlink_configs
