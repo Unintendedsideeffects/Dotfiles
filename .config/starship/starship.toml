@@ -1,7 +1,6 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-format = """
-[](red)\
+format = """[](red)\
 $os\
 $username\
 [](bg:peach fg:red)\
@@ -31,6 +30,8 @@ $time\
 $cmd_duration"""
 
 palette = 'adventure_time'
+
+add_newline = false
 
 [os]
 disabled = false
