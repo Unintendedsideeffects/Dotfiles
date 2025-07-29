@@ -1,3 +1,5 @@
+#!/bin/bash
+
 config() {
     # The base command for git with the bare repo setup
     local git_cmd=("/usr/bin/git" "--git-dir=$HOME/.cfg" "--work-tree=$HOME")
