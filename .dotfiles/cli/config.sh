@@ -71,4 +71,4 @@ config() {
         # For any other command than 'pull', just pass it to git
         "${git_cmd[@]}" "$@"
     fi
-} 
+}
