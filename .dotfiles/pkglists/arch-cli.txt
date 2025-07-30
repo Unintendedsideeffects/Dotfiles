@@ -84,6 +84,7 @@ ttf-jetbrains-mono-nerd
 # For X11 font settings
 xorg-xrdb
 
-informant
 zoxide
 ccache
+# informant needs to be the last package installed or it will break the automatic installation
+informant
