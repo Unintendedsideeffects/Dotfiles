@@ -33,6 +33,26 @@ is_crostini() {
     [[ -e /dev/cros_guest ]]
 }
 
+# Function to configure informant group permissions
+configure_informant() {
+    if command -v informant &> /dev/null; then
+        echo -e "${YELLOW}Configuring informant group permissions...${NC}"
+        
+        # Add user to informant group
+        sudo usermod -aG informant "$USER"
+        
+        # Ensure cache/state paths are group-writable
+        sudo install -d -o root -g informant -m 775 /var/cache/informant
+        sudo chgrp -R informant /var/cache/informant /var/lib/informant* 2>/dev/null || true
+        sudo chmod -R g+rwX /var/cache/informant /var/lib/informant* 2>/dev/null || true
+        
+        echo -e "${GREEN}Informant group configuration complete!${NC}"
+        echo -e "${YELLOW}Note: You may need to re-login or run 'newgrp informant' for group changes to take effect${NC}"
+    else
+        echo -e "${YELLOW}Informant not found, skipping group configuration${NC}"
+    fi
+}
+
 # Function to install packages
 install_packages() {
     local os="$1"
@@ -181,9 +201,13 @@ install_starship() {
 }
 
 install_aur_helper() {
-    # Check for existing AUR helpers
+
     if command -v yay &> /dev/null || command -v paru &> /dev/null; then
         echo -e "${GREEN}AUR helper already installed.${NC}"
+        if ! command -v ccache &> /dev/null; then
+            echo -e "${YELLOW}Installing ccache for faster builds...${NC}"
+            sudo pacman -S --needed --noconfirm ccache
+        fi
         return
     fi
 
@@ -192,15 +216,11 @@ install_aur_helper() {
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Installing yay...${NC}"
-        
-        # Dependencies for building AUR packages
-        echo -e "${YELLOW}Ensuring git and base-devel are installed...${NC}"
-        sudo pacman -S --needed --noconfirm git base-devel
-        
-        # Create a temporary directory for building
+        echo -e "${YELLOW}Ensuring git, base-devel, and ccache are installed...${NC}"
+        sudo pacman -S --needed --noconfirm git base-devel ccache
+
         BUILD_DIR=$(mktemp -d -p "/tmp" yay-build.XXXXXX)
-        
-        # Clone, build, and install yay
+
         echo -e "${YELLOW}Cloning yay from AUR...${NC}"
         if git clone https://aur.archlinux.org/yay.git "$BUILD_DIR"; then
             (
@@ -230,13 +250,11 @@ install_aur_helper() {
 setup_package_manager_configs() {
     echo -e "${YELLOW}Setting up optimized package manager configurations...${NC}"
     
-    # Check if configuration files exist
     if [[ ! -f "$REPO_ROOT/.config/pacman/pacman.conf" ]]; then
         echo -e "${RED}Package manager configs not found, skipping setup${NC}"
         return
     fi
 
-    # Backup existing configurations
     echo -e "${YELLOW}Backing up existing configurations...${NC}"
     if [[ -f "/etc/pacman.conf" ]]; then
         sudo cp /etc/pacman.conf /etc/pacman.conf.backup
@@ -248,24 +266,20 @@ setup_package_manager_configs() {
         echo -e "${GREEN}Backed up /etc/makepkg.conf${NC}"
     fi
 
-    # Apply optimized configurations
     echo -e "${YELLOW}Applying optimized pacman configuration...${NC}"
     sudo cp "$REPO_ROOT/.config/pacman/pacman.conf" /etc/pacman.conf
 
     echo -e "${YELLOW}Applying optimized makepkg configuration...${NC}"
     sudo cp "$REPO_ROOT/.config/pacman/makepkg.conf" /etc/makepkg.conf
 
-    # Set up yay configuration
     echo -e "${YELLOW}Setting up yay configuration...${NC}"
     mkdir -p ~/.config/yay
     cp "$REPO_ROOT/.config/yay/config.json" ~/.config/yay/config.json
 
-    # Install ccache if not present
-    if ! command -v ccache &> /dev/null; then
-        echo -e "${YELLOW}Installing ccache for faster builds...${NC}"
-        sudo pacman -S --needed --noconfirm ccache
+    if command -v ccache &> /dev/null; then
+        echo -e "${GREEN}ccache available for faster builds${NC}"
     else
-        echo -e "${GREEN}ccache already installed${NC}"
+        echo -e "${YELLOW}Warning: ccache not found, builds may be slower${NC}"
     fi
 
     # Create makepkg cache directories
@@ -318,6 +332,7 @@ main() {
     fi
 
     install_starship
+    configure_informant
 
     # Make scripts executable
     echo -e "${YELLOW}Making scripts executable...${NC}"
