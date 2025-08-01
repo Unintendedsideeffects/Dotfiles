@@ -1,0 +1,16 @@
+# -----------------  CORE / SHELL  -----------------
+build-essential
+sudo
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+neovim
+tmux
+man-db
+manpages-dev
+
+# -----------------  NETWORK & VCS  ----------------
+git
+openssh-client
+curl
+wget

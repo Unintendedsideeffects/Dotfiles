@@ -1,19 +1,4 @@
-# -----------------  CORE / SHELL  -----------------
-base
-base-devel
-sudo
-zsh
-zsh-completions
-neovim
-tmux
-man-db
-man-pages
-
-# -----------------  NETWORK & VCS  ----------------
-git
-openssh
-curl
-wget
+# -----------------  PASSWORD MANAGEMENT  ----------
 pass                 # simple password manager
 
 # -----------------  PRODUCTIVITY  -----------------
@@ -81,8 +66,6 @@ ttf-jetbrains-mono-nerd
 # From AUR
 # ttf-symbola
 
-# For X11 font settings
-xorg-xrdb
 
 zoxide
 ccache

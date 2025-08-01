@@ -1,0 +1,16 @@
+# -----------------  CORE / SHELL  -----------------
+base
+base-devel
+sudo
+zsh
+zsh-completions
+neovim
+tmux
+man-db
+man-pages
+
+# -----------------  NETWORK & VCS  ----------------
+git
+openssh
+curl
+wget

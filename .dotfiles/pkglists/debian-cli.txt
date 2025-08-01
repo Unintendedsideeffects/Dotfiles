@@ -1,0 +1,58 @@
+# -----------------  PASSWORD MANAGEMENT  ----------
+pass                 # simple password manager
+
+# -----------------  PRODUCTIVITY  -----------------
+ripgrep
+fd-find
+fzf
+bat
+htop
+btop
+tree
+direnv
+jq
+ranger
+fonts-hack-ttf       # NerdFonts alternative for ranger devicons
+
+# -----------------  LANG RUNTIME  -----------------
+python3
+python3-pip
+golang-go
+nodejs
+npm
+
+# -----------------  BUILD TOOLCHAIN  --------------
+gcc
+clang
+lld
+llvm
+make
+cmake
+ninja-build
+meson
+pkg-config
+
+# -----------------  CONTAINERS / CLOUD ------------
+docker.io
+docker-compose
+
+# -----------------  FONTS  ------------------------
+# Recommended
+fonts-noto
+fonts-noto-cjk
+fonts-noto-color-emoji
+
+# Optional but highly recommended
+fonts-liberation
+fonts-dejavu-core
+fonts-roboto
+
+# Monospaced
+fonts-jetbrains-mono
+fonts-firacode
+fonts-hack-ttf
+
+
+# -----------------  ADDITIONAL TOOLS  -------------
+zoxide
+ccache
