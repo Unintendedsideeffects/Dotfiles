@@ -11,6 +11,23 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Usage function
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  essential    Install only essential packages (shell, git, basic tools)"
+    echo "  cli          Install essential + CLI packages (default)"
+    echo "  desktop      Install essential + CLI + GUI packages"
+    echo "  --help, -h   Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0               Install CLI packages (default)"
+    echo "  $0 essential     Install only essential packages"
+    echo "  $0 desktop       Install desktop environment packages"
+    exit 0
+}
+
 # Function to detect OS
 detect_os() {
     if [[ -f /etc/os-release ]]; then
@@ -90,6 +107,15 @@ install_packages() {
                 [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
                 echo -e "${GREEN}Installing $pkg...${NC}"
                 sudo dnf install -y "$pkg" || true
+            done < "$pkglist"
+            ;;
+        "debian"|"ubuntu")
+            # Update package list first
+            sudo apt update
+            while read -r pkg; do
+                [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
+                echo -e "${GREEN}Installing $pkg...${NC}"
+                sudo apt install -y "$pkg" || true
             done < "$pkglist"
             ;;
         *)
@@ -295,7 +321,33 @@ setup_package_manager_configs() {
 }
 
 main() {
-    echo -e "${YELLOW}Starting bootstrap process...${NC}"
+    # Parse arguments
+    INSTALL_TYPE="cli"  # default
+    
+    case "${1:-}" in
+        "essential")
+            INSTALL_TYPE="essential"
+            ;;
+        "cli")
+            INSTALL_TYPE="cli"
+            ;;
+        "desktop")
+            INSTALL_TYPE="desktop"
+            ;;
+        "--help"|"-h")
+            usage
+            ;;
+        "")
+            # Default to cli
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo ""
+            usage
+            ;;
+    esac
+
+    echo -e "${YELLOW}Starting bootstrap process (${INSTALL_TYPE} mode)...${NC}"
 
     # Detect OS
     OS=$(detect_os)
@@ -304,29 +356,40 @@ main() {
     if [[ "$OS" == "arch" ]]; then
         setup_package_manager_configs
         install_aur_helper
-        if is_crostini; then
+        if is_crostini && [[ "$INSTALL_TYPE" != "essential" ]]; then
             echo -e "${GREEN}Detected Crostini environment. Installing Crostini packages...${NC}"
             install_packages "$OS" "crostini"
         fi
     fi
 
-    # Install CLI packages
-    install_packages "$OS" "cli"
-
-    # Install GUI packages if not in WSL
-    if ! is_wsl; then
-        if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-            install_packages "$OS" "gui"
-        else
-            echo -e "${YELLOW}Skipping GUI packages (no display detected)${NC}"
-        fi
-    else
-        echo -e "${YELLOW}Skipping GUI packages (WSL detected)${NC}"
-    fi
+    # Install packages based on type
+    case "$INSTALL_TYPE" in
+        "essential")
+            install_packages "$OS" "essential"
+            ;;
+        "cli")
+            install_packages "$OS" "essential"
+            install_packages "$OS" "cli"
+            ;;
+        "desktop")
+            install_packages "$OS" "essential"
+            install_packages "$OS" "cli"
+            # Install GUI packages if not in WSL
+            if ! is_wsl; then
+                if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" || "$INSTALL_TYPE" == "desktop" ]]; then
+                    install_packages "$OS" "gui"
+                else
+                    echo -e "${YELLOW}Skipping GUI packages (no display detected)${NC}"
+                fi
+            else
+                echo -e "${YELLOW}Skipping GUI packages (WSL detected)${NC}"
+            fi
+            ;;
+    esac
 
     symlink_configs
 
-    if ! is_wsl; then
+    if ! is_wsl && [[ "$INSTALL_TYPE" != "essential" ]]; then
       configure_fonts
       merge_xresources
     fi
@@ -338,7 +401,7 @@ main() {
     echo -e "${YELLOW}Making scripts executable...${NC}"
     chmod +x "$SCRIPT_DIR"/*
 
-    echo -e "${GREEN}Bootstrap complete!${NC}"
+    echo -e "${GREEN}Bootstrap complete (${INSTALL_TYPE} mode)!${NC}"
     echo -e "${YELLOW}Next steps:${NC}"
     echo "1. Restart your shell to see the new prompt"
     echo "2. Run '$SCRIPT_DIR/test-dotfiles.sh' to verify the setup"

@@ -75,4 +75,20 @@ fi
 
 if [[ -f /etc/arch-release ]]; then
   export IS_ARCH=true
+fi
+
+# Fix TERM in headless environments
+# Detect if we're in a headless environment and override inappropriate TERM values
+if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]] || [[ -n "${SSH_CONNECTION:-}" ]]; then
+  # We're in a headless environment (no display server or SSH)
+  case "${TERM:-}" in
+    "ghostty"|"ghostty-256color")
+      # Override display-dependent TERM values with compatible alternatives
+      export TERM="xterm-256color"
+      ;;
+    "")
+      # Set a sensible default if TERM is empty
+      export TERM="xterm-256color"
+      ;;
+  esac
 fi 
