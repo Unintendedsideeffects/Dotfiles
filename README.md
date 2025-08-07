@@ -29,6 +29,7 @@ chmod +x "$HOME/.dotfiles/bin/bootstrap.sh" "$HOME/.dotfiles/shell/install.sh" "
 └── .dotfiles/
     ├── bin/
     │   ├── bootstrap.sh
+    │   ├── setup-xforward.sh
     │   └── validate.sh
     ├── cli/
     │   └── config.sh
@@ -41,8 +42,11 @@ chmod +x "$HOME/.dotfiles/bin/bootstrap.sh" "$HOME/.dotfiles/shell/install.sh" "
     │       └── proxmox.zsh
     └── pkglists/
         ├── arch-cli.txt
+        ├── arch-xforward.txt
         ├── debian-cli.txt
-        └── proxmox-cli.txt
+        ├── debian-xforward.txt
+        ├── proxmox-cli.txt
+        └── proxmox-xforward.txt
 ```
 
 ## Environment detection
@@ -86,6 +90,21 @@ Use the `config` alias defined in `./.dotfiles/cli/config.sh` for all git operat
 ## Validation
 
 `./.dotfiles/bin/validate.sh` prints detected distro and checks for key tools.
+
+## Headless GUI (X11 forwarding)
+
+For thin-client display over SSH:
+
+1. Install X11 forwarding prerequisites:
+   - `./.dotfiles/bin/setup-xforward.sh` (use `--dry-run` to preview)
+2. From client: `ssh -Y user@host` (trusted) or `ssh -X user@host` (untrusted)
+3. Test: `xclock` or `glxinfo -B`
+
+Lists are under `.dotfiles/pkglists/*-xforward.txt` per distro.
+
+## Atuin
+
+Optional enhanced history. Installed on Arch; available on Debian/Proxmox. Initialization is automatic in the shell if present. Default config is local-only at `~/.config/atuin/config.toml`.
 
 ## Customization
 
