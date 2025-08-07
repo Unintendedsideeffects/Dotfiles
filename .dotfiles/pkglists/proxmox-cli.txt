@@ -12,6 +12,7 @@ direnv
 jq
 zoxide
 ccache
+atuin
 python3
 python3-pip
 build-essential
