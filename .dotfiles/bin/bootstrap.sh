@@ -1,416 +1,112 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+DRY_RUN=false
+if [[ "${1:-}" == "--dry-run" ]] || [[ "${BOOTSTRAP_DRYRUN:-}" == "1" ]]; then
+  DRY_RUN=true
+fi
 
-# Usage function
-usage() {
-    echo "Usage: $0 [OPTIONS]"
-    echo ""
-    echo "Options:"
-    echo "  essential    Install only essential packages (shell, git, basic tools)"
-    echo "  cli          Install essential + CLI packages (default)"
-    echo "  desktop      Install essential + CLI + GUI packages"
-    echo "  --help, -h   Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0               Install CLI packages (default)"
-    echo "  $0 essential     Install only essential packages"
-    echo "  $0 desktop       Install desktop environment packages"
-    exit 0
+OS_ID=""
+OS_ID_LIKE=""
+OS_PRETTY=""
+if [[ -r /etc/os-release ]]; then
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  OS_ID="${ID:-}"
+  OS_ID_LIKE="${ID_LIKE:-}"
+  OS_PRETTY="${PRETTY_NAME:-}"
+fi
+
+detect_env() {
+  if [[ -d /etc/pve ]] || echo "$OS_PRETTY" | grep -qi proxmox; then
+    echo "proxmox"
+    return
+  fi
+  case "$OS_ID" in
+    arch) echo "arch" ;;
+    debian|ubuntu) echo "debian" ;;
+    *) if [[ "${OS_ID_LIKE}" == *debian* ]]; then echo "debian"; else echo ""; fi ;;
+  esac
 }
 
-# Function to detect OS
-detect_os() {
-    if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        echo "$ID"
-    elif [[ -f /etc/arch-release ]]; then
-        echo "arch"
+ENVIRONMENT="$(detect_env)"
+if [[ -z "$ENVIRONMENT" ]]; then
+  echo "Unsupported OS. ID=$OS_ID ID_LIKE=$OS_ID_LIKE"
+  exit 1
+fi
+
+CROSTINI=false
+if [[ -d /mnt/chromeos ]]; then
+  CROSTINI=true
+fi
+
+PKGLIST="$ROOT_DIR/.dotfiles/pkglists/${ENVIRONMENT}-cli.txt"
+if [[ ! -f "$PKGLIST" ]]; then
+  echo "Package list not found: $PKGLIST"
+  exit 1
+fi
+
+install_arch() {
+  local SUDO=""
+  if command -v sudo >/dev/null 2>&1 && [[ "$(id -u)" -ne 0 ]]; then SUDO="sudo"; fi
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "[DRY-RUN] pacman -Syu --noconfirm"
+  else
+    $SUDO pacman -Syu --noconfirm
+  fi
+  mapfile -t packages < <(grep -vE '^(#|\s*$)' "$PKGLIST")
+  if [[ ${#packages[@]} -gt 0 ]]; then
+    if [[ "$CROSTINI" == true ]]; then
+      packages+=(wl-clipboard pinentry nss-mdns ca-certificates zip unzip xz neovim)
+    fi
+    if [[ "$DRY_RUN" == true ]]; then
+      echo "[DRY-RUN] pacman -S --needed --noconfirm ${packages[*]}"
     else
-        echo "unknown"
+      $SUDO pacman -S --needed --noconfirm "${packages[@]}"
     fi
+  fi
 }
 
-# Function to detect WSL
-is_wsl() {
-    [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version
-}
-
-# Function to detect Crostini
-is_crostini() {
-    [[ -e /dev/cros_guest ]]
-}
-
-# Function to configure informant group permissions
-configure_informant() {
-    if command -v informant &> /dev/null; then
-        echo -e "${YELLOW}Configuring informant group permissions...${NC}"
-        
-        # Add user to informant group
-        sudo usermod -aG informant "$USER"
-        
-        # Ensure cache/state paths are group-writable
-        sudo install -d -o root -g informant -m 775 /var/cache/informant
-        sudo chgrp -R informant /var/cache/informant /var/lib/informant* 2>/dev/null || true
-        sudo chmod -R g+rwX /var/cache/informant /var/lib/informant* 2>/dev/null || true
-        
-        echo -e "${GREEN}Informant group configuration complete!${NC}"
-        echo -e "${YELLOW}Note: You may need to re-login or run 'newgrp informant' for group changes to take effect${NC}"
+install_debian() {
+  export DEBIAN_FRONTEND=noninteractive
+  local SUDO=""
+  if command -v sudo >/dev/null 2>&1 && [[ "$(id -u)" -ne 0 ]]; then SUDO="sudo"; fi
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "[DRY-RUN] apt-get update -y"
+  else
+    $SUDO apt-get update -y
+  fi
+  mapfile -t packages < <(grep -vE '^(#|\s*$)' "$PKGLIST")
+  if [[ ${#packages[@]} -gt 0 ]]; then
+    if [[ "$CROSTINI" == true ]]; then
+      packages+=(wl-clipboard pinentry-curses libnss-mdns ca-certificates zip unzip xz-utils neovim)
+    fi
+    if [[ "$DRY_RUN" == true ]]; then
+      echo "[DRY-RUN] apt-get install -y --no-install-recommends ${packages[*]}"
     else
-        echo -e "${YELLOW}Informant not found, skipping group configuration${NC}"
+      $SUDO apt-get install -y --no-install-recommends "${packages[@]}"
     fi
+  fi
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "[DRY-RUN] apt-get autoremove -y"
+    echo "[DRY-RUN] apt-get clean"
+  else
+    $SUDO apt-get autoremove -y
+    $SUDO apt-get clean
+  fi
 }
 
-# Function to install packages
-install_packages() {
-    local os="$1"
-    local type="$2"
-    local pkglist="$REPO_ROOT/pkglists/${os}-${type}.txt"
+if [[ "$ENVIRONMENT" == "arch" ]]; then
+  install_arch
+else
+  install_debian
+fi
 
-    if [[ ! -f "$pkglist" ]]; then
-        echo -e "${RED}Error: Package list $pkglist not found${NC}"
-        return 1
-    fi
-
-    echo -e "${YELLOW}Installing $type packages for $os...${NC}"
-
-    case "$os" in
-        "arch")
-            AUR_HELPER=""
-            if command -v yay &> /dev/null; then
-                AUR_HELPER="yay"
-            elif command -v paru &> /dev/null; then
-                AUR_HELPER="paru"
-            fi
-
-            while read -r pkg; do
-                [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
-                echo -e "${GREEN}Installing $pkg...${NC}"
-                if [[ -n "$AUR_HELPER" ]]; then
-                    "$AUR_HELPER" -S --needed --noconfirm "$pkg" || true
-                else
-                    sudo pacman -S --needed --noconfirm "$pkg" || true
-                fi
-            done < "$pkglist"
-            ;;
-        "rocky"|"rhel"|"fedora")
-            while read -r pkg; do
-                [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
-                echo -e "${GREEN}Installing $pkg...${NC}"
-                sudo dnf install -y "$pkg" || true
-            done < "$pkglist"
-            ;;
-        "debian"|"ubuntu")
-            # Update package list first
-            sudo apt update
-            while read -r pkg; do
-                [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
-                echo -e "${GREEN}Installing $pkg...${NC}"
-                sudo apt install -y "$pkg" || true
-            done < "$pkglist"
-            ;;
-        *)
-            echo -e "${RED}Unsupported OS: $os${NC}"
-            return 1
-            ;;
-    esac
-}
-
-symlink_configs() {
-    echo -e "${YELLOW}Creating symlinks...${NC}"
-    # Create necessary directories
-    mkdir -p "$HOME/.config"
-
-    # List of configs to symlink
-    CONFIGS=(
-        "git" "htop" "kitty" "sway" "rofi" "dunst"
-        "gtk-3.0" "i3" "mpd" "nvim" "yabar" "picom" "ranger"
-    )
-
-    # Additional dotfiles to symlink
-    DOTFILES=(
-        ".zshrc" ".gitconfig" ".xinitrc"
-    )
-
-    # Create symlinks for .config directories
-    for config in "${CONFIGS[@]}"; do
-        if [ -d "$REPO_ROOT/.config/$config" ]; then
-            echo -e "${GREEN}Creating symlink for $config...${NC}"
-            ln -sf "$REPO_ROOT/.config/$config" "$HOME/.config/"
-        fi
-    done
-
-    # Create symlink for starship.toml
-    if [ -f "$REPO_ROOT/.config/starship/starship.toml" ]; then
-        echo -e "${GREEN}Creating symlink for starship configuration...${NC}"
-        mkdir -p "$HOME/.config/starship"
-        ln -sf "$REPO_ROOT/.config/starship/starship.toml" "$HOME/.config/starship/starship.toml"
-    elif [ -f "$REPO_ROOT/.config/starship.toml" ]; then
-        echo -e "${GREEN}Creating symlink for starship.toml (legacy location)...${NC}"
-        ln -sf "$REPO_ROOT/.config/starship.toml" "$HOME/.config/starship.toml"
-    fi
-
-    # Create symlinks for dotfiles in home directory
-    for dotfile in "${DOTFILES[@]}"; do
-        if [ -f "$REPO_ROOT/$dotfile" ]; then
-            echo -e "${GREEN}Creating symlink for $dotfile...${NC}"
-            ln -sf "$REPO_ROOT/$dotfile" "$HOME/$dotfile"
-        fi
-    done
-
-    # Create symlink for .Xresources from shell directory
-    if [ -f "$REPO_ROOT/.dotfiles/shell/.Xresources" ]; then
-        echo -e "${GREEN}Creating symlink for .Xresources...${NC}"
-        ln -sf "$REPO_ROOT/.dotfiles/shell/.Xresources" "$HOME/.Xresources"
-    fi
-    echo -e "${GREEN}Symlinks created.${NC}"
-}
-
-configure_fonts() {
-    echo -e "${YELLOW}Applying font improvement settings...${NC}"
-    if [ "$(id -u)" -eq 0 ]; then
-        echo "Running system-wide font configuration steps..."
-
-        # Create symbolic links for font rendering
-        ln -sf /usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d/
-        ln -sf /usr/share/fontconfig/conf.avail/10-hinting-slight.conf /etc/fonts/conf.d/
-        ln -sf /usr/share/fontconfig/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d/
-
-        # Edit freetype2.sh
-        FREETYPE_CONFIG="/etc/profile.d/freetype2.sh"
-        if [ -f "$FREETYPE_CONFIG" ]; then
-            echo "Updating freetype2.sh..."
-            # Uncomment and set the interpreter version
-            sed -i 's/^#\(export FREETYPE_PROPERTIES=\).*/\1"truetype:interpreter-version=40"/' "$FREETYPE_CONFIG"
-        fi
-
-        # Refresh font cache
-        echo "Refreshing font cache..."
-        fc-cache -fv
-
-        echo "System-wide font configuration applied."
-    else
-        echo -e "${YELLOW}Skipping system-wide font configuration. Run with sudo to apply.${NC}"
-    fi
-}
-
-merge_xresources() {
-    if command -v xrdb >/dev/null 2>&1 && [ -f "$HOME/.Xresources" ]; then
-        echo -e "${YELLOW}Merging .Xresources...${NC}"
-        xrdb -merge "$HOME/.Xresources"
-    fi
-}
-
-install_starship() {
-    if ! command -v starship &> /dev/null; then
-        echo -e "${YELLOW}Installing Starship...${NC}"
-        if command -v pacman &> /dev/null; then
-            sudo pacman -S --needed --noconfirm starship
-        elif command -v dnf &> /dev/null; then
-            sudo dnf install -y starship
-        else
-            echo -e "${YELLOW}Could not find a package manager to install Starship. Installing from script...${NC}"
-            curl -sS https://starship.rs/install.sh | sh -s -- -y
-        fi
-    else
-        echo -e "${GREEN}Starship is already installed.${NC}"
-    fi
-}
-
-install_aur_helper() {
-
-    if command -v yay &> /dev/null || command -v paru &> /dev/null; then
-        echo -e "${GREEN}AUR helper already installed.${NC}"
-        if ! command -v ccache &> /dev/null; then
-            echo -e "${YELLOW}Installing ccache for faster builds...${NC}"
-            sudo pacman -S --needed --noconfirm ccache
-        fi
-        return
-    fi
-
-    echo -e "${YELLOW}No AUR helper (like yay or paru) found.${NC}"
-    read -p "Do you want to install yay? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}Installing yay...${NC}"
-        echo -e "${YELLOW}Ensuring git, base-devel, and ccache are installed...${NC}"
-        sudo pacman -S --needed --noconfirm git base-devel ccache
-
-        BUILD_DIR=$(mktemp -d -p "/tmp" yay-build.XXXXXX)
-
-        echo -e "${YELLOW}Cloning yay from AUR...${NC}"
-        if git clone https://aur.archlinux.org/yay.git "$BUILD_DIR"; then
-            (
-                cd "$BUILD_DIR" || exit
-                echo -e "${YELLOW}Building and installing yay...${NC}"
-                makepkg -si --noconfirm
-            )
-        else
-            echo -e "${RED}Failed to clone yay repository.${NC}"
-            rm -rf "$BUILD_DIR"
-            return 1
-        fi
-
-        # Clean up
-        echo -e "${YELLOW}Cleaning up...${NC}"
-        rm -rf "$BUILD_DIR"
-        
-        if command -v yay &> /dev/null; then
-            echo -e "${GREEN}yay installed successfully.${NC}"
-        else
-            echo -e "${RED}Failed to install yay.${NC}"
-            return 1
-        fi
-    fi
-}
-
-setup_package_manager_configs() {
-    echo -e "${YELLOW}Setting up optimized package manager configurations...${NC}"
-    
-    if [[ ! -f "$REPO_ROOT/.config/pacman/pacman.conf" ]]; then
-        echo -e "${RED}Package manager configs not found, skipping setup${NC}"
-        return
-    fi
-
-    echo -e "${YELLOW}Backing up existing configurations...${NC}"
-    if [[ -f "/etc/pacman.conf" ]]; then
-        sudo cp /etc/pacman.conf /etc/pacman.conf.backup
-        echo -e "${GREEN}Backed up /etc/pacman.conf${NC}"
-    fi
-
-    if [[ -f "/etc/makepkg.conf" ]]; then
-        sudo cp /etc/makepkg.conf /etc/makepkg.conf.backup
-        echo -e "${GREEN}Backed up /etc/makepkg.conf${NC}"
-    fi
-
-    echo -e "${YELLOW}Applying optimized pacman configuration...${NC}"
-    sudo cp "$REPO_ROOT/.config/pacman/pacman.conf" /etc/pacman.conf
-
-    echo -e "${YELLOW}Applying optimized makepkg configuration...${NC}"
-    sudo cp "$REPO_ROOT/.config/pacman/makepkg.conf" /etc/makepkg.conf
-
-    echo -e "${YELLOW}Setting up yay configuration...${NC}"
-    mkdir -p ~/.config/yay
-    cp "$REPO_ROOT/.config/yay/config.json" ~/.config/yay/config.json
-
-    if command -v ccache &> /dev/null; then
-        echo -e "${GREEN}ccache available for faster builds${NC}"
-    else
-        echo -e "${YELLOW}Warning: ccache not found, builds may be slower${NC}"
-    fi
-
-    # Create makepkg cache directories
-    echo -e "${YELLOW}Creating makepkg cache directories...${NC}"
-    mkdir -p ~/.cache/makepkg/{packages,sources,srcpackages,logs}
-
-    echo -e "${GREEN}Package manager configuration complete!${NC}"
-    echo -e "${GREEN}Optimizations applied:${NC}"
-    echo "  • Pacman: 8 parallel downloads, color output, progress bars"
-    echo "  • Makepkg: Multi-core builds, ccache, LTO optimization"
-    echo "  • Yay: Safety features and performance settings"
-    echo "  • Cache: User-specific build directories created"
-}
-
-main() {
-    # Parse arguments
-    INSTALL_TYPE="cli"  # default
-    
-    case "${1:-}" in
-        "essential")
-            INSTALL_TYPE="essential"
-            ;;
-        "cli")
-            INSTALL_TYPE="cli"
-            ;;
-        "desktop")
-            INSTALL_TYPE="desktop"
-            ;;
-        "--help"|"-h")
-            usage
-            ;;
-        "")
-            # Default to cli
-            ;;
-        *)
-            echo -e "${RED}Unknown option: $1${NC}"
-            echo ""
-            usage
-            ;;
-    esac
-
-    echo -e "${YELLOW}Starting bootstrap process (${INSTALL_TYPE} mode)...${NC}"
-
-    # Detect OS
-    OS=$(detect_os)
-    echo -e "${GREEN}Detected OS: $OS${NC}"
-
-    if [[ "$OS" == "arch" ]]; then
-        setup_package_manager_configs
-        install_aur_helper
-        if is_crostini && [[ "$INSTALL_TYPE" != "essential" ]]; then
-            echo -e "${GREEN}Detected Crostini environment. Installing Crostini packages...${NC}"
-            install_packages "$OS" "crostini"
-        fi
-    fi
-
-    # Install packages based on type
-    case "$INSTALL_TYPE" in
-        "essential")
-            install_packages "$OS" "essential"
-            ;;
-        "cli")
-            install_packages "$OS" "essential"
-            install_packages "$OS" "cli"
-            ;;
-        "desktop")
-            install_packages "$OS" "essential"
-            install_packages "$OS" "cli"
-            # Install GUI packages if not in WSL
-            if ! is_wsl; then
-                if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" || "$INSTALL_TYPE" == "desktop" ]]; then
-                    install_packages "$OS" "gui"
-                else
-                    echo -e "${YELLOW}Skipping GUI packages (no display detected)${NC}"
-                fi
-            else
-                echo -e "${YELLOW}Skipping GUI packages (WSL detected)${NC}"
-            fi
-            ;;
-    esac
-
-    symlink_configs
-
-    if ! is_wsl && [[ "$INSTALL_TYPE" != "essential" ]]; then
-      configure_fonts
-      merge_xresources
-    fi
-
-    install_starship
-    configure_informant
-
-    # Make scripts executable
-    echo -e "${YELLOW}Making scripts executable...${NC}"
-    chmod +x "$SCRIPT_DIR"/*
-
-    echo -e "${GREEN}Bootstrap complete (${INSTALL_TYPE} mode)!${NC}"
-    echo -e "${YELLOW}Next steps:${NC}"
-    echo "1. Restart your shell to see the new prompt"
-    echo "2. Run '$SCRIPT_DIR/test-dotfiles.sh' to verify the setup"
-    if [[ "$OS" == "arch" ]]; then
-        echo "3. Package manager optimizations are now active (pacman/yay/makepkg)"
-        echo "4. For font changes to take full effect, you may need to reboot."
-    else
-        echo "3. For font changes to take full effect, you may need to reboot."
-    fi
-}
-
-main "$@" 
+if [[ "$DRY_RUN" == true ]]; then
+  echo "Dry-run complete for $ENVIRONMENT. No changes were made."
+else
+  echo "Bootstrap complete for $ENVIRONMENT."
+fi

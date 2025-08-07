@@ -1,3 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config() {
+  /usr/bin/git --git-dir="$HOME/.cfg" --work-tree="$HOME" "$@"
+}
+
+safe_checkout() {
+  if config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | while read -r f; do mv "$HOME/$f" "$HOME/$f.backup"; done; then
+    :
+  fi
+  config checkout
+}
+
 #!/bin/bash
 
 config() {

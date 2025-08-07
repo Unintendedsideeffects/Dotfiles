@@ -1,3 +1,7 @@
+# -*- zsh -*-
+
+alias pacup='sudo pacman -Syu --noconfirm'
+
 # Arch Linux specific configuration
 
 export IS_ARCH=true
