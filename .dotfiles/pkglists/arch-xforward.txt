@@ -1,0 +1,6 @@
+openssh
+xorg-xauth
+xorg-xhost
+xorg-xclock
+mesa-demos
+

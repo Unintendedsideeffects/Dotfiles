@@ -12,16 +12,10 @@ direnv
 jq
 zoxide
 ccache
-ranger
 python3
 python3-pip
-golang-go
-nodejs
-npm
 build-essential
 cmake
 ninja-build
 pkg-config
-fonts-noto
-fonts-noto-color-emoji
-fonts-jetbrains-mono
+

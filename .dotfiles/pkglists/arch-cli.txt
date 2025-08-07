@@ -1,73 +1,33 @@
-# -----------------  PASSWORD MANAGEMENT  ----------
-pass                 # simple password manager
-
-# -----------------  PRODUCTIVITY  -----------------
+git
+gnupg
+pass
+zsh
 ripgrep
 fd
 fzf
 bat
+eza
 htop
-btop
 tree
-eza                  # modern ls (AUR)
-direnv
+zoxide
 jq
 yq
+direnv
 ranger
-ttf-hack-nerd        # NerdFonts for ranger devicons and terminal icons
-
-# -----------------  LANG RUNTIME  -----------------
+yazi
 python
 python-pip
 go
-rustup               # installs toolchains on demand
+rustup
 nodejs
 npm
 pnpm
-
-# -----------------  BUILD TOOLCHAIN  --------------
+ccache
 gcc
-clang
-lld
-llvm
 make
 cmake
 ninja
-meson
 pkgconf
-
-# -----------------  CONTAINERS / CLOUD ------------
-docker
-docker-compose
-podman
-sudo                 # docker & podman need it 
-
-starship
-
-# -----------------  FONTS  ------------------------
-# Recommended
 noto-fonts
-noto-fonts-cjk
 noto-fonts-emoji
-noto-fonts-extra
-
-# Optional but highly recommended
-ttf-liberation
-ttf-dejavu
-ttf-roboto
-
-# Monospaced
 ttf-jetbrains-mono
-ttf-fira-code
-ttf-hack
-adobe-source-code-pro-fonts
-ttf-jetbrains-mono-nerd
-
-# From AUR
-# ttf-symbola
-
-
-zoxide
-ccache
-# informant needs to be the last package installed or it will break the automatic installation
-informant

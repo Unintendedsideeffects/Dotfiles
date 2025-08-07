@@ -1,0 +1,5 @@
+openssh-server
+xauth
+x11-apps
+mesa-utils
+

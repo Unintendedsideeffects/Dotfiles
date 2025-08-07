@@ -1,94 +1,55 @@
-# Base zsh configuration - shared across all environments
+setopt autocd
+setopt correct
+setopt histignorealldups
+setopt sharehistory
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
 
-# History configuration
-HISTFILE=~/.histfile
-HISTSIZE=1000
-SAVEHIST=1000
-setopt autocd extendedglob
-setopt HIST_IGNORE_DUPS
-
-# Key bindings
-bindkey -v
-
-# Completion system
-autoload -Uz compinit
-compinit
-autoload -Uz promptinit
-promptinit
-zstyle ':completion:*' menu select
-setopt COMPLETE_ALIASES
-ttyctl -f
-zstyle ':completion:*' rehash true
-
-# Linux console color scheme
-if [ "$TERM" = "linux" ]; then
-  /bin/echo -e "
-  \e]P0000000
-  \e]P16666cc
-  \e]P200779f
-  \e]P33b6bcc
-  \e]P4217199
-  \e]P54068a5
-  \e]P6493b8b
-  \e]P7a0a0a0
-  \e]P8000000
-  \e]P96666cc
-  \e]PA00779f
-  \e]PB3b6bcc
-  \e]PC217199
-  \e]PD4068a5
-  \e]PE493b8b
-  \e]PFa0a0a0
-  "
-  clear
+if command -v nvim >/dev/null 2>&1; then
+  export EDITOR="nvim"
+elif command -v vim >/dev/null 2>&1; then
+  export EDITOR="vim"
+else
+  export EDITOR="vi"
 fi
 
-# Syntax highlighting (conditional)
-if [[ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
-  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-elif [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
-  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza -alh --group-directories-first --icons=auto'
+else
+  alias ls='ls --color=auto -alh'
 fi
 
-# Initialize starship prompt
-if command -v starship >/dev/null 2>&1; then
-  export STARSHIP_CONFIG=~/.config/starship/starship.toml
-  eval "$(starship init zsh)"
+if command -v bat >/dev/null 2>&1; then
+  alias bat='bat'
+elif command -v batcat >/dev/null 2>&1; then
+  alias bat='batcat'
 fi
 
-# Environment detection
-if grep -qi microsoft /proc/version 2>/dev/null; then
-  export IS_WSL=true
+if command -v fd >/dev/null 2>&1; then
+  alias fd='fd'
+elif command -v fdfind >/dev/null 2>&1; then
+  alias fd='fdfind'
 fi
 
-if [[ "$(uname -r)" == *Crostini* ]]; then
-  export IS_CROSTINI=true
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+  if [[ -d /etc/pve ]] || echo "${PRETTY_NAME:-}" | grep -qi proxmox; then
+    [[ -f "$HOME/.dotfiles/shell/zshrc.d/proxmox.zsh" ]] && source "$HOME/.dotfiles/shell/zshrc.d/proxmox.zsh"
+  else
+    case "$ID" in
+      arch)
+        [[ -f "$HOME/.dotfiles/shell/zshrc.d/arch.zsh" ]] && source "$HOME/.dotfiles/shell/zshrc.d/arch.zsh"
+        ;;
+      debian|ubuntu)
+        [[ -f "$HOME/.dotfiles/shell/zshrc.d/debian.zsh" ]] && source "$HOME/.dotfiles/shell/zshrc.d/debian.zsh"
+        ;;
+    esac
+  fi
 fi
 
-if [[ -f /etc/rocky-release ]]; then
-  export IS_ROCKY=true
-fi
+PROMPT='%F{cyan}%n%f@%F{yellow}%m%f:%F{green}%~%f %# '
 
-if [[ -f /etc/redhat-release ]] && ! [[ -f /etc/rocky-release ]]; then
-  export IS_RHEL=true
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
 fi
-
-if [[ -f /etc/arch-release ]]; then
-  export IS_ARCH=true
-fi
-
-# Fix TERM in headless environments
-# Detect if we're in a headless environment and override inappropriate TERM values
-if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]] || [[ -n "${SSH_CONNECTION:-}" ]]; then
-  # We're in a headless environment (no display server or SSH)
-  case "${TERM:-}" in
-    "ghostty"|"ghostty-256color")
-      # Override display-dependent TERM values with compatible alternatives
-      export TERM="xterm-256color"
-      ;;
-    "")
-      # Set a sensible default if TERM is empty
-      export TERM="xterm-256color"
-      ;;
-  esac
-fi 
