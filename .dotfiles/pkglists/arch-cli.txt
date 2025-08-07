@@ -2,6 +2,7 @@ git
 gnupg
 pass
 zsh
+curl
 ripgrep
 fd
 fzf
@@ -16,6 +17,10 @@ direnv
 atuin
 ranger
 yazi
+zip
+unzip
+xz
+neovim
 python
 python-pip
 go
