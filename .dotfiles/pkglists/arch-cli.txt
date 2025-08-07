@@ -13,6 +13,7 @@ zoxide
 jq
 yq
 direnv
+atuin
 ranger
 yazi
 python
