@@ -94,6 +94,10 @@ Use the `config` alias defined in `./.dotfiles/cli/config.sh` for all git operat
 
 `./.dotfiles/bin/validate.sh` prints detected distro and checks for key tools.
 
+### Dev container
+
+Open this repo in a dev container to test Debian flow without touching your system. The container runs validation and dry-runs automatically via `.devcontainer/devcontainer.json`.
+
 ## Headless GUI (X11 forwarding)
 
 For thin-client display over SSH:
