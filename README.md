@@ -8,6 +8,8 @@ Portable dotfiles for Arch, Debian, and Proxmox. Minimal, fast, and consistent.
 - **Bare repo**: Manage dotfiles cleanly with a git bare repository
 - **Bootstrap**: One command installs curated CLI packages
 - **Modular shell**: Minimal zsh base + per-distro modules
+  - fzf key bindings auto-sourced when available
+  - zoxide and atuin initialized when present
 
 ## Quick start
 
@@ -86,6 +88,7 @@ Use the `config` alias defined in `./.dotfiles/cli/config.sh` for all git operat
 1. `./.dotfiles/shell/install.sh`
 2. `./.dotfiles/bin/bootstrap.sh`
 3. `source .dotfiles/cli/config.sh`
+4. Optional: `./.dotfiles/bin/setup-atuin.sh`
 
 ## Validation
 
