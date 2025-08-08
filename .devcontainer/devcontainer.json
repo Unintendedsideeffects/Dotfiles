@@ -1,0 +1,15 @@
+{
+  "name": "Dotfiles (Debian test)",
+  "image": "debian:bookworm-slim",
+  "remoteUser": "root",
+  "features": {},
+  "postCreateCommand": "/bin/bash -lc 'apt-get update -y && apt-get install -y git curl ca-certificates && chmod +x ./.dotfiles/bin/*.sh || true && ./.dotfiles/bin/validate.sh || true && ./.dotfiles/bin/bootstrap.sh --dry-run || true && ./.dotfiles/bin/setup-xforward.sh --dry-run || true'",
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": []
+    }
+  }
+}
+
+
