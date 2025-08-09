@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# set -euo pipefail
 
 config() {
   /usr/bin/git --git-dir="$HOME/.cfg" --work-tree="$HOME" "$@"
