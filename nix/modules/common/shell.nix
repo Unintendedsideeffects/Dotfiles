@@ -33,6 +33,18 @@
 
   programs.direnv = { enable = true; nix-direnv.enable = true; };
 
+  programs.starship = {
+    enable = true;
+    settings = {
+      hostname = {
+        ssh_only = true;
+        disabled = false;
+        format = "[$hostname]($style) ";
+        style = "bold green";
+      };
+    };
+  };
+
   home.file = {
     ".config/ghostty/config".text = ''
       background = 000000
