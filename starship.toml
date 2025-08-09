@@ -7,6 +7,7 @@ $hostname\
 [](bg:peach fg:red)\
 $directory\
 [](fg:peach)\
+$line_break\
 $character"""
 
 right_format = """
@@ -32,7 +33,7 @@ $cmd_duration"""
 
 palette = 'adventure_time'
 
-add_newline = false
+add_newline = true
 
 [os]
 disabled = false
@@ -156,7 +157,7 @@ style = "bg:lavender"
 format = '[[  $time ](fg:crust bg:lavender)]($style)'
 
 [line_break]
-disabled = true
+disabled = false
 
 [character]
 disabled = false
