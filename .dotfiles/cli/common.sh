@@ -29,6 +29,10 @@ path_prepend() {
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/bin"
 
+# Editor configuration
+export VISUAL="nvim"
+export EDITOR="nvim"
+
 # Enhanced OS detection with more detailed information
 detect_os() {
     local os
