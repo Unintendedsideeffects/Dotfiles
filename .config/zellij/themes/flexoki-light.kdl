@@ -1,0 +1,16 @@
+// Flexoki Light for zellij
+themes {
+  flexoki-light {
+    fg "#3a3a3a"
+    bg "#fffcf0"
+    black "#fffcf0"
+    red "#d14"
+    green "#4f6f00"
+    yellow "#b58900"
+    blue "#268bd2"
+    magenta "#6c71c4"
+    cyan "#2aa198"
+    white "#3a3a3a"
+    orange "#cb4b16"
+  }
+}

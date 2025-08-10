@@ -1,0 +1,17 @@
+// Flexoki Dark for zellij
+// See: https://github.com/zellij-org/zellij/blob/main/example/themes.kdl
+themes {
+  flexoki-dark {
+    fg "#d3c6aa"
+    bg "#100f0f"
+    black "#100f0f"
+    red "#d14"
+    green "#7f8b00"
+    yellow "#ffb454"
+    blue "#5b9cff"
+    magenta "#d088ff"
+    cyan "#2dd4bf"
+    white "#d3c6aa"
+    orange "#ffb454"
+  }
+}
