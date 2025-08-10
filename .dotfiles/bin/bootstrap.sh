@@ -47,27 +47,6 @@ run_with_sudo_if_needed() {
   if [[ $EUID -ne 0 ]]; then sudo "$@"; else "$@"; fi
 }
 
-prompt_flexoki() {
-  local variant
-  variant=$(whip --title "Flexoki" --radiolist "Choose variant" 12 50 2 \
-    dark "Flexoki Dark" ON \
-    light "Flexoki Light" OFF \
-    3>&1 1>&2 2>&3) || return 1
-
-  local script="$BIN_DIR/setup-flexoki.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "Flexoki" --msgbox "Missing: $script" 10 60
-    return 1
-  fi
-
-  "$script" --variant "$variant" || {
-    whip --title "Flexoki" --msgbox "Flexoki installer failed." 10 60
-    return 1
-  }
-
-  whip --title "Flexoki" --msgbox "Flexoki ($variant) installation attempted. Check output for activation notes." 10 70 || true
-}
-
 prompt_headless_gui() {
   # Only available on Arch-based systems because setup-headless-gui.sh is Arch-specific
   if ! is_arch; then
@@ -111,7 +90,6 @@ main_menu() {
   local options=()
 
   # Dynamically include options based on available scripts and distro
-  options+=("flexoki" "Install Flexoki themes (multi-app)" OFF)
   if is_arch; then
     options+=("headless_gui" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" OFF)
   fi
@@ -130,8 +108,6 @@ main_menu() {
   for sel in $selections; do
     sel=${sel//\"/}
     case "$sel" in
-      flexoki)
-        prompt_flexoki ;;
       headless_gui)
         prompt_headless_gui ;;
     esac
