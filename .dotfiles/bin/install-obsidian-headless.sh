@@ -12,7 +12,7 @@ fi
 USER_NAME="${SUDO_USER:-$(logname 2>/dev/null || whoami)}"
 DISPLAY_NUM=5
 VNC_PORT=5900
-SCREEN="1280x800x16"
+SCREEN="1280x800x24"
 OBS_VER="1.6.7"
 
 while getopts ":u:d:p:s:o:" opt; do
