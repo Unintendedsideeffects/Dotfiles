@@ -6,7 +6,7 @@ After=obsidian-headless-openboxsession.service
 User=__USER__
 Group=__GROUP__
 WorkingDirectory=__HOME__
-ExecStart=/usr/bin/obsidian --no-sandbox --disable-gpu
+ExecStart=/usr/bin/obsidian --no-sandbox --disable-gpu --disable-software-rasterizer
 KillSignal=SIGINT
 Environment="DISPLAY=::__DISPLAY__"
 Environment="ELECTRON_OZONE_PLATFORM_HINT=x11"
