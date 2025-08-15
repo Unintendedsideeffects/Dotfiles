@@ -1,0 +1,17 @@
+[Unit]
+Description=Headless x11vnc for Obsidian GUI
+After=obsidian-headless-openboxsession.service
+
+[Service]
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__HOME__
+ExecStart=/usr/bin/x11vnc -rfbport __VNC_PORT__ -display :__DISPLAY__ -rfbauth __HOME__/.vnc/passwd -loop -forever -shared
+KillSignal=SIGINT
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Type=simple
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Headless openbox-session for Obsidian GUI
+After=obsidian-headless-xvfb.service
+
+[Service]
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__HOME__
+ExecStart=/usr/bin/openbox-session
+KillSignal=SIGINT
+Environment="DISPLAY=::__DISPLAY__"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Type=simple
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
