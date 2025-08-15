@@ -1,0 +1,16 @@
+[Unit]
+Description=Headless Xvfb for Obsidian GUI
+
+[Service]
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__HOME__
+ExecStart=/usr/bin/Xvfb :__DISPLAY__ -extension GLX -screen 0 __SCREEN__
+KillSignal=SIGINT
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Type=simple
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
