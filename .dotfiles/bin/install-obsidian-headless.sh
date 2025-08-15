@@ -40,11 +40,11 @@ is_debian_like() { [[ "$ID_LOWER" == "debian" || "$ID_LOWER" == "ubuntu" || "$ID
 install_base_packages() {
   if is_arch; then
     pacman -Sy --noconfirm --needed \
-      openbox xorg-server-xvfb x11vnc xdg-utils libnotify nss libsecret wget
+      openbox xorg-server-xvfb x11vnc xdg-utils libnotify nss libsecret wget xorg-xauth
   elif is_debian_like; then
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      openbox xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget
+      openbox xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget xauth
   else
     echo "Unsupported distro: $ID" >&2; exit 1
   fi
@@ -101,6 +101,10 @@ if [[ ! -f "$USER_HOME/.vnc/passwd" ]]; then
 fi
 chmod 600 "$USER_HOME/.vnc/passwd"
 chown -R "$USER_NAME":"$USER_NAME" "$USER_HOME/.vnc"
+
+# Ensure XAUTHORITY exists to appease some WMs/apps
+sudo -u "$USER_NAME" touch "$USER_HOME/.Xauthority"
+chown "$USER_NAME":"$USER_NAME" "$USER_HOME/.Xauthority"
 
 # Render and install systemd unit files from templates
 UNIT_DIR="/etc/systemd/system"

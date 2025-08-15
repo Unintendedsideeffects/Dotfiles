@@ -9,6 +9,7 @@ WorkingDirectory=__HOME__
 ExecStart=/usr/bin/openbox-session
 KillSignal=SIGINT
 Environment="DISPLAY=::__DISPLAY__"
+Environment="XAUTHORITY=__HOME__/.Xauthority"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Type=simple
 Restart=on-failure
