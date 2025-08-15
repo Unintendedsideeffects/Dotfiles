@@ -1,15 +1,15 @@
 [Unit]
-Description=Headless Obsidian
-After=obsidian-headless-wm.service
+Description=Headless __WM_NAME__ for Obsidian GUI
+After=obsidian-headless-xvfb.service
 
 [Service]
 User=__USER__
 Group=__GROUP__
 WorkingDirectory=__HOME__
-ExecStart=/usr/bin/obsidian --no-sandbox --disable-gpu --disable-software-rasterizer
+ExecStart=__WM_EXEC__
 KillSignal=SIGINT
 Environment="DISPLAY=::__DISPLAY__"
-Environment="ELECTRON_OZONE_PLATFORM_HINT=x11"
+Environment="XAUTHORITY=__HOME__/.Xauthority"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Type=simple
 Restart=on-failure

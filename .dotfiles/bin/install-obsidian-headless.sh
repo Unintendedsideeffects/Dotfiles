@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: sudo .dotfiles/bin/install-obsidian-headless.sh [-u USER] [-d DISPLAY] [-p VNC_PORT] [-s SCREEN] [-o OBS_VER]
+# Usage: sudo .dotfiles/bin/install-obsidian-headless.sh [-u USER] [-d DISPLAY] [-p VNC_PORT] [-s SCREEN] [-o OBS_VER] [-w WM]
 # Defaults: USER=$SUDO_USER or current, DISPLAY=5, VNC_PORT=5900, SCREEN=1280x800x16, OBS_VER=1.6.7
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
@@ -14,14 +14,16 @@ DISPLAY_NUM=5
 VNC_PORT=5900
 SCREEN="1280x800x24"
 OBS_VER="1.6.7"
+WM="openbox"
 
-while getopts ":u:d:p:s:o:" opt; do
+while getopts ":u:d:p:s:o:w:" opt; do
   case $opt in
     u) USER_NAME="$OPTARG" ;;
     d) DISPLAY_NUM="$OPTARG" ;;
     p) VNC_PORT="$OPTARG" ;;
     s) SCREEN="$OPTARG" ;;
     o) OBS_VER="$OPTARG" ;;
+    w) WM="$OPTARG" ;;
     *) echo "Invalid option" >&2; exit 2 ;;
   esac
 done
@@ -40,11 +42,25 @@ is_debian_like() { [[ "$ID_LOWER" == "debian" || "$ID_LOWER" == "ubuntu" || "$ID
 install_base_packages() {
   if is_arch; then
     pacman -Sy --noconfirm --needed \
-      openbox xorg-server-xvfb x11vnc xdg-utils libnotify nss libsecret wget xorg-xauth
+      xorg-server-xvfb x11vnc xdg-utils libnotify nss libsecret wget xorg-xauth
+    if [[ "$WM" == "openbox" ]]; then
+      pacman -Sy --noconfirm --needed openbox obconf tint2
+    elif [[ "$WM" == "i3" ]]; then
+      pacman -Sy --noconfirm --needed i3-wm i3status dmenu
+    else
+      echo "Unsupported WM: $WM" >&2; exit 1
+    fi
   elif is_debian_like; then
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      openbox xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget xauth
+      xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget xauth
+    if [[ "$WM" == "openbox" ]]; then
+      DEBIAN_FRONTEND=noninteractive apt-get install -y openbox tint2
+    elif [[ "$WM" == "i3" ]]; then
+      DEBIAN_FRONTEND=noninteractive apt-get install -y i3-wm i3status dmenu
+    else
+      echo "Unsupported WM: $WM" >&2; exit 1
+    fi
   else
     echo "Unsupported distro: $ID" >&2; exit 1
   fi
@@ -130,14 +146,24 @@ install_unit() {
 }
 
 install_unit obsidian-headless-xvfb
-install_unit obsidian-headless-openboxsession
+
+# Render generic WM unit
+WM_EXEC="/usr/bin/openbox-session"
+WM_NAME="Openbox"
+if [[ "$WM" == "i3" ]]; then
+  WM_EXEC="/usr/bin/i3"
+  WM_NAME="i3"
+fi
+render "$TEMPLATE_DIR/obsidian-headless-wm.service.tmpl" "$UNIT_DIR/obsidian-headless-wm.service"
+sed -i "s|__WM_EXEC__|$WM_EXEC|g; s|__WM_NAME__|$WM_NAME|g" "$UNIT_DIR/obsidian-headless-wm.service"
+
 install_unit obsidian-headless-x11vnc
 install_unit obsidian-headless
 
 systemctl daemon-reload
 
 systemctl enable --now obsidian-headless-xvfb.service
-systemctl enable --now obsidian-headless-openboxsession.service
+systemctl enable --now obsidian-headless-wm.service
 systemctl enable --now obsidian-headless-x11vnc.service
 systemctl enable --now obsidian-headless.service
 
