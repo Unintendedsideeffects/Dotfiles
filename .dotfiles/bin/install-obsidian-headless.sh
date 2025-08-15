@@ -92,6 +92,7 @@ install_obsidian() {
     curl -L "$url" -o "$appdir/Obsidian.AppImage"
     chmod +x "$appdir/Obsidian.AppImage"
     ln -sf "$appdir/Obsidian.AppImage" /usr/local/bin/obsidian
+    setcap cap_sys_admin=ep "$appdir/Obsidian.AppImage" || true
     return 0
   fi
 
