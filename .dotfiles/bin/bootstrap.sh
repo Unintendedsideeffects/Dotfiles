@@ -47,6 +47,16 @@ run_with_sudo_if_needed() {
   if [[ $EUID -ne 0 ]]; then sudo "$@"; else "$@"; fi
 }
 
+# --- Debian/Ubuntu: Headless Obsidian (Xvfb/Openbox/VNC) ---
+prompt_headless_obsidian() {
+  local script="$BIN_DIR/bootstrap-headless-obsidian.sh"
+  if [[ ! -x "$script" ]]; then
+    whip --title "Headless Obsidian" --msgbox "Missing: $script" 10 70
+    return 1
+  fi
+  "$script"
+}
+
 prompt_headless_gui() {
   # Only available on Arch-based systems because setup-headless-gui.sh is Arch-specific
   if ! is_arch; then
@@ -93,6 +103,9 @@ main_menu() {
   if is_arch; then
     options+=("headless_gui" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" OFF)
   fi
+  if is_debian_like; then
+    options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Debian/Ubuntu]" OFF)
+  fi
 
   if [[ ${#options[@]} -eq 0 ]]; then
     whip --title "Dotfiles Bootstrap" --msgbox "No interactive components available for this distro." 10 70
@@ -110,6 +123,8 @@ main_menu() {
     case "$sel" in
       headless_gui)
         prompt_headless_gui ;;
+      headless_obsidian)
+        prompt_headless_obsidian ;;
     esac
   done
 
