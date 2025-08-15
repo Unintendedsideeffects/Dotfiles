@@ -102,6 +102,7 @@ main_menu() {
   # Dynamically include options based on available scripts and distro
   if is_arch; then
     options+=("headless_gui" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" OFF)
+    options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Arch]" OFF)
   fi
   if is_debian_like; then
     options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Debian/Ubuntu]" OFF)

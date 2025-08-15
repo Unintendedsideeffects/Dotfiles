@@ -28,19 +28,70 @@ done
 
 USER_HOME=$(eval echo ~"$USER_NAME")
 
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  openbox xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget
+# --- Distro detection ---
+. /etc/os-release
+ID_LOWER="${ID,,}"
+ID_LIKE_LOWER="${ID_LIKE:-}"
+ID_LIKE_LOWER="${ID_LIKE_LOWER,,}"
 
-# Obsidian install (idempotent)
-DEB_URL="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBS_VER}/obsidian_${OBS_VER}_amd64.deb"
-TMP_DEB="/tmp/obsidian_${OBS_VER}_amd64.deb"
-if ! command -v obsidian >/dev/null 2>&1; then
-  echo "Installing Obsidian ${OBS_VER}..."
-  wget -O "$TMP_DEB" "$DEB_URL"
-  dpkg -i "$TMP_DEB" || true
-  apt-get -f install -y
-fi
+is_arch() { [[ "$ID_LOWER" == "arch" || "$ID_LIKE_LOWER" == *"arch"* ]]; }
+is_debian_like() { [[ "$ID_LOWER" == "debian" || "$ID_LOWER" == "ubuntu" || "$ID_LIKE_LOWER" == *"debian"* ]]; }
+
+install_base_packages() {
+  if is_arch; then
+    pacman -Sy --noconfirm --needed \
+      openbox xorg-server-xvfb x11vnc xdg-utils libnotify nss libsecret wget
+  elif is_debian_like; then
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      openbox xvfb x11vnc python3-xdg xdg-utils libnotify4 libnss3 libsecret-1-0 wget
+  else
+    echo "Unsupported distro: $ID" >&2; exit 1
+  fi
+}
+
+install_obsidian() {
+  if command -v obsidian >/dev/null 2>&1; then return 0; fi
+
+  if is_arch; then
+    # Try repo package first, then AUR via yay if available; else fallback to AppImage
+    if pacman -Si obsidian >/dev/null 2>&1; then
+      pacman -Sy --noconfirm --needed obsidian
+      return 0
+    fi
+    if command -v yay >/dev/null 2>&1; then
+      yay -S --noconfirm --needed obsidian
+      return 0
+    fi
+    # AppImage fallback
+    local appdir="/opt/obsidian"
+    install -d "$appdir"
+    local url
+    url=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/tags/v${OBS_VER} | \
+          grep browser_download_url | grep -i AppImage | cut -d '"' -f4 | head -n1)
+    if [[ -z "$url" ]]; then
+      url=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | \
+            grep browser_download_url | grep -i AppImage | cut -d '"' -f4 | head -n1)
+    fi
+    curl -L "$url" -o "$appdir/Obsidian.AppImage"
+    chmod +x "$appdir/Obsidian.AppImage"
+    ln -sf "$appdir/Obsidian.AppImage" /usr/local/bin/obsidian
+    return 0
+  fi
+
+  if is_debian_like; then
+    local deb_url="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBS_VER}/obsidian_${OBS_VER}_amd64.deb"
+    local tmp_deb="/tmp/obsidian_${OBS_VER}_amd64.deb"
+    echo "Installing Obsidian ${OBS_VER} (Debian package)..."
+    wget -O "$tmp_deb" "$deb_url"
+    dpkg -i "$tmp_deb" || true
+    apt-get -f install -y
+    return 0
+  fi
+}
+
+install_base_packages
+install_obsidian
 
 # VNC password setup
 sudo -u "$USER_NAME" mkdir -p "$USER_HOME/.vnc"
