@@ -154,6 +154,8 @@ WM_NAME="Openbox"
 if [[ "$WM" == "i3" ]]; then
   WM_EXEC="/usr/bin/i3"
   WM_NAME="i3"
+  
+  # Note: Using existing i3 config, but startup commands may fail in headless mode
 fi
 render "$TEMPLATE_DIR/obsidian-headless-wm.service.tmpl" "$UNIT_DIR/obsidian-headless-wm.service"
 sed -i "s|__WM_EXEC__|$WM_EXEC|g; s|__WM_NAME__|$WM_NAME|g" "$UNIT_DIR/obsidian-headless-wm.service"
