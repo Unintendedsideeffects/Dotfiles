@@ -125,7 +125,7 @@ chown "$USER_NAME":"$USER_NAME" "$USER_HOME/.Xauthority"
 
 # Render and install systemd unit files from templates
 UNIT_DIR="/etc/systemd/system"
-TEMPLATE_DIR="$(cd "$(dirname "$0")/../../systemd" && pwd)"
+TEMPLATE_DIR="$(cd "$(dirname "$0")/../systemd" && pwd)"
 
 render() {
   local src="$1" dest="$2"
