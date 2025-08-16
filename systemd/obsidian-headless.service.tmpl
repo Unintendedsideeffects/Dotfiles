@@ -8,7 +8,7 @@ Group=__GROUP__
 WorkingDirectory=__HOME__
 ExecStart=/usr/bin/obsidian --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --password-store=basic --user-data-dir=__HOME__/.config/obsidian
 KillSignal=SIGINT
-Environment="DISPLAY=::__DISPLAY__"
+Environment="DISPLAY=:__DISPLAY__"
 Environment="ELECTRON_OZONE_PLATFORM_HINT=x11"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Type=simple
