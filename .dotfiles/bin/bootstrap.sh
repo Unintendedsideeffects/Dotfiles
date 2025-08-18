@@ -26,20 +26,24 @@ is_wsl() {
 }
 
 # --- Ensure TUI dependency ---
+# Helper function to run commands with sudo when needed
+run_cmd() {
+  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
 ensure_tui() {
   if command -v whiptail >/dev/null 2>&1; then return 0; fi
   if command -v dialog >/dev/null 2>&1; then return 0; fi
 
-  local use_sudo=""
-  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
-    use_sudo="sudo"
-  fi
-
   if is_arch; then
-    $use_sudo pacman -Sy --noconfirm --needed dialog
+    run_cmd pacman -Sy --noconfirm --needed dialog
   elif is_debian_like; then
-    $use_sudo apt-get update -y
-    $use_sudo apt-get install -y whiptail || $use_sudo apt-get install -y dialog
+    run_cmd apt-get update -y
+    run_cmd apt-get install -y whiptail || run_cmd apt-get install -y dialog
   fi
 }
 
