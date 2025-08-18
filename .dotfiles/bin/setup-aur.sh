@@ -19,9 +19,15 @@ fi
 
 echo "🔧 Installing yay AUR helper..."
 
+# Determine if we need sudo
+use_sudo=""
+if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+    use_sudo="sudo"
+fi
+
 # Ensure we have git and base-devel
 echo "📦 Installing prerequisites..."
-sudo pacman -S --needed --noconfirm git base-devel
+$use_sudo pacman -S --needed --noconfirm git base-devel
 
 # Create temporary directory
 TMP_DIR=$(mktemp -d)
