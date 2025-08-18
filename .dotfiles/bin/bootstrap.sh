@@ -79,13 +79,20 @@ prompt_aur_setup() {
   fi
 
   if whip --title "AUR Setup" --yesno "Install yay AUR helper?\n\nThis enables installation of packages from the Arch User Repository (AUR).\n\nRequired for many development tools and applications." 15 70; then
-    # Capture both stdout and stderr
-    if output=$("$script" 2>&1); then
+    # Create a temporary file for output
+    local tmpfile=$(mktemp)
+    
+    # Run script and capture output
+    if "$script" >"$tmpfile" 2>&1; then
       whip --title "AUR Setup" --msgbox "yay AUR helper installed successfully!\n\nYou can now install AUR packages with:\n  yay -S package-name" 12 60
     else
-      # Display the actual error in a scrollable text box
-      whip --title "AUR Setup Failed" --scrolltext --msgbox "$output" 20 80
+      local error_output
+      error_output=$(cat "$tmpfile")
+      whip --title "AUR Setup Failed" --scrolltext --msgbox "$error_output" 20 80
     fi
+    
+    # Cleanup
+    rm -f "$tmpfile"
   fi
 }
 
