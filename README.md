@@ -1,143 +1,108 @@
 # Malcolm's Dotfiles
 
-Portable dotfiles for Arch, Debian, and Proxmox. Minimal, fast, and consistent.
+Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Proxmox, and WSL2.
 
 ## Features
 
-- **Cross-distro**: Arch, Debian, Proxmox (Proxmox treated as Debian with safe defaults)
-- **Bare repo**: Manage dotfiles cleanly with a git bare repository
-- **Bootstrap**: One command installs curated CLI packages
-- **Modular shell**: Minimal zsh base + per-distro modules
-  - fzf key bindings auto-sourced when available
-  - zoxide and atuin initialized when present
+- **Universal**: Works on Arch, Debian/Ubuntu, Proxmox, and WSL2
+- **Smart Detection**: Automatically configures for your environment
+- **Interactive Bootstrap**: TUI for selecting components to install
+- **Optimized Packages**: Curated package lists per environment
+- **WSL Ready**: Special handling for WSL2 with Windows integration
 
-## Quick start
+## Quick Setup
 
+**One command install:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
+```
+
+**Or manual setup:**
 ```bash
 git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git "$HOME/.cfg"
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.backup || true
 config checkout
 source "$HOME/.dotfiles/cli/config.sh"
-chmod +x "$HOME/.dotfiles/bin/bootstrap.sh" "$HOME/.dotfiles/shell/install.sh" "$HOME/.dotfiles/bin/validate.sh" 2>/dev/null || true
 "$HOME/.dotfiles/shell/install.sh"
 "$HOME/.dotfiles/bin/bootstrap.sh"
 ```
 
-## Directory structure
+## What You Get
 
+**Packages automatically installed based on your environment:**
+- **Development tools**: git, neovim, build tools, language runtimes
+- **Modern CLI tools**: ripgrep, fd, fzf, bat, eza, zoxide, atuin
+- **Shell setup**: zsh with smart completion and history
+- **WSL integration**: Windows path integration, WSL utilities
+- **X11 forwarding**: For remote GUI applications
+
+**Environment-specific packages:**
+- **Arch/Arch WSL**: Uses pacman, includes AUR build tools
+- **Debian/Ubuntu/Ubuntu WSL**: Uses apt, includes build-essential
+- **Proxmox**: Conservative package set for server environments
+
+## Interactive Bootstrap
+
+The bootstrap script provides a TUI menu to install:
+
+1. **Package Installation** - Automatically detects your environment and installs appropriate packages
+2. **WSL Configuration** - Fixes common WSL configuration issues (WSL only)
+3. **Headless GUI Setup** - X11 forwarding for remote desktop (Arch only)
+4. **Obsidian Headless** - Containerized Obsidian setup
+
+## WSL2 Special Features
+
+**Automatic WSL detection and configuration:**
+- Fixes common `/etc/wsl.conf` issues (invalid key formats)
+- Enables systemd support in WSL2
+- Includes Windows path integration
+- Adds WSL utilities (`wslu`) for Windows integration
+
+**WSL-optimized package lists:**
+- `arch-wsl.txt` - Arch WSL with WSL integration tools
+- `debian-wsl.txt` - Ubuntu/Debian WSL with WSL integration tools
+
+## Managing Your Dotfiles
+
+After installation, use the `config` command for git operations:
+```bash
+config status           # Check dotfile changes
+config add .file        # Add a new dotfile
+config commit -m "msg"  # Commit changes
+config push             # Push to remote
 ```
-.
-└── .dotfiles/
-    ├── bin/
-    │   ├── bootstrap.sh
-    │   ├── setup-xforward.sh
-    │   └── validate.sh
-    ├── cli/
-    │   └── config.sh
-    ├── shell/
-    │   ├── install.sh
-    │   ├── zshrc.base
-    │   └── zshrc.d/
-    │       ├── arch.zsh
-    │       ├── debian.zsh
-    │       └── proxmox.zsh
-    └── pkglists/
-        ├── arch-cli.txt
-        ├── arch-xforward.txt
-        ├── debian-cli.txt
-        ├── debian-xforward.txt
-        ├── proxmox-cli.txt
-        └── proxmox-xforward.txt
-```
-
-## Environment detection
-
-Detected via `/etc/os-release` and Proxmox presence. Proxmox uses the Debian list with a conservative set.
-
-## Packages
-
-Curated minimal lists per distro. Order matters: core tools → CLI → runtimes → toolchain → fonts.
-
-- Arch: pacman installs from `arch-cli.txt`. AUR is not automated.
-- Debian: apt installs from `debian-cli.txt`.
-- Proxmox: apt installs from `proxmox-cli.txt`.
-
-### Package Manager Configuration
-
-#### Pacman (Arch Linux)
-- **Optimized Settings**: 8 parallel downloads, color output, progress bars
-- **Build Optimization**: Multi-core compilation, ccache, LTO support
-- **Custom Cache**: User-specific package and build cache directories
-
-#### Yay (AUR Helper)
-- **Smart Defaults**: Clean after build, show diffs, upgrade menu
-- **Performance**: Batch operations, combined upgrades
-- **Security**: PGP verification, dependency checking
-
-## Shell
-
-`zshrc.base` sets sane defaults and aliases. Per-distro modules load automatically. `bat` aliases to `batcat` on Debian/Proxmox. `fd` aliases to `fdfind` on Debian/Proxmox.
-
-## Managing dotfiles
-
-Use the `config` alias defined in `./.dotfiles/cli/config.sh` for all git operations.
-
-## Manual steps
-
-1. `./.dotfiles/shell/install.sh`
-2. `./.dotfiles/bin/bootstrap.sh`
-3. `source .dotfiles/cli/config.sh`
-4. Optional: `./.dotfiles/bin/setup-atuin.sh`
-
-## Validation
-
-`./.dotfiles/bin/validate.sh` prints detected distro and checks for key tools.
-
-### Dev container
-
-Open this repo in a dev container to test Debian flow without touching your system. The container runs validation and dry-runs automatically via `.devcontainer/devcontainer.json`.
-
-## Headless GUI (X11 forwarding)
-
-For thin-client display over SSH:
-
-1. Install X11 forwarding prerequisites:
-   - `./.dotfiles/bin/setup-xforward.sh` (use `--dry-run` to preview)
-2. From client: `ssh -Y user@host` (trusted) or `ssh -X user@host` (untrusted)
-3. Test: `xclock` or `glxinfo -B`
-
-Lists are under `.dotfiles/pkglists/*-xforward.txt` per distro.
-
-## Atuin
-
-Optional enhanced history. Installed on Arch; available on Debian/Proxmox. Initialization is automatic in the shell if present. Default config is local-only at `~/.config/atuin/config.toml`.
 
 ## Customization
 
-- **Local Overrides**: Use `~/.zshrc.local` for machine-specific settings
-- **Secrets**: Store sensitive data in `secrets/` directory
-- **Additional Packages**: Add to appropriate `.dotfiles/pkglists/*.txt` file
-- **Environment-Specific**: Modify files in `.dotfiles/shell/zshrc.d/`
+- **Local settings**: Create `~/.zshrc.local` for machine-specific config
+- **Additional packages**: Add to `.dotfiles/pkglists/*.txt` files
+- **Environment tweaks**: Modify `.dotfiles/shell/zshrc.d/` files
 
-## Testing
+## Manual Commands
 
-Verify your setup:
+If you prefer manual installation:
 ```bash
-./.dotfiles/bin/test-dotfiles.sh
+./.dotfiles/shell/install.sh      # Install shell configuration
+./.dotfiles/bin/setup-packages.sh # Install packages for your environment  
+./.dotfiles/bin/setup-wsl.sh      # Configure WSL (WSL only)
+./.dotfiles/bin/validate.sh       # Verify installation
 ```
+
+## X11 Forwarding
+
+For remote GUI applications:
+1. Run `./.dotfiles/bin/setup-xforward.sh`
+2. Connect with `ssh -X user@host`
+3. Test with `xclock`
 
 ## Troubleshooting
 
-1. Ensure scripts are executable: `chmod +x .dotfiles/bin/* .dotfiles/shell/*`
-2. Confirm the correct package list exists for your distro
-3. Use `config status` to inspect changes
+**Common issues:**
+- Make scripts executable: `chmod +x .dotfiles/bin/* .dotfiles/shell/*`
+- WSL configuration errors: Run `./.dotfiles/bin/setup-wsl.sh`
+- Missing packages: Check `.dotfiles/bin/validate.sh` output
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Test on your target environments
-4. Submit a pull request
-
-This dotfiles system is designed to be a comprehensive, yet flexible foundation for any Linux development environment.
+**WSL-specific:**
+- After WSL configuration changes: `wsl --shutdown` then restart
+- Windows path issues: Check `.dotfiles/shell/zshrc.d/wsl.zsh`
