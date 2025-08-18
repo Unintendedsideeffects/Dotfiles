@@ -79,10 +79,12 @@ prompt_aur_setup() {
   fi
 
   if whip --title "AUR Setup" --yesno "Install yay AUR helper?\n\nThis enables installation of packages from the Arch User Repository (AUR).\n\nRequired for many development tools and applications." 15 70; then
-    if "$script"; then
+    # Capture both stdout and stderr
+    if output=$("$script" 2>&1); then
       whip --title "AUR Setup" --msgbox "yay AUR helper installed successfully!\n\nYou can now install AUR packages with:\n  yay -S package-name" 12 60
     else
-      whip --title "AUR Setup" --msgbox "AUR helper installation failed. Check the terminal for details." 10 60
+      # Display the actual error in a scrollable text box
+      whip --title "AUR Setup Failed" --scrolltext --msgbox "$output" 20 80
     fi
   fi
 }
@@ -129,11 +131,12 @@ prompt_packages() {
     return 1
   fi
   
-  # Install packages
-  if "$script" "$package_type"; then
+  # Install packages with error capture
+  if output=$("$script" "$package_type" 2>&1); then
     whip --title "Package Installation" --msgbox "Package installation completed successfully!" 10 60
   else
-    whip --title "Package Installation" --msgbox "Package installation failed. Check the terminal for details." 10 60
+    # Display the actual error in a scrollable text box
+    whip --title "Package Installation Failed" --scrolltext --msgbox "$output" 20 80
   fi
 }
 
@@ -150,8 +153,11 @@ prompt_wsl_setup() {
   fi
 
   if whip --title "WSL Setup" --yesno "Configure WSL settings (/etc/wsl.conf)?\n\nThis will:\n- Fix invalid configuration keys\n- Set up proper WSL2 settings\n- Enable systemd support" 15 70; then
-    "$script"
-    whip --title "WSL Setup" --msgbox "WSL configuration completed.\n\nYou may need to restart WSL:\n  wsl --shutdown\n  wsl" 12 60
+    if output=$("$script" 2>&1); then
+      whip --title "WSL Setup" --msgbox "WSL configuration completed.\n\nYou may need to restart WSL:\n  wsl --shutdown\n  wsl" 12 60
+    else
+      whip --title "WSL Setup Failed" --scrolltext --msgbox "$output" 20 80
+    fi
   fi
 }
 
