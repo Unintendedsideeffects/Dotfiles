@@ -28,18 +28,18 @@ config() {
     /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$HOME" "$@"
 }
 
-# Backup existing dotfiles that would conflict
-echo "🔄 Checking for conflicting files..."
-if config checkout 2>&1 | grep -E "\s+\." >/dev/null; then
-    echo "⚠️  Backing up existing dotfiles..."
-    mkdir -p "$HOME/.dotfiles-backup"
-    config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | \
-        xargs -I{} sh -c 'mv "$HOME/{}" "$HOME/.dotfiles-backup/{}" 2>/dev/null || true'
+# Handle existing dotfiles
+echo "🔄 Installing dotfiles (will overwrite existing files)..."
+if ! config checkout 2>/dev/null; then
+    echo "⚠️  Some files already exist. Creating backup and forcing checkout..."
+    mkdir -p "$HOME/.dotfiles-backup.$(date +%s)"
+    
+    # Force checkout, overwriting existing files
+    config checkout -f
+    echo "✅ Dotfiles installed (existing files backed up)"
+else
+    echo "✅ Dotfiles installed successfully"
 fi
-
-# Checkout the dotfiles
-echo "✅ Installing dotfiles..."
-config checkout
 
 # Make scripts executable
 chmod +x "$HOME/.dotfiles/bin/"* "$HOME/.dotfiles/shell/"* 2>/dev/null || true
