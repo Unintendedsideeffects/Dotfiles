@@ -77,28 +77,34 @@ if [[ "$IS_WSL" == true ]]; then
   echo "WSL environment detected"
 fi
 
+# Helper function to run commands with sudo when needed
+run_cmd() {
+  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
 install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")
   echo "Packages to install: ${#pkgs[@]}"
   
-  # Determine if we need sudo
-  local use_sudo=""
-  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
-    use_sudo="sudo"
-  fi
-  
   if [[ "$ENV" == "arch" ]]; then
     if [[ "$DRY" == true ]]; then
-      echo "[DRY-RUN] $use_sudo pacman -S --needed --noconfirm ${pkgs[*]}"
+      echo "[DRY-RUN] pacman -Syy --needed --noconfirm ${pkgs[*]}"
     else
-      $use_sudo pacman -S --needed --noconfirm "${pkgs[@]}"
+      echo "Refreshing package databases and mirrors..."
+      run_cmd pacman -Syy --noconfirm
+      echo "Installing packages..."
+      run_cmd pacman -S --needed --noconfirm "${pkgs[@]}"
     fi
   else
     if [[ "$DRY" == true ]]; then
-      echo "[DRY-RUN] $use_sudo apt-get update -y && $use_sudo apt-get install -y ${pkgs[*]}"
+      echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
     else
-      $use_sudo apt-get update -y
-      $use_sudo apt-get install -y "${pkgs[@]}"
+      run_cmd apt-get update -y
+      run_cmd apt-get install -y "${pkgs[@]}"
     fi
   fi
 }
