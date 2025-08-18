@@ -33,14 +33,32 @@ $use_sudo pacman -S --needed --noconfirm git base-devel
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
-# Clone yay repository
+# Clone yay repository with retry logic
 echo "📥 Cloning yay repository..."
-git clone https://aur.archlinux.org/yay.git
+for attempt in 1 2 3; do
+    if git clone https://aur.archlinux.org/yay.git; then
+        break
+    else
+        echo "⚠️ Clone attempt $attempt failed, retrying..."
+        sleep 2
+        rm -rf yay 2>/dev/null || true
+        if [[ $attempt -eq 3 ]]; then
+            echo "❌ Failed to clone yay repository after 3 attempts"
+            echo "This might be a network connectivity issue."
+            echo "You can try running this script again later."
+            exit 1
+        fi
+    fi
+done
 
 # Build and install yay
 echo "🔨 Building yay..."
 cd yay
-makepkg -si --noconfirm
+if ! makepkg -si --noconfirm; then
+    echo "❌ Failed to build yay"
+    echo "This might be due to missing dependencies or build errors."
+    exit 1
+fi
 
 # Cleanup
 cd /
