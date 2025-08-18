@@ -1,0 +1,48 @@
+# WSL-specific package list for Arch Linux
+# Includes all CLI tools plus WSL integration utilities
+
+# Include base CLI packages
+# NOTE: This conceptually includes arch-cli.txt
+git
+gnupg
+pass
+zsh
+curl
+ripgrep
+fd
+fzf
+bat
+eza
+htop
+tree
+zoxide
+jq
+yq
+direnv
+atuin
+ranger
+yazi
+zip
+unzip
+xz
+neovim
+python
+python-pip
+go
+rustup
+nodejs
+npm
+pnpm
+ccache
+gcc
+make
+cmake
+ninja
+pkgconf
+noto-fonts
+noto-fonts-emoji
+ttf-jetbrains-mono
+
+# WSL-specific additions
+wslu
+base-devel

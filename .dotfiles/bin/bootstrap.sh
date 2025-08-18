@@ -21,6 +21,10 @@ is_debian_like() {
   [[ "$ID_LOWER" == "debian" || "$ID_LOWER" == "ubuntu" || "$ID_LOWER" == "linuxmint" || "$ID_LOWER" == "raspbian" || "$ID_LOWER" == "pop" || "$ID_LOWER" == "kali" || "$ID_LOWER" == "parrot" || "$ID_LOWER" == "devuan" || "$ID_LOWER" == "neon" || "$ID_LOWER" == "zorin" || "$ID_LOWER" == "mx" || "$ID_LOWER" == "nitrux" || "$ID_LOWER" == "proxmox" || "$ID_LIKE_LOWER" == *"debian"* ]]
 }
 
+is_wsl() {
+  [[ -f /proc/version ]] && grep -q Microsoft /proc/version
+}
+
 # --- Ensure TUI dependency ---
 ensure_tui() {
   if command -v whiptail >/dev/null 2>&1; then return 0; fi
@@ -55,6 +59,74 @@ prompt_headless_obsidian() {
     return 1
   fi
   "$script"
+}
+
+prompt_packages() {
+  local script="$BIN_DIR/setup-packages.sh"
+  if [[ ! -x "$script" ]]; then
+    whip --title "Package Installation" --msgbox "Missing: $script" 10 70
+    return 1
+  fi
+
+  local package_type=""
+  local distro_name=""
+  
+  if is_wsl; then
+    if is_arch; then
+      distro_name="Arch WSL"
+    elif is_debian_like; then
+      distro_name="Debian/Ubuntu WSL"
+    else
+      distro_name="WSL"
+    fi
+    
+    if whip --title "Package Installation" --yesno "Install WSL-optimized packages for $distro_name?\n\nThis includes CLI tools plus WSL integration utilities." 12 70; then
+      package_type="wsl"
+    else
+      return 1
+    fi
+  elif is_arch; then
+    package_type=$(whip --title "Package Installation" --radiolist "Choose package set" 15 60 4 \
+      cli "CLI tools (development/terminal)" ON \
+      gui "GUI applications" OFF \
+      xforward "X11 forwarding tools" OFF \
+      3>&1 1>&2 2>&3) || return 1
+  else
+    package_type=$(whip --title "Package Installation" --radiolist "Choose package set" 15 60 3 \
+      cli "CLI tools (development/terminal)" ON \
+      xforward "X11 forwarding tools" OFF \
+      3>&1 1>&2 2>&3) || return 1
+  fi
+
+  # For non-WSL, ask for confirmation again
+  if [[ "$package_type" != "wsl" ]] && ! whip --title "Package Installation" --yesno "Install $package_type packages?\n\nThis will install development tools, utilities, and applications." 12 70; then
+    return 1
+  fi
+  
+  # Install packages
+  if "$script" "$package_type"; then
+    whip --title "Package Installation" --msgbox "Package installation completed successfully!" 10 60
+  else
+    whip --title "Package Installation" --msgbox "Package installation failed. Check the terminal for details." 10 60
+  fi
+}
+
+prompt_wsl_setup() {
+  if ! is_wsl; then
+    whip --title "WSL Setup" --msgbox "WSL setup is only available in WSL environments." 10 70
+    return 1
+  fi
+
+  local script="$BIN_DIR/setup-wsl.sh"
+  if [[ ! -x "$script" ]]; then
+    whip --title "WSL Setup" --msgbox "Missing: $script" 10 70
+    return 1
+  fi
+
+  if whip --title "WSL Setup" --yesno "Configure WSL settings (/etc/wsl.conf)?\n\nThis will:\n- Fix invalid configuration keys\n- Set up proper WSL2 settings\n- Enable systemd support" 15 70; then
+    "$script"
+    whip --title "WSL Setup" --msgbox "WSL configuration completed.\n\nYou may need to restart WSL:\n  wsl --shutdown\n  wsl" 12 60
+  fi
 }
 
 prompt_headless_gui() {
@@ -100,6 +172,11 @@ main_menu() {
   local options=()
 
   # Dynamically include options based on available scripts and distro
+  options+=("packages" "Install Packages" OFF)
+  
+  if is_wsl; then
+    options+=("wsl_setup" "WSL Configuration Setup" OFF)
+  fi
   if is_arch; then
     options+=("headless_gui" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" OFF)
     options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Arch]" OFF)
@@ -122,6 +199,10 @@ main_menu() {
   for sel in $selections; do
     sel=${sel//\"/}
     case "$sel" in
+      packages)
+        prompt_packages ;;
+      wsl_setup)
+        prompt_wsl_setup ;;
       headless_gui)
         prompt_headless_gui ;;
       headless_obsidian)

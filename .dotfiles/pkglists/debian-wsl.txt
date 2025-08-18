@@ -1,0 +1,41 @@
+# WSL-specific package list for Debian-based distributions (Ubuntu, etc.)
+# Includes all CLI tools plus WSL integration utilities
+
+# Include base CLI packages
+# NOTE: This conceptually includes debian-cli.txt
+git
+gnupg
+pass
+zsh
+curl
+ripgrep
+fd-find
+fzf
+bat
+htop
+tree
+direnv
+jq
+zoxide
+ccache
+ranger
+atuin
+zip
+unzip
+xz-utils
+neovim
+python3
+python3-pip
+golang-go
+nodejs
+npm
+build-essential
+cmake
+ninja-build
+pkg-config
+fonts-noto
+fonts-noto-color-emoji
+fonts-jetbrains-mono
+
+# WSL-specific additions for Debian/Ubuntu
+wslu
