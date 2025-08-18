@@ -66,6 +66,27 @@ prompt_headless_obsidian() {
   "$script"
 }
 
+prompt_aur_setup() {
+  if ! is_arch; then
+    whip --title "AUR Setup" --msgbox "AUR helper setup is only available on Arch Linux." 10 70
+    return 1
+  fi
+
+  local script="$BIN_DIR/setup-aur.sh"
+  if [[ ! -x "$script" ]]; then
+    whip --title "AUR Setup" --msgbox "Missing: $script" 10 70
+    return 1
+  fi
+
+  if whip --title "AUR Setup" --yesno "Install yay AUR helper?\n\nThis enables installation of packages from the Arch User Repository (AUR).\n\nRequired for many development tools and applications." 15 70; then
+    if "$script"; then
+      whip --title "AUR Setup" --msgbox "yay AUR helper installed successfully!\n\nYou can now install AUR packages with:\n  yay -S package-name" 12 60
+    else
+      whip --title "AUR Setup" --msgbox "AUR helper installation failed. Check the terminal for details." 10 60
+    fi
+  fi
+}
+
 prompt_packages() {
   local script="$BIN_DIR/setup-packages.sh"
   if [[ ! -x "$script" ]]; then
@@ -177,6 +198,10 @@ main_menu() {
   local options=()
 
   # Dynamically include options based on available scripts and distro
+  if is_arch; then
+    options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
+  fi
+  
   options+=("packages" "Install Packages" OFF)
   
   if is_wsl; then
@@ -204,6 +229,8 @@ main_menu() {
   for sel in $selections; do
     sel=${sel//\"/}
     case "$sel" in
+      aur_setup)
+        prompt_aur_setup ;;
       packages)
         prompt_packages ;;
       wsl_setup)
