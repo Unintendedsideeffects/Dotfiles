@@ -46,10 +46,11 @@ source "$HOME/.dotfiles/cli/config.sh"
 
 The bootstrap script provides a TUI menu to install:
 
-1. **Package Installation** - Automatically detects your environment and installs appropriate packages
-2. **WSL Configuration** - Fixes common WSL configuration issues (WSL only)
-3. **Headless GUI Setup** - X11 forwarding for remote desktop (Arch only)
-4. **Obsidian Headless** - Containerized Obsidian setup
+1. **AUR Helper Setup** - Installs yay for AUR package management (Arch only)
+2. **Package Installation** - Automatically detects your environment and installs appropriate packages
+3. **WSL Configuration** - Fixes common WSL configuration issues (WSL only)
+4. **Headless GUI Setup** - X11 forwarding for remote desktop (Arch only)
+5. **Obsidian Headless** - Containerized Obsidian setup
 
 ## WSL2 Special Features
 
@@ -84,6 +85,7 @@ config push             # Push to remote
 If you prefer manual installation:
 ```bash
 ./.dotfiles/shell/install.sh      # Install shell configuration
+./.dotfiles/bin/setup-aur.sh      # Install yay AUR helper (Arch only)
 ./.dotfiles/bin/setup-packages.sh # Install packages for your environment  
 ./.dotfiles/bin/setup-wsl.sh      # Configure WSL (WSL only)
 ./.dotfiles/bin/validate.sh       # Verify installation
