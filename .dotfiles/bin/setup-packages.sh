@@ -81,18 +81,24 @@ install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")
   echo "Packages to install: ${#pkgs[@]}"
   
+  # Determine if we need sudo
+  local use_sudo=""
+  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+    use_sudo="sudo"
+  fi
+  
   if [[ "$ENV" == "arch" ]]; then
     if [[ "$DRY" == true ]]; then
-      echo "[DRY-RUN] pacman -S --needed --noconfirm ${pkgs[*]}"
+      echo "[DRY-RUN] $use_sudo pacman -S --needed --noconfirm ${pkgs[*]}"
     else
-      sudo pacman -S --needed --noconfirm "${pkgs[@]}"
+      $use_sudo pacman -S --needed --noconfirm "${pkgs[@]}"
     fi
   else
     if [[ "$DRY" == true ]]; then
-      echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
+      echo "[DRY-RUN] $use_sudo apt-get update -y && $use_sudo apt-get install -y ${pkgs[*]}"
     else
-      sudo apt-get update -y
-      sudo apt-get install -y "${pkgs[@]}"
+      $use_sudo apt-get update -y
+      $use_sudo apt-get install -y "${pkgs[@]}"
     fi
   fi
 }
