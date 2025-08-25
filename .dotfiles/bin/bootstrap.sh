@@ -57,7 +57,11 @@ whip() {
 
 # --- Helpers ---
 run_with_sudo_if_needed() {
-  if [[ $EUID -ne 0 ]]; then sudo "$@"; else "$@"; fi
+  if [[ $EUID -ne 0 ]]; then 
+    sudo "$@"
+  else 
+    "$@"
+  fi
 }
 
 # --- Debian/Ubuntu: Headless Obsidian (Xvfb/Openbox/VNC) ---
