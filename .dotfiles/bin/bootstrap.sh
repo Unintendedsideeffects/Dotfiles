@@ -11,7 +11,8 @@ BIN_DIR="$DOTFILES_DIR/bin"
 # --- Distro detection ---
 . /etc/os-release
 ID_LOWER="${ID,,}"
-ID_LIKE_LOWER="${ID_LIKE:-}" ; ID_LIKE_LOWER="${ID_LIKE_LOWER,,}"
+ID_LIKE="${ID_LIKE:-}"
+ID_LIKE_LOWER="${ID_LIKE,,}"
 
 is_arch() {
   [[ "$ID_LOWER" == "arch" || "$ID_LIKE_LOWER" == *"arch"* ]]
