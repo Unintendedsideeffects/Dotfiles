@@ -23,7 +23,7 @@ is_debian_like() {
 }
 
 is_wsl() {
-  [[ -f /proc/version ]] && grep -q Microsoft /proc/version
+  [[ -f /proc/version ]] && grep -qi microsoft /proc/version
 }
 
 # --- Ensure TUI dependency ---

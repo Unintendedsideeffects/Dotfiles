@@ -45,7 +45,7 @@ detect_os() {
             if [ -f /etc/os-release ]; then
                 distro=$(/usr/bin/grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
             fi
-            if /usr/bin/grep -q Microsoft /proc/version 2>/dev/null; then
+            if /usr/bin/grep -qi microsoft /proc/version 2>/dev/null; then
                 wsl=true
             fi
             ;;
