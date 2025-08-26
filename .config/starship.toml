@@ -3,7 +3,7 @@
 format = """[ ](red)\
 $os\
 $username\
-[ ](bg:peach fg:red)\
+[  ](bg:peach fg:red)\
 $directory\
 [ ](fg:peach)\
 $character"""
