@@ -45,7 +45,12 @@ detect_os() {
             if [ -f /etc/os-release ]; then
                 distro=$(/usr/bin/grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
             fi
-            if /usr/bin/grep -qi microsoft /proc/version 2>/dev/null; then
+            # Multiple detection methods for better WSL reliability
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]] || \
+               [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
+               [[ -d /mnt/wsl ]] || \
+               (/usr/bin/grep -qi "microsoft.*wsl" /proc/version 2>/dev/null) || \
+               (/usr/bin/grep -qi "microsoft.*wsl" /proc/sys/kernel/osrelease 2>/dev/null); then
                 wsl=true
             fi
             ;;

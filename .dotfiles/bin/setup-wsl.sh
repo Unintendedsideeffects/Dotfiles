@@ -8,7 +8,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 TEMPLATES_DIR="$(dirname "$SCRIPT_DIR")/templates"
 
 # Check if running in WSL
-if [[ ! -f /proc/version ]] || ! grep -qi microsoft /proc/version; then
+# Multiple detection methods for better WSL reliability
+if ! ([[ -n "${WSL_DISTRO_NAME:-}" ]] || \
+      [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
+      [[ -d /mnt/wsl ]] || \
+      ([[ -f /proc/version ]] && grep -qi "microsoft.*wsl" /proc/version) || \
+      ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft.*wsl" /proc/sys/kernel/osrelease 2>/dev/null)); then
     echo "This script is only for WSL environments"
     exit 1
 fi
