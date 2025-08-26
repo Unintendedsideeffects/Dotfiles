@@ -27,8 +27,8 @@ is_wsl() {
   [[ -n "${WSL_DISTRO_NAME:-}" ]] || \
   [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
   [[ -d /mnt/wsl ]] || \
-  ([[ -f /proc/version ]] && grep -qi "microsoft.*wsl" /proc/version) || \
-  ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft.*wsl" /proc/sys/kernel/osrelease 2>/dev/null)
+  ([[ -f /proc/version ]] && grep -qi "microsoft" /proc/version && grep -qi "wsl" /proc/version) || \
+  ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null && grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null)
 }
 
 # --- Ensure TUI dependency ---
