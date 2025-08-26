@@ -49,8 +49,8 @@ detect_os() {
             if [[ -n "${WSL_DISTRO_NAME:-}" ]] || \
                [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
                [[ -d /mnt/wsl ]] || \
-               (/usr/bin/grep -qi "microsoft.*wsl" /proc/version 2>/dev/null) || \
-               (/usr/bin/grep -qi "microsoft.*wsl" /proc/sys/kernel/osrelease 2>/dev/null); then
+               (/usr/bin/grep -qi "microsoft" /proc/version 2>/dev/null && /usr/bin/grep -qi "wsl" /proc/version 2>/dev/null) || \
+               (/usr/bin/grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null && /usr/bin/grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null); then
                 wsl=true
             fi
             ;;

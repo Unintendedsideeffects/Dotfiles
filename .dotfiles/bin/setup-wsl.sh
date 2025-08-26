@@ -12,8 +12,8 @@ TEMPLATES_DIR="$(dirname "$SCRIPT_DIR")/templates"
 if ! ([[ -n "${WSL_DISTRO_NAME:-}" ]] || \
       [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
       [[ -d /mnt/wsl ]] || \
-      ([[ -f /proc/version ]] && grep -qi "microsoft.*wsl" /proc/version) || \
-      ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft.*wsl" /proc/sys/kernel/osrelease 2>/dev/null)); then
+      ([[ -f /proc/version ]] && grep -qi "microsoft" /proc/version && grep -qi "wsl" /proc/version) || \
+      ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null && grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null)); then
     echo "This script is only for WSL environments"
     exit 1
 fi
