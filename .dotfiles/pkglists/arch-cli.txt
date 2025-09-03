@@ -37,3 +37,4 @@ pkgconf
 noto-fonts
 noto-fonts-emoji
 ttf-jetbrains-mono
+ttf-hack-nerd
