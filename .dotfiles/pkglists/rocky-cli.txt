@@ -1,6 +1,6 @@
 # Essential CLI tools
 bat
-exa
+eza
 fd-find
 fzf
 git

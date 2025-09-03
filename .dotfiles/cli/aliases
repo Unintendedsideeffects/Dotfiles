@@ -1,9 +1,9 @@
 # Modern CLI Tool Aliases
-alias ls='exa --icons --group-directories-first'
-alias ll='exa -l --icons --group-directories-first'
-alias la='exa -a --icons --group-directories-first'
-alias lla='exa -la --icons --group-directories-first'
-alias lt='exa -T --icons --group-directories-first'
+alias ls='eza  --icons --group-directories-first'
+alias ll='eza  -l --icons --group-directories-first'
+alias la='eza  -a --icons --group-directories-first'
+alias lla='eza  -la --icons --group-directories-first'
+alias lt='eza  -T --icons --group-directories-first'
 
 alias cat='bat --paging=never'
 alias grep='rg'
