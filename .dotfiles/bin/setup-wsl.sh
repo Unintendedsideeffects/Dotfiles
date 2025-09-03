@@ -31,9 +31,9 @@ if [[ -f /etc/wsl.conf ]]; then
         fi
     }
     
-    # Check for invalid dot notation keys
-    if grep -q "wsl2\." /etc/wsl.conf; then
-        echo "❌ Found invalid WSL configuration keys with dot notation"
+    # Check for invalid configurations
+    if grep -q "wsl2\." /etc/wsl.conf || grep -q 'kernelCommandLine = "' /etc/wsl.conf; then
+        echo "❌ Found invalid WSL configuration format"
         echo "Backing up current configuration to /etc/wsl.conf.backup"
         run_cmd cp /etc/wsl.conf /etc/wsl.conf.backup
         
