@@ -3,7 +3,8 @@
 format = """[ ](red)\
 $os\
 $username\
-[  ](bg:peach fg:red)\
+[ ](bg:red)\
+[](bg:peach fg:red)\
 $directory\
 [ ](fg:peach)\
 $character"""
@@ -24,9 +25,9 @@ $haskell\
 $python\
 [ ](fg:green bg:sapphire)\
 $conda\
-[ ](fg:sapphire bg:lavender)\
+[](fg:sapphire bg:lavender)\
 $time\
-[ ](fg:lavender)\
+[](fg:lavender)\
 $cmd_duration"""
 
 palette = 'adventure_time'
