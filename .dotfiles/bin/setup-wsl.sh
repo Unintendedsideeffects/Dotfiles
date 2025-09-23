@@ -18,31 +18,31 @@ if ! ([[ -n "${WSL_DISTRO_NAME:-}" ]] || \
     exit 1
 fi
 
+# Helper function to run commands with sudo when needed
+run_cmd() {
+    if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+        sudo "$@"
+    else
+        "$@"
+    fi
+}
+
 # Check if wsl.conf already exists and validate it
 if [[ -f /etc/wsl.conf ]]; then
     echo "Checking existing /etc/wsl.conf for issues..."
-    
-    # Helper function to run commands with sudo when needed
-    run_cmd() {
-        if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
-            sudo "$@"
-        else
-            "$@"
-        fi
-    }
-    
+
     # Check for invalid configurations
-    if grep -q "wsl2\." /etc/wsl.conf || grep -q 'kernelCommandLine = "' /etc/wsl.conf; then
+    if grep -q "wsl2\\." /etc/wsl.conf || grep -q 'kernelCommandLine = "' /etc/wsl.conf; then
         echo "❌ Found invalid WSL configuration format"
         echo "Backing up current configuration to /etc/wsl.conf.backup"
         run_cmd cp /etc/wsl.conf /etc/wsl.conf.backup
-        
+
         echo "Creating corrected configuration..."
         run_cmd cp "$TEMPLATES_DIR/wsl.conf" /etc/wsl.conf
-        
+
         # Replace template variables
         run_cmd sed -i "s/\${USER}/$USER/g" /etc/wsl.conf
-        
+
         echo "✅ WSL configuration has been corrected"
         echo "⚠️  You need to restart WSL for changes to take effect:"
         echo "   wsl --shutdown"
@@ -51,21 +51,12 @@ if [[ -f /etc/wsl.conf ]]; then
         echo "✅ Existing WSL configuration appears valid"
     fi
 else
-    # Helper function to run commands with sudo when needed
-    run_cmd() {
-        if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
-            sudo "$@"
-        else
-            "$@"
-        fi
-    }
-    
     echo "Creating new WSL configuration..."
     run_cmd cp "$TEMPLATES_DIR/wsl.conf" /etc/wsl.conf
-    
+
     # Replace template variables
     run_cmd sed -i "s/\${USER}/$USER/g" /etc/wsl.conf
-    
+
     echo "✅ WSL configuration created"
     echo "⚠️  You need to restart WSL for changes to take effect:"
     echo "   wsl --shutdown"
@@ -74,3 +65,28 @@ fi
 
 echo "Current WSL configuration:"
 cat /etc/wsl.conf
+
+echo
+
+echo "Configuring WSL kernel tuning..."
+
+SYSCTL_CONF="/etc/sysctl.d/99-wsl-network-tuning.conf"
+SYSCTL_SETTINGS=$'net.core.rmem_max = 16777216\nnet.core.wmem_max = 16777216\nvm.vfs_cache_pressure = 1000000\n'
+
+if [[ -f "$SYSCTL_CONF" ]]; then
+    echo "- Existing $SYSCTL_CONF detected"
+else
+    echo "- Writing persistent sysctl configuration to $SYSCTL_CONF"
+    run_cmd mkdir -p /etc/sysctl.d
+    printf '%s\n' "$SYSCTL_SETTINGS" | run_cmd tee "$SYSCTL_CONF" >/dev/null
+fi
+
+echo "- Applying sysctl values now"
+while IFS='=' read -r key value; do
+    key="${key// /}"
+    value="${value// /}"
+    [[ -z "$key" ]] && continue
+    run_cmd sysctl -w "$key=$value"
+done <<< "$SYSCTL_SETTINGS"
+
+echo "✅ Kernel tuning applied. Values will persist across WSL restarts."
