@@ -33,6 +33,7 @@ $cmd_duration"""
 palette = 'adventure_time'
 
 add_newline = false
+command_timeout = 1500
 
 [os]
 disabled = false
