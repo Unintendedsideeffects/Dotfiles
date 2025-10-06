@@ -68,6 +68,62 @@ cat /etc/wsl.conf
 
 echo
 
+echo "Ensuring Windows executables retain execute permissions (fmask=000)..."
+fmask_updated=0
+if grep -Eq '^\s*options\s*=.*fmask=000' /etc/wsl.conf; then
+    echo "- fmask is already set to 000"
+else
+    echo "- Updating fmask to 000 in /etc/wsl.conf"
+    run_cmd python3 - <<'PY'
+import pathlib
+import re
+
+path = pathlib.Path("/etc/wsl.conf")
+text = path.read_text()
+
+pattern = re.compile(r'(^\s*options\s*=\s*")(.*?)("\s*$)', re.MULTILINE)
+
+def rebuild(value: str) -> str:
+    parts = [segment.strip() for segment in value.split(',') if segment.strip()]
+    parts = [segment for segment in parts if not segment.startswith('fmask=')]
+    parts.append('fmask=000')
+    return ','.join(parts)
+
+match = pattern.search(text)
+if match:
+    new_text = pattern.sub(lambda m: f"{m.group(1)}{rebuild(m.group(2))}{m.group(3)}", text, count=1)
+else:
+    lines = text.splitlines()
+    inserted = False
+    for index, line in enumerate(lines):
+        if line.strip().lower() == '[automount]':
+            insert_at = index + 1
+            while insert_at < len(lines) and lines[insert_at].strip() == '':
+                insert_at += 1
+            lines.insert(insert_at, 'options = "fmask=000"')
+            inserted = True
+            break
+    if not inserted:
+        lines.extend(['', '[automount]', 'options = "fmask=000"'])
+    new_text = '\n'.join(lines).rstrip('\n') + '\n'
+
+if new_text != text:
+    path.write_text(new_text)
+PY
+    fmask_updated=1
+fi
+
+if [[ $fmask_updated -eq 1 ]]; then
+    echo "✅ Updated WSL automount options to include fmask=000"
+    echo "⚠️  You need to restart WSL for changes to take effect:"
+    echo "   wsl --shutdown"
+    echo "   wsl"
+else
+    echo "✅ WSL automount options already include fmask=000"
+fi
+
+echo
+
 echo "Configuring WSL kernel tuning..."
 
 SYSCTL_CONF="/etc/sysctl.d/99-wsl-network-tuning.conf"
