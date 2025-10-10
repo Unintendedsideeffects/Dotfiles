@@ -86,6 +86,47 @@ run_cmd() {
   fi
 }
 
+ensure_zsh_default_shell() {
+  if ! command -v zsh >/dev/null 2>&1; then
+    echo "zsh not installed, skipping default shell update"
+    return
+  fi
+
+  if ! command -v chsh >/dev/null 2>&1; then
+    echo "chsh command not found, cannot set default shell"
+    return
+  fi
+
+  local target_user
+  target_user=${SUDO_USER:-$USER}
+
+  if [[ -z "$target_user" ]]; then
+    echo "Unable to determine target user for default shell update"
+    return
+  fi
+
+  local zsh_path current_shell
+  zsh_path="$(command -v zsh)"
+  current_shell="$(getent passwd "$target_user" | cut -d: -f7)"
+
+  if [[ "$current_shell" == "$zsh_path" ]]; then
+    echo "Default shell already set to zsh for $target_user"
+    return
+  fi
+
+  echo "Setting default shell to zsh for $target_user"
+
+  if [[ $EUID -eq 0 ]]; then
+    chsh -s "$zsh_path" "$target_user"
+  elif [[ "$USER" == "$target_user" ]]; then
+    chsh -s "$zsh_path"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo chsh -s "$zsh_path" "$target_user"
+  else
+    echo "Insufficient permissions to change shell for $target_user"
+  fi
+}
+
 install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")
   echo "Packages to install: ${#pkgs[@]}"
@@ -136,6 +177,8 @@ install_pkgs() {
       run_cmd apt-get install -y "${pkgs[@]}"
     fi
   fi
+
+  ensure_zsh_default_shell
 }
 
 install_pkgs

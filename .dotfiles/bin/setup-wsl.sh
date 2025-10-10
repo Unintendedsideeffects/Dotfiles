@@ -27,6 +27,34 @@ run_cmd() {
     fi
 }
 
+install_windows_nerd_fonts() {
+    echo
+    echo "Checking Windows host for Nerd Font installation..."
+
+    if ! command -v powershell.exe >/dev/null 2>&1; then
+        echo "- powershell.exe not found in PATH; skipping Windows font installation"
+        return
+    fi
+
+    if ! powershell.exe -NoProfile -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >/dev/null 2>&1; then
+        echo "- winget not available on Windows; install Nerd Fonts manually from https://www.nerdfonts.com"
+        return
+    fi
+
+    local fonts=("NerdFonts.JetBrainsMono" "NerdFonts.CaskaydiaCove")
+
+    for font in "${fonts[@]}"; do
+        echo "- Installing/updating $font via winget..."
+        if powershell.exe -NoProfile -Command "winget install --id $font --accept-package-agreements --accept-source-agreements" >/dev/null 2>&1; then
+            echo "  ✔ $font installed"
+        else
+            echo "  ⚠ Failed to install $font automatically. You may need to install it manually via Windows Terminal: winget install --id $font"
+        fi
+    done
+
+    echo "- Nerd Font installation attempt complete. Configure Windows Terminal to use one of the installed Nerd Fonts."
+}
+
 # Check if wsl.conf already exists and validate it
 if [[ -f /etc/wsl.conf ]]; then
     echo "Checking existing /etc/wsl.conf for issues..."
@@ -146,3 +174,5 @@ while IFS='=' read -r key value; do
 done <<< "$SYSCTL_SETTINGS"
 
 echo "✅ Kernel tuning applied. Values will persist across WSL restarts."
+
+install_windows_nerd_fonts
