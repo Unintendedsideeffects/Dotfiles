@@ -43,6 +43,6 @@ noto-fonts
 noto-fonts-emoji
 ttf-jetbrains-mono
 
-# WSL-specific additions
-wslu
+# WSL-specific additions (aur-prefixed entries require yay)
+aur:wslu
 base-devel
