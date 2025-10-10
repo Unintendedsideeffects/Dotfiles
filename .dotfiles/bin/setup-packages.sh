@@ -89,15 +89,44 @@ run_cmd() {
 install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")
   echo "Packages to install: ${#pkgs[@]}"
-  
+
   if [[ "$ENV" == "arch" ]]; then
+    pacman_pkgs=()
+    aur_pkgs=()
+
+    for pkg in "${pkgs[@]}"; do
+      if [[ "$pkg" == aur:* ]]; then
+        aur_pkgs+=("${pkg#aur:}")
+      else
+        pacman_pkgs+=("$pkg")
+      fi
+    done
+
     if [[ "$DRY" == true ]]; then
-      echo "[DRY-RUN] pacman -Syy --needed --noconfirm ${pkgs[*]}"
-    else
+      if ((${#pacman_pkgs[@]})); then
+        echo "[DRY-RUN] pacman -Syy --needed --noconfirm ${pacman_pkgs[*]}"
+      fi
+      if ((${#aur_pkgs[@]})); then
+        echo "[DRY-RUN] yay -S --needed --noconfirm ${aur_pkgs[*]}"
+      fi
+      return
+    fi
+
+    if ((${#pacman_pkgs[@]})); then
       echo "Refreshing package databases and mirrors..."
       run_cmd pacman -Syy --noconfirm
-      echo "Installing packages..."
-      run_cmd pacman -S --needed --noconfirm "${pkgs[@]}"
+      echo "Installing pacman packages..."
+      run_cmd pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
+    fi
+
+    if ((${#aur_pkgs[@]})); then
+      if ! command -v yay >/dev/null 2>&1; then
+        echo "⚠️  Skipping AUR packages (missing yay): ${aur_pkgs[*]}"
+        echo "    Run setup-aur.sh to install yay, then rerun this script."
+      else
+        echo "Installing AUR packages with yay..."
+        yay -S --needed --noconfirm "${aur_pkgs[@]}"
+      fi
     fi
   else
     if [[ "$DRY" == true ]]; then
