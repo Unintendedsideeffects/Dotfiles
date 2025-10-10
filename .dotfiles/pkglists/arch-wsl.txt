@@ -7,6 +7,7 @@ git
 gnupg
 pass
 zsh
+starship
 curl
 ripgrep
 fd
