@@ -152,13 +152,73 @@ prompt_packages() {
     return 1
   fi
   
-  # Install packages with error capture
-  if output=$("$script" "$package_type" 2>&1); then
+  # Install packages while streaming output
+  local tmpfile
+  tmpfile=$(mktemp)
+  : >"$tmpfile"
+  echo "Starting package installation ($package_type)..." >>"$tmpfile"
+
+  whip --title "Package Installation" --tailboxbg "$tmpfile" 20 80 &
+  local tail_pid=$!
+
+  local status=0
+  set +e
+  "$script" "$package_type" \
+    > >(tee -a "$tmpfile") \
+    2> >(tee -a "$tmpfile" >&2)
+  status=$?
+  set -e
+
+  kill "$tail_pid" 2>/dev/null || true
+  wait "$tail_pid" 2>/dev/null || true
+
+  if [[ $status -eq 0 ]]; then
     whip --title "Package Installation" --msgbox "Package installation completed successfully!" 10 60
   else
-    # Display the actual error in a scrollable text box
+    local output
+    output=$(cat "$tmpfile")
     whip --title "Package Installation Failed" --scrolltext --msgbox "$output" 20 80
   fi
+
+  rm -f "$tmpfile"
+}
+
+prompt_validate() {
+  local script="$BIN_DIR/validate.sh"
+  if [[ ! -x "$script" ]]; then
+    whip --title "Validate Environment" --msgbox "Missing: $script" 10 70
+    return 1
+  fi
+
+  local tmpfile
+  tmpfile=$(mktemp)
+  : >"$tmpfile"
+  echo "Running environment validation..." >>"$tmpfile"
+
+  whip --title "Validate Environment" --tailboxbg "$tmpfile" 20 70 &
+  local tail_pid=$!
+
+  local status=0
+  set +e
+  "$script" \
+    > >(tee -a "$tmpfile") \
+    2> >(tee -a "$tmpfile" >&2)
+  status=$?
+  set -e
+
+  kill "$tail_pid" 2>/dev/null || true
+  wait "$tail_pid" 2>/dev/null || true
+
+  local output
+  output=$(cat "$tmpfile")
+
+  if [[ $status -eq 0 ]]; then
+    whip --title "Validation Results" --scrolltext --msgbox "$output" 20 70
+  else
+    whip --title "Validation Failed" --scrolltext --msgbox "$output" 20 70
+  fi
+
+  rm -f "$tmpfile"
 }
 
 prompt_wsl_setup() {
@@ -230,6 +290,7 @@ main_menu() {
   fi
   
   options+=("packages" "Install Packages" OFF)
+  options+=("validate" "Validate Environment" OFF)
   
   if is_wsl; then
     options+=("wsl_setup" "WSL Configuration Setup" OFF)
@@ -260,6 +321,8 @@ main_menu() {
         prompt_aur_setup ;;
       packages)
         prompt_packages ;;
+      validate)
+        prompt_validate ;;
       wsl_setup)
         prompt_wsl_setup ;;
       headless_gui)
