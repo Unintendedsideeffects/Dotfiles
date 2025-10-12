@@ -29,8 +29,8 @@ run_cmd() {
 }
 
 # Ensure we have git and base-devel
-echo "📦 Installing prerequisites..."
-run_cmd pacman -S --needed --noconfirm git base-devel
+echo "📦 Installing prerequisites (including ccache)..."
+run_cmd pacman -S --needed --noconfirm git base-devel ccache
 
 # Create temporary directory
 TMP_DIR=$(mktemp -d)
