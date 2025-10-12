@@ -26,6 +26,35 @@ elif command -v batcat >/dev/null 2>&1; then
   alias bat='batcat'
 fi
 
+# Copy bat output to the clipboard without decorations
+batclip() {
+  local -a bat_cmd copier
+
+  if command -v bat >/dev/null 2>&1; then
+    bat_cmd=(bat)
+  elif command -v batcat >/dev/null 2>&1; then
+    bat_cmd=(batcat)
+  else
+    print -u2 "batclip: bat is not installed"
+    return 1
+  fi
+
+  if command -v clip.exe >/dev/null 2>&1; then
+    copier=(clip.exe)
+  elif command -v wl-copy >/dev/null 2>&1; then
+    copier=(wl-copy)
+  elif command -v xclip >/dev/null 2>&1; then
+    copier=(xclip -selection clipboard)
+  elif command -v xsel >/dev/null 2>&1; then
+    copier=(xsel --clipboard --input)
+  else
+    print -u2 "batclip: no clipboard command available"
+    return 1
+  fi
+
+  "${bat_cmd[@]}" --style=plain --color=never --paging=never "$@" | "${copier[@]}"
+}
+
 if command -v fd >/dev/null 2>&1; then
   alias fd='fd'
 elif command -v fdfind >/dev/null 2>&1; then
