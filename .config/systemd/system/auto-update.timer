@@ -1,0 +1,10 @@
+[Unit]
+Description=Auto-update timer (runs at 2am daily)
+Requires=auto-update.service
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

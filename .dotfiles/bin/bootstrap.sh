@@ -7,49 +7,65 @@ set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIN_DIR="$DOTFILES_DIR/bin"
+LIB_DIR="$DOTFILES_DIR/lib"
 
-# --- Distro detection ---
-. /etc/os-release
-ID_LOWER="${ID,,}"
-ID_LIKE="${ID_LIKE:-}"
-ID_LIKE_LOWER="${ID_LIKE,,}"
+# shellcheck disable=SC1090
+source "$LIB_DIR/detect.sh"
 
-is_arch() {
-  [[ "$ID_LOWER" == "arch" || "$ID_LIKE_LOWER" == *"arch"* ]]
+# Track background processes and temp files for cleanup
+declare -a CLEANUP_PIDS=()
+declare -a CLEANUP_FILES=()
+
+# Cleanup handler
+cleanup_handler() {
+  local exit_code=$?
+
+  # Kill any background processes
+  for pid in "${CLEANUP_PIDS[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    fi
+  done
+
+  # Remove temp files
+  for file in "${CLEANUP_FILES[@]}"; do
+    [[ -f "$file" ]] && rm -f "$file"
+  done
+
+  exit "$exit_code"
 }
 
-is_debian_like() {
-  [[ "$ID_LOWER" == "debian" || "$ID_LOWER" == "ubuntu" || "$ID_LOWER" == "linuxmint" || "$ID_LOWER" == "raspbian" || "$ID_LOWER" == "pop" || "$ID_LOWER" == "kali" || "$ID_LOWER" == "parrot" || "$ID_LOWER" == "devuan" || "$ID_LOWER" == "neon" || "$ID_LOWER" == "zorin" || "$ID_LOWER" == "mx" || "$ID_LOWER" == "nitrux" || "$ID_LOWER" == "proxmox" || "$ID_LIKE_LOWER" == *"debian"* ]]
-}
+# Register cleanup handler
+trap cleanup_handler EXIT INT TERM
 
-is_wsl() {
-  # Multiple detection methods for better reliability
-  [[ -n "${WSL_DISTRO_NAME:-}" ]] || \
-  [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] || \
-  [[ -d /mnt/wsl ]] || \
-  ([[ -f /proc/version ]] && grep -qi "microsoft" /proc/version && grep -qi "wsl" /proc/version) || \
-  ([[ -r /proc/sys/kernel/osrelease ]] && grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null && grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null)
-}
+# --- Distro detection wrappers ---
+is_arch() { df_is_arch; }
 
-# --- Ensure TUI dependency ---
+is_debian_like() { df_is_debian_like; }
+
+is_wsl() { df_is_wsl; }
+
+# --- Helpers ---
 # Helper function to run commands with sudo when needed
-run_cmd() {
-  if [[ $EUID -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
+run_with_sudo_if_needed() {
+  if [[ $EUID -ne 0 ]]; then
     sudo "$@"
   else
     "$@"
   fi
 }
 
+# --- Ensure TUI dependency ---
 ensure_tui() {
   if command -v whiptail >/dev/null 2>&1; then return 0; fi
   if command -v dialog >/dev/null 2>&1; then return 0; fi
 
   if is_arch; then
-    run_cmd pacman -Sy --noconfirm --needed dialog
+    run_with_sudo_if_needed pacman -Sy --noconfirm --needed dialog
   elif is_debian_like; then
-    run_cmd apt-get update -y
-    run_cmd apt-get install -y whiptail || run_cmd apt-get install -y dialog
+    run_with_sudo_if_needed apt-get update -y
+    run_with_sudo_if_needed apt-get install -y whiptail || run_with_sudo_if_needed apt-get install -y dialog
   fi
 }
 
@@ -61,20 +77,14 @@ whip() {
   fi
 }
 
-# --- Helpers ---
-run_with_sudo_if_needed() {
-  if [[ $EUID -ne 0 ]]; then 
-    sudo "$@"
-  else 
-    "$@"
-  fi
-}
-
 # --- Debian/Ubuntu: Headless Obsidian (Xvfb/Openbox/VNC) ---
 prompt_headless_obsidian() {
   local script="$BIN_DIR/bootstrap-headless-obsidian.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "Headless Obsidian" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "Headless Obsidian" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Headless Obsidian" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
   "$script"
@@ -87,15 +97,19 @@ prompt_aur_setup() {
   fi
 
   local script="$BIN_DIR/setup-aur.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "AUR Setup" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "AUR Setup" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "AUR Setup" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
 
   if whip --title "AUR Setup" --yesno "Install yay AUR helper?\n\nThis enables installation of packages from the Arch User Repository (AUR).\n\nRequired for many development tools and applications." 15 70; then
     # Create a temporary file for output
     local tmpfile=$(mktemp)
-    
+    CLEANUP_FILES+=("$tmpfile")
+
     # Run script and capture output
     if "$script" >"$tmpfile" 2>&1; then
       whip --title "AUR Setup" --msgbox "yay AUR helper installed successfully!\n\nYou can now install AUR packages with:\n  yay -S package-name" 12 60
@@ -104,7 +118,7 @@ prompt_aur_setup() {
       error_output=$(cat "$tmpfile")
       whip --title "AUR Setup Failed" --scrolltext --msgbox "$error_output" 20 80
     fi
-    
+
     # Cleanup
     rm -f "$tmpfile"
   fi
@@ -112,8 +126,11 @@ prompt_aur_setup() {
 
 prompt_packages() {
   local script="$BIN_DIR/setup-packages.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "Package Installation" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "Package Installation" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Package Installation" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
 
@@ -155,21 +172,35 @@ prompt_packages() {
   # Install packages while streaming output
   local tmpfile
   tmpfile=$(mktemp)
+  CLEANUP_FILES+=("$tmpfile")
   : >"$tmpfile"
   echo "Starting package installation ($package_type)..." >>"$tmpfile"
 
   whip --title "Package Installation" --tailboxbg "$tmpfile" 20 80 &
   local tail_pid=$!
+  CLEANUP_PIDS+=("$tail_pid")
 
   local status=0
-  set +e
-  "$script" "$package_type" \
-    > >(tee -a "$tmpfile") \
-    2> >(tee -a "$tmpfile" >&2)
-  status=$?
-  set -e
+  # Run script and capture all output to tmpfile
+  # Using exec redirection to avoid process substitution issues
+  {
+    "$script" "$package_type" 2>&1
+    echo "$?" > "${tmpfile}.status"
+  } >> "$tmpfile" || true
 
-  kill "$tail_pid" 2>/dev/null || true
+  status=$(cat "${tmpfile}.status" 2>/dev/null || echo "1")
+  rm -f "${tmpfile}.status"
+  CLEANUP_FILES+=("${tmpfile}.status")
+
+  # Kill background process with timeout
+  if kill "$tail_pid" 2>/dev/null; then
+    local timeout=5
+    while kill -0 "$tail_pid" 2>/dev/null && ((timeout > 0)); do
+      sleep 0.1
+      ((timeout--))
+    done
+    kill -9 "$tail_pid" 2>/dev/null || true
+  fi
   wait "$tail_pid" 2>/dev/null || true
 
   if [[ $status -eq 0 ]]; then
@@ -185,28 +216,45 @@ prompt_packages() {
 
 prompt_validate() {
   local script="$BIN_DIR/validate.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "Validate Environment" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "Validate Environment" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Validate Environment" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
 
   local tmpfile
   tmpfile=$(mktemp)
+  CLEANUP_FILES+=("$tmpfile")
   : >"$tmpfile"
   echo "Running environment validation..." >>"$tmpfile"
 
   whip --title "Validate Environment" --tailboxbg "$tmpfile" 20 70 &
   local tail_pid=$!
+  CLEANUP_PIDS+=("$tail_pid")
 
   local status=0
-  set +e
-  "$script" \
-    > >(tee -a "$tmpfile") \
-    2> >(tee -a "$tmpfile" >&2)
-  status=$?
-  set -e
+  # Run script and capture all output to tmpfile
+  # Using exec redirection to avoid process substitution issues
+  {
+    "$script" 2>&1
+    echo "$?" > "${tmpfile}.status"
+  } >> "$tmpfile" || true
 
-  kill "$tail_pid" 2>/dev/null || true
+  status=$(cat "${tmpfile}.status" 2>/dev/null || echo "1")
+  rm -f "${tmpfile}.status"
+  CLEANUP_FILES+=("${tmpfile}.status")
+
+  # Kill background process with timeout
+  if kill "$tail_pid" 2>/dev/null; then
+    local timeout=5
+    while kill -0 "$tail_pid" 2>/dev/null && ((timeout > 0)); do
+      sleep 0.1
+      ((timeout--))
+    done
+    kill -9 "$tail_pid" 2>/dev/null || true
+  fi
   wait "$tail_pid" 2>/dev/null || true
 
   local output
@@ -228,8 +276,11 @@ prompt_wsl_setup() {
   fi
 
   local script="$BIN_DIR/setup-wsl.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "WSL Setup" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "WSL Setup" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "WSL Setup" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
 
@@ -262,13 +313,42 @@ prompt_headless_gui() {
   if whip --title "Headless GUI" --yesno "Enable VNC server?" 10 60; then vnc_enabled=true; else vnc_enabled=false; fi
   if whip --title "Headless GUI" --yesno "Install and run Obsidian?" 10 60; then obsidian_enabled=true; else obsidian_enabled=false; fi
 
-  display_num=$(whip --title "Headless GUI" --inputbox "X display number (format :N)" 10 60 ":5" 3>&1 1>&2 2>&3) || return 1
-  vnc_port=$(whip --title "Headless GUI" --inputbox "VNC port" 10 60 "5900" 3>&1 1>&2 2>&3) || return 1
-  target_user=$(whip --title "Headless GUI" --inputbox "Target user" 10 60 "$default_user" 3>&1 1>&2 2>&3) || return 1
+  # Validate display number
+  while true; do
+    display_num=$(whip --title "Headless GUI" --inputbox "X display number (format :N)" 10 60 ":5" 3>&1 1>&2 2>&3) || return 1
+    if [[ "$display_num" =~ ^:[0-9]+$ ]]; then
+      break
+    else
+      whip --title "Invalid Input" --msgbox "Display number must be in format :N where N is a number (e.g., :5)" 10 60
+    fi
+  done
+
+  # Validate VNC port
+  while true; do
+    vnc_port=$(whip --title "Headless GUI" --inputbox "VNC port" 10 60 "5900" 3>&1 1>&2 2>&3) || return 1
+    if [[ "$vnc_port" =~ ^[0-9]+$ ]] && ((vnc_port >= 1 && vnc_port <= 65535)); then
+      break
+    else
+      whip --title "Invalid Input" --msgbox "VNC port must be a number between 1 and 65535" 10 60
+    fi
+  done
+
+  # Validate target user
+  while true; do
+    target_user=$(whip --title "Headless GUI" --inputbox "Target user" 10 60 "$default_user" 3>&1 1>&2 2>&3) || return 1
+    if [[ "$target_user" =~ ^[a-z_][a-z0-9_-]*\$?$ ]] && id "$target_user" >/dev/null 2>&1; then
+      break
+    else
+      whip --title "Invalid Input" --msgbox "User '$target_user' does not exist or is invalid" 10 60
+    fi
+  done
 
   local script="$BIN_DIR/setup-headless-gui.sh"
-  if [[ ! -x "$script" ]]; then
-    whip --title "Headless GUI" --msgbox "Missing: $script" 10 70
+  if [[ ! -f "$script" ]]; then
+    whip --title "Headless GUI" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Headless GUI" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
     return 1
   fi
 
@@ -313,9 +393,12 @@ main_menu() {
     "${options[@]}" \
     3>&1 1>&2 2>&3) || exit 1
 
-  # Separate-output not used; parse quoted selections
-  for sel in $selections; do
-    sel=${sel//\"/}
+  # Parse whiptail's space-separated quoted output into array
+  local selection_array=()
+  eval "selection_array=($selections)"
+
+  # Process each selection
+  for sel in "${selection_array[@]}"; do
     case "$sel" in
       aur_setup)
         prompt_aur_setup ;;
