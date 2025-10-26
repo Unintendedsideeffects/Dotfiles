@@ -3,21 +3,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+LIB_DIR="$ROOT_DIR/.dotfiles/lib"
+
+# shellcheck disable=SC1090
+source "$LIB_DIR/detect.sh"
 
 DRY=false
 if [[ "${1:-}" == "--dry-run" ]]; then DRY=true; fi
 
-OS_ID=""; OS_LIKE=""; PRETTY=""
-if [[ -r /etc/os-release ]]; then . /etc/os-release; OS_ID=${ID:-}; OS_LIKE=${ID_LIKE:-}; PRETTY=${PRETTY_NAME:-}; fi
-
-ENV=""
-case "$OS_ID" in
-  arch) ENV="arch" ;; 
-  debian|ubuntu) ENV="debian"; ;;
-  *) [[ "$OS_LIKE" == *debian* ]] && ENV="debian" || ENV="" ;;
-esac
-
-if [[ -z "$ENV" ]]; then echo "Unsupported OS"; exit 1; fi
+ENV="$(df_package_family || true)"
+if [[ -z "$ENV" ]]; then echo "Unsupported OS $(df_os_id)"; exit 1; fi
 
 PKGLIST="$ROOT_DIR/.dotfiles/pkglists/${ENV}-xforward.txt"
 if [[ ! -f "$PKGLIST" ]]; then echo "Missing list: $PKGLIST"; exit 1; fi

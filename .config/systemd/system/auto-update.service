@@ -1,0 +1,9 @@
+[Unit]
+Description=Automatic system update and reboot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/auto-update.sh
+User=root
