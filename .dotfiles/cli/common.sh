@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # XDG Base Directory Specification
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
