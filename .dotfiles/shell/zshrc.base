@@ -9,12 +9,18 @@ SAVEHIST=10000
 # Set UTF-8 locale to properly handle Unicode characters (especially powerline glyphs)
 # This fixes cursor positioning issues with ambiguous-width characters in SSH sessions
 if [[ -z "$LANG" ]] || [[ "$LANG" == "POSIX" ]] || [[ "$LANG" == "C" ]]; then
-  if locale -a 2>/dev/null | grep -qi "en_US.utf8\|en_US.UTF-8"; then
-    export LANG="en_US.UTF-8"
-    export LC_ALL="en_US.UTF-8"
-  elif locale -a 2>/dev/null | grep -qi "C.utf8\|C.UTF-8"; then
-    export LANG="C.UTF-8"
-    export LC_ALL="C.UTF-8"
+  # Capture the actual locale name that exists on the system
+  local utf8_locale=$(locale -a 2>/dev/null | grep -i "^en_US\.utf" | head -1)
+  if [[ -n "$utf8_locale" ]]; then
+    export LANG="$utf8_locale"
+    export LC_ALL="$utf8_locale"
+  else
+    # Fallback to C.UTF-8 or C.utf8
+    local c_utf8_locale=$(locale -a 2>/dev/null | grep -i "^C\.utf" | head -1)
+    if [[ -n "$c_utf8_locale" ]]; then
+      export LANG="$c_utf8_locale"
+      export LC_ALL="$c_utf8_locale"
+    fi
   fi
 fi
 
