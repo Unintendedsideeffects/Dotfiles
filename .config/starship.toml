@@ -9,10 +9,26 @@ $directory\
 [ ](fg:peach)\
 $character"""
 
-# Disable right prompt to fix SSH column width issues
-# Powerline separators (U+E0B0, U+E0B4, U+E0B6) have ambiguous East Asian Width
-# which causes cursor positioning problems in SSH sessions
-right_format = ""
+right_format = """
+[ ](yellow)\
+$git_branch\
+$git_status\
+[ ](fg:yellow bg:green)\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+[ ](fg:green bg:sapphire)\
+$conda\
+[](fg:sapphire bg:lavender)\
+$time\
+[](fg:lavender)\
+$cmd_duration"""
 
 palette = 'adventure_time'
 
