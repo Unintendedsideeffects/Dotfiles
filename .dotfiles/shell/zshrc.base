@@ -6,6 +6,27 @@ HISTFILE="$HOME/.zsh_history"
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Set UTF-8 locale to properly handle Unicode characters (especially powerline glyphs)
+# This fixes cursor positioning issues with ambiguous-width characters in SSH sessions
+# Using anonymous function to keep variables locally scoped
+() {
+  if [[ -z "$LANG" ]] || [[ "$LANG" == "POSIX" ]] || [[ "$LANG" == "C" ]]; then
+    # Capture the actual locale name that exists on the system
+    local utf8_locale=$(locale -a 2>/dev/null | grep -i "^en_US\.utf" | head -1)
+    if [[ -n "$utf8_locale" ]]; then
+      export LANG="$utf8_locale"
+      export LC_CTYPE="$utf8_locale"  # Character classification for width calculations
+    else
+      # Fallback to C.UTF-8 or C.utf8
+      local c_utf8_locale=$(locale -a 2>/dev/null | grep -i "^C\.utf" | head -1)
+      if [[ -n "$c_utf8_locale" ]]; then
+        export LANG="$c_utf8_locale"
+        export LC_CTYPE="$c_utf8_locale"  # Character classification for width calculations
+      fi
+    fi
+  fi
+}
+
 if command -v nvim >/dev/null 2>&1; then
   export EDITOR="nvim"
 elif command -v vim >/dev/null 2>&1; then
