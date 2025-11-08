@@ -1,2 +1,6 @@
 background = 000000
 
+# SSH shell integration: automatically handle TERM for SSH sessions
+# ssh-env: Sets TERM=xterm-256color for SSH to avoid terminfo issues
+# ssh-terminfo: Installs ghostty terminfo on remote hosts
+shell-integration-features = ssh-env,ssh-terminfo
