@@ -270,42 +270,56 @@ prompt_validate() {
 }
 
 prompt_git_config() {
-  # Try to get git config from environment or existing git config
-  local git_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
-  local git_email="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || echo "")}"
+  # Try to get git config from environment, existing git config, or .gitconfig.local
+  local default_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
+  local default_email="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || echo "")}"
 
-  # Check if .gitconfig.local already exists
+  # Check if .gitconfig.local already exists and use those values as defaults
   if [[ -f "$HOME/.gitconfig.local" ]]; then
     local existing_name
     local existing_email
     existing_name=$(git config --file "$HOME/.gitconfig.local" user.name 2>/dev/null || echo "")
     existing_email=$(git config --file "$HOME/.gitconfig.local" user.email 2>/dev/null || echo "")
 
-    if [[ -n "$existing_name" ]] && [[ -n "$existing_email" ]]; then
-      if ! whip --title "Git Configuration" --yesno "Git configuration already exists:\n\nName: $existing_name\nEmail: $existing_email\n\nDo you want to reconfigure?" 12 70; then
-        return 0
-      fi
-      git_username="$existing_name"
-      git_email="$existing_email"
+    if [[ -n "$existing_name" ]]; then
+      default_username="$existing_name"
+    fi
+    if [[ -n "$existing_email" ]]; then
+      default_email="$existing_email"
     fi
   fi
 
-  # Prompt for username if not set
+  # Always show TUI prompts with pre-populated defaults
+  local git_username
+  git_username=$(whip --title "Git Configuration" --inputbox "Enter your Git username:" 10 60 "$default_username" 3>&1 1>&2 2>&3)
+  if [[ $? -ne 0 ]]; then
+    whip --title "Git Configuration" --msgbox "Git configuration cancelled." 10 60
+    return 1
+  fi
+
+  # Trim whitespace and validate
+  git_username="${git_username#"${git_username%%[![:space:]]*}"}"
+  git_username="${git_username%"${git_username##*[![:space:]]}"}"
+
   if [[ -z "$git_username" ]]; then
-    git_username=$(whip --title "Git Configuration" --inputbox "Enter your Git username:" 10 60 "" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]] || [[ -z "$git_username" ]]; then
-      whip --title "Git Configuration" --msgbox "Git configuration cancelled or username empty." 10 60
-      return 1
-    fi
+    whip --title "Git Configuration" --msgbox "Git username cannot be empty." 10 60
+    return 1
   fi
 
-  # Prompt for email if not set
+  local git_email
+  git_email=$(whip --title "Git Configuration" --inputbox "Enter your Git email:" 10 60 "$default_email" 3>&1 1>&2 2>&3)
+  if [[ $? -ne 0 ]]; then
+    whip --title "Git Configuration" --msgbox "Git configuration cancelled." 10 60
+    return 1
+  fi
+
+  # Trim whitespace and validate
+  git_email="${git_email#"${git_email%%[![:space:]]*}"}"
+  git_email="${git_email%"${git_email##*[![:space:]]}"}"
+
   if [[ -z "$git_email" ]]; then
-    git_email=$(whip --title "Git Configuration" --inputbox "Enter your Git email:" 10 60 "" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]] || [[ -z "$git_email" ]]; then
-      whip --title "Git Configuration" --msgbox "Git configuration cancelled or email empty." 10 60
-      return 1
-    fi
+    whip --title "Git Configuration" --msgbox "Git email cannot be empty." 10 60
+    return 1
   fi
 
   # Confirm configuration
@@ -332,12 +346,7 @@ prompt_git_config() {
 # Optional: Add any other local overrides here
 EOF
 
-  if [[ $? -eq 0 ]]; then
-    whip --title "Git Configuration" --msgbox "Git configuration saved to ~/.gitconfig.local\n\nName: $git_username\nEmail: $git_email" 12 60
-  else
-    whip --title "Git Configuration" --msgbox "Failed to save git configuration." 10 60
-    return 1
-  fi
+  whip --title "Git Configuration" --msgbox "Git configuration saved to ~/.gitconfig.local\n\nName: $git_username\nEmail: $git_email" 12 60
 }
 
 prompt_wsl_setup() {
