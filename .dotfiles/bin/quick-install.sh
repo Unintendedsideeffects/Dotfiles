@@ -47,6 +47,65 @@ chmod +x "$HOME/.dotfiles/bin/"* "$HOME/.dotfiles/shell/"* 2>/dev/null || true
 # Source the config to get the config alias
 source "$HOME/.dotfiles/cli/config.sh"
 
+# Configure git user settings
+echo ""
+echo "⚙️  Git Configuration"
+
+# Try to get git config from environment or existing git config
+git_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
+git_email="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || echo "")}"
+
+# Only prompt if not already set
+if [[ -z "$git_username" ]]; then
+    echo "Please enter your git user information:"
+    echo ""
+    read -p "Git username: " git_username
+    while [[ -z "$git_username" ]]; do
+        echo "Username cannot be empty."
+        read -p "Git username: " git_username
+    done
+else
+    echo "Using git username from environment: $git_username"
+fi
+
+if [[ -z "$git_email" ]]; then
+    if [[ -z "$GIT_USER_NAME" ]]; then
+        echo "Please enter your git user information:"
+        echo ""
+    fi
+    read -p "Git email: " git_email
+    while [[ -z "$git_email" ]]; do
+        echo "Email cannot be empty."
+        read -p "Git email: " git_email
+    done
+else
+    echo "Using git email from environment: $git_email"
+fi
+
+# Create .gitconfig.local with user settings
+echo ""
+echo "📝 Creating ~/.gitconfig.local..."
+cat > "$HOME/.gitconfig.local" <<EOF
+# Local Git Configuration
+# This file was automatically created during dotfiles setup
+# Edit this file to update your git user information
+
+[user]
+	name = $git_username
+	email = $git_email
+
+# Optional: Configure GPG signing
+# [commit]
+# 	gpgsign = true
+# [user]
+# 	signingkey = YOUR_GPG_KEY_ID
+
+# Optional: Add any other local overrides here
+EOF
+
+echo "✅ Git configuration saved to ~/.gitconfig.local"
+echo ""
+
 # Install shell configuration
 echo "🐚 Installing shell configuration..."
 "$HOME/.dotfiles/shell/install.sh"
