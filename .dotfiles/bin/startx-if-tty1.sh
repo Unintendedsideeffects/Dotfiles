@@ -5,13 +5,19 @@
 set -euo pipefail
 
 if [[ -n "${DISPLAY:-}" ]]; then
-  echo "DISPLAY already set; refusing to start another X session." >&2
   exit 0
 fi
 
 if [[ "${XDG_VTNR:-}" != "1" ]]; then
-  echo "Not on tty1; stop to avoid taking over other consoles." >&2
   exit 0
 fi
 
-exec startx "$@"
+if ! command -v startx >/dev/null 2>&1; then
+  echo "startx command not found in PATH." >&2
+  exit 1
+fi
+
+if ! startx "$@"; then
+  echo "startx exited with a non-zero status." >&2
+  exit 1
+fi
