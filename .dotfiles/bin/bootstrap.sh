@@ -214,6 +214,82 @@ prompt_packages() {
   rm -f "$tmpfile"
 }
 
+prompt_gui_autologin() {
+  local script="$BIN_DIR/gui-autostart-config.sh"
+  local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/gui-autostart.conf"
+
+  if [[ ! -f "$script" ]]; then
+    whip --title "GUI Autologin" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "GUI Autologin" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
+    return 1
+  fi
+
+  local current_backend="x11"
+  local current_command="sway"
+  local enabled="0"
+
+  if [[ -f "$config_file" ]]; then
+    # shellcheck disable=SC1090
+    source "$config_file"
+    enabled="${AUTOLOGIN_ENABLED:-0}"
+    current_backend="${SESSION_TYPE:-$current_backend}"
+    current_command="${SESSION_COMMAND:-$current_command}"
+  fi
+
+  local disable_default="OFF"
+  local x11_default="OFF"
+  local wayland_default="OFF"
+
+  if [[ "$enabled" != "1" ]]; then
+    disable_default="ON"
+  elif [[ "$current_backend" == "x11" ]]; then
+    x11_default="ON"
+  elif [[ "$current_backend" == "wayland" ]]; then
+    wayland_default="ON"
+  fi
+
+  local choice
+  choice=$(whip --title "GUI Autologin" --radiolist "Choose how (or if) to auto-start a GUI session on tty1" 16 78 3 \
+    disable "Leave CLI login only (no GUI autostart)" "$disable_default" \
+    x11 "Start X11 via startx on tty1" "$x11_default" \
+    wayland "Run a Wayland compositor command (e.g., sway)" "$wayland_default" \
+    3>&1 1>&2 2>&3) || return 1
+
+  local output
+
+  case "$choice" in
+    disable)
+      output=$("$script" disable 2>&1) || {
+        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        return 1
+      }
+      whip --title "GUI Autologin" --msgbox "GUI autostart disabled.\n\nYou will stay in the CLI unless you start a GUI manually." 12 70
+      ;;
+    x11)
+      output=$("$script" enable --backend x11 2>&1) || {
+        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        return 1
+      }
+      whip --title "GUI Autologin" --msgbox "Configured startx to run automatically on tty1.\n\nIf X11 exits or fails you will drop back to the shell." 12 70
+      ;;
+    wayland)
+      local cmd_input
+      cmd_input=$(whip --title "GUI Autologin" --inputbox "Wayland launch command\n(e.g., sway, dbus-run-session hyprland)" 12 75 "$current_command" 3>&1 1>&2 2>&3) || return 1
+      if [[ -z "$cmd_input" ]]; then
+        whip --title "GUI Autologin" --msgbox "Wayland command cannot be empty." 10 70
+        return 1
+      fi
+      output=$("$script" enable --backend wayland --command "$cmd_input" 2>&1) || {
+        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        return 1
+      }
+      whip --title "GUI Autologin" --msgbox "Configured Wayland autostart.\n\nIf the compositor exits you will return to the shell." 12 70
+      ;;
+  esac
+}
+
 prompt_validate() {
   local script="$BIN_DIR/validate.sh"
   if [[ ! -f "$script" ]]; then
@@ -370,6 +446,7 @@ main_menu() {
   fi
   
   options+=("packages" "Install Packages" OFF)
+  options+=("gui_autologin" "Configure GUI autostart (X11/Wayland)" OFF)
   options+=("validate" "Validate Environment" OFF)
   
   if is_wsl; then
@@ -404,6 +481,8 @@ main_menu() {
         prompt_aur_setup ;;
       packages)
         prompt_packages ;;
+      gui_autologin)
+        prompt_gui_autologin ;;
       validate)
         prompt_validate ;;
       wsl_setup)
