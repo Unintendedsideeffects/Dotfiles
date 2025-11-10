@@ -1,8 +1,3 @@
-[user]
-	# Set your name and email
-	# name = Your Name
-	# email = your.email@example.com
-
 [core]
 	editor = nvim
 	autocrlf = input
@@ -28,4 +23,7 @@
 	conflictstyle = diff3
 
 [include]
+	# Include custom git aliases
 	path = ~/.gitconfig-aliases
+	# Include local user-specific configuration (not tracked in git)
+	path = ~/.gitconfig.local

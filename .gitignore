@@ -46,6 +46,7 @@ __pycache__/
 *.local
 *.local.*
 !*.local.example
+!.gitconfig.local.example
 
 # Cache directories
 .cache/
