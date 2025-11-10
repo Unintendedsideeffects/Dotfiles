@@ -48,7 +48,7 @@ config() {
         fi
 
         # Check for the specific "overwritten by" error
-        if echo "$pull_output" | grep -q "overwritten by"; then
+        if echo "$pull_output" | command grep -q "overwritten by"; then
             echo "Pull failed due to local changes. Backing up conflicting files."
 
             # Create a timestamped backup directory
@@ -60,8 +60,9 @@ config() {
             echo "Backup directory created: $backup_dir"
 
             # Extract the list of conflicting files from the git output
+            # Files appear after "overwritten by merge:" line, indented with whitespace
             local conflicting_files
-            conflicting_files=$(echo "$pull_output" | grep -E '^\s+[^\s]' | awk '{print $1}')
+            conflicting_files=$(echo "$pull_output" | command grep -E '^\s+\.' | awk '{print $1}')
 
             if [[ -z "$conflicting_files" ]]; then
                 echo "Error: Could not parse conflicting files from git output."
@@ -124,7 +125,7 @@ config() {
 }
 
 safe_checkout() {
-  if config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | while read -r f; do mv "$HOME/$f" "$HOME/$f.backup"; done; then
+  if config checkout 2>&1 | command grep -E "\s+\." | awk '{print $1}' | while read -r f; do mv "$HOME/$f" "$HOME/$f.backup"; done; then
     :
   fi
   config checkout
