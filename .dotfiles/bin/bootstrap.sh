@@ -269,6 +269,77 @@ prompt_validate() {
   rm -f "$tmpfile"
 }
 
+prompt_git_config() {
+  # Try to get git config from environment or existing git config
+  local git_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
+  local git_email="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || echo "")}"
+
+  # Check if .gitconfig.local already exists
+  if [[ -f "$HOME/.gitconfig.local" ]]; then
+    local existing_name
+    local existing_email
+    existing_name=$(git config --file "$HOME/.gitconfig.local" user.name 2>/dev/null || echo "")
+    existing_email=$(git config --file "$HOME/.gitconfig.local" user.email 2>/dev/null || echo "")
+
+    if [[ -n "$existing_name" ]] && [[ -n "$existing_email" ]]; then
+      if ! whip --title "Git Configuration" --yesno "Git configuration already exists:\n\nName: $existing_name\nEmail: $existing_email\n\nDo you want to reconfigure?" 12 70; then
+        return 0
+      fi
+      git_username="$existing_name"
+      git_email="$existing_email"
+    fi
+  fi
+
+  # Prompt for username if not set
+  if [[ -z "$git_username" ]]; then
+    git_username=$(whip --title "Git Configuration" --inputbox "Enter your Git username:" 10 60 "" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]] || [[ -z "$git_username" ]]; then
+      whip --title "Git Configuration" --msgbox "Git configuration cancelled or username empty." 10 60
+      return 1
+    fi
+  fi
+
+  # Prompt for email if not set
+  if [[ -z "$git_email" ]]; then
+    git_email=$(whip --title "Git Configuration" --inputbox "Enter your Git email:" 10 60 "" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]] || [[ -z "$git_email" ]]; then
+      whip --title "Git Configuration" --msgbox "Git configuration cancelled or email empty." 10 60
+      return 1
+    fi
+  fi
+
+  # Confirm configuration
+  if ! whip --title "Git Configuration" --yesno "Save the following configuration?\n\nName: $git_username\nEmail: $git_email" 12 70; then
+    return 0
+  fi
+
+  # Create .gitconfig.local
+  cat > "$HOME/.gitconfig.local" <<EOF
+# Local Git Configuration
+# This file was automatically created during dotfiles setup
+# Edit this file to update your git user information
+
+[user]
+	name = $git_username
+	email = $git_email
+
+# Optional: Configure GPG signing
+# [commit]
+# 	gpgsign = true
+# [user]
+# 	signingkey = YOUR_GPG_KEY_ID
+
+# Optional: Add any other local overrides here
+EOF
+
+  if [[ $? -eq 0 ]]; then
+    whip --title "Git Configuration" --msgbox "Git configuration saved to ~/.gitconfig.local\n\nName: $git_username\nEmail: $git_email" 12 60
+  else
+    whip --title "Git Configuration" --msgbox "Failed to save git configuration." 10 60
+    return 1
+  fi
+}
+
 prompt_wsl_setup() {
   if ! is_wsl; then
     whip --title "WSL Setup" --msgbox "WSL setup is only available in WSL environments." 10 70
@@ -365,10 +436,12 @@ main_menu() {
   local options=()
 
   # Dynamically include options based on available scripts and distro
+  options+=("git_config" "Configure Git User Settings" ON)
+
   if is_arch; then
     options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
   fi
-  
+
   options+=("packages" "Install Packages" OFF)
   options+=("validate" "Validate Environment" OFF)
   
@@ -400,6 +473,8 @@ main_menu() {
   # Process each selection
   for sel in "${selection_array[@]}"; do
     case "$sel" in
+      git_config)
+        prompt_git_config ;;
       aur_setup)
         prompt_aur_setup ;;
       packages)
