@@ -46,6 +46,7 @@ __pycache__/
 *.local
 *.local.*
 !*.local.example
+!.gitconfig.local.example
 
 # Cache directories
 .cache/
@@ -63,7 +64,6 @@ powerlevel10k/
 
 
 ## TODOS
-.gitconfig
 *TODO*
 
 # Issue tracking (local)

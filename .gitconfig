@@ -1,0 +1,29 @@
+[core]
+	editor = nvim
+	autocrlf = input
+	excludesfile = ~/.gitignore_global
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = false
+
+[push]
+	default = simple
+	autoSetupRemote = true
+
+[color]
+	ui = auto
+
+[diff]
+	colorMoved = zebra
+
+[merge]
+	conflictstyle = diff3
+
+[include]
+	# Include custom git aliases
+	path = ~/.gitconfig-aliases
+	# Include local user-specific configuration (not tracked in git)
+	path = ~/.gitconfig.local
