@@ -68,3 +68,9 @@ powerlevel10k/
 
 # Issue tracking (local)
 issues/
+
+# Nix
+result
+result-*
+.direnv/
+.envrc.cache

@@ -2,6 +2,40 @@
 
 Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Proxmox, and WSL2.
 
+## 🎉 NEW: Nix-based Configuration Available!
+
+This repository now supports **declarative configuration management** using Nix and Home Manager! This provides:
+
+- ✨ **Reproducible environments** - Same config, same result, every time
+- 🔄 **Atomic updates** - Changes are applied atomically and can be rolled back
+- 📦 **No dependency conflicts** - Nix manages dependencies independently
+- 🎯 **Multi-environment support** - Easy switching between different configurations
+- 🚀 **Modern package management** - Access to 80,000+ packages
+
+### Quick Start with Nix
+
+```bash
+# Clone the repository
+git clone https://github.com/Unintendedsideeffects/Dotfiles.git ~/Dotfiles
+cd ~/Dotfiles
+
+# Run the installer (will install Nix if needed)
+./install-nix.sh
+
+# Or manually install Home Manager
+nix run home-manager/master -- switch --flake ~/Dotfiles#arch    # For Arch Linux
+nix run home-manager/master -- switch --flake ~/Dotfiles#debian  # For Debian/Ubuntu
+nix run home-manager/master -- switch --flake ~/Dotfiles#wsl     # For WSL
+```
+
+📖 **[Read the full Nix migration guide](NIX_MIGRATION.md)** for detailed instructions and documentation.
+
+---
+
+## Traditional Setup (Original Method)
+
+You can still use the traditional installation method below if you prefer not to use Nix.
+
 ## Features
 
 - **Universal**: Works on Arch, Debian/Ubuntu, Proxmox, and WSL2
