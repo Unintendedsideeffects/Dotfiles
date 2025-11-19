@@ -26,4 +26,4 @@
 			fi; \
 		done; \
 		cd \"$start_dir\"; \
-	}; git-all \"$@\""
+	}; git-all"
