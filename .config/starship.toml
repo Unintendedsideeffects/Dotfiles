@@ -10,10 +10,10 @@ $directory\
 $character"""
 
 right_format = """
-[ ](yellow)\
+[](yellow)\
 $git_branch\
 $git_status\
-[ ](fg:yellow bg:green)\
+[](fg:yellow bg:green)\
 $c\
 $rust\
 $golang\
@@ -23,7 +23,7 @@ $java\
 $kotlin\
 $haskell\
 $python\
-[ ](fg:green bg:sapphire)\
+[](fg:green bg:sapphire)\
 $conda\
 [](fg:sapphire bg:lavender)\
 $time\
