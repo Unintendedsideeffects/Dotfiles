@@ -1,0 +1,15 @@
+# Local Git Configuration
+# Copy this file to ~/.gitconfig.local and update with your information
+# This file is not tracked in git, keeping your personal info private
+
+[user]
+	name = Your Name
+	email = your.email@example.com
+
+# Optional: Configure GPG signing
+# [commit]
+# 	gpgsign = true
+# [user]
+# 	signingkey = YOUR_GPG_KEY_ID
+
+# Optional: Add any other local overrides here
