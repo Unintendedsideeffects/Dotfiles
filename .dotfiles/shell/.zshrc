@@ -42,8 +42,15 @@ if [ "$TERM" = "linux" ]; then
   "
   # get rid of artifacts
   clear
-fi       
+fi
 
+# Ghostty TERM handling for SSH
+# Prevent exporting unavailable $TERM over SSH
+if [[ -n "$SSH_CONNECTION" ]] || [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; then
+  if [[ "$TERM" == "xterm-ghostty" ]]; then
+    export TERM=xterm-256color
+  fi
+fi
 
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 powerline-daemon -q
