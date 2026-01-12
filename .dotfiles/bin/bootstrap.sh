@@ -52,6 +52,8 @@ is_arch() { df_is_arch; }
 
 is_debian_like() { df_is_debian_like; }
 
+is_rhel_like() { df_is_rhel_like; }
+
 is_wsl() { df_is_wsl; }
 
 # --- Helpers ---
@@ -74,6 +76,12 @@ ensure_tui() {
   elif is_debian_like; then
     run_with_sudo_if_needed apt-get update -y
     run_with_sudo_if_needed apt-get install -y whiptail || run_with_sudo_if_needed apt-get install -y dialog
+  elif is_rhel_like; then
+    if command -v dnf >/dev/null 2>&1; then
+      run_with_sudo_if_needed dnf install -y dialog
+    elif command -v yum >/dev/null 2>&1; then
+      run_with_sudo_if_needed yum install -y dialog
+    fi
   fi
 }
 

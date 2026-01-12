@@ -14,10 +14,10 @@ NC='\033[0m' # No Color
 # Function to check if a command exists
 check_command() {
     if command -v "$1" &>/dev/null; then
-        echo -e "${GREEN}✓${NC} $1 is installed"
+        echo -e "${GREEN}OK${NC} $1 is installed"
         return 0
     else
-        echo -e "${RED}✗${NC} $1 is not installed"
+        echo -e "${RED}FAIL${NC} $1 is not installed"
         return 1
     fi
 }
@@ -25,10 +25,10 @@ check_command() {
 # Function to check if a file exists and is readable
 check_file() {
     if [[ -r "$1" ]]; then
-        echo -e "${GREEN}✓${NC} $1 exists and is readable"
+        echo -e "${GREEN}OK${NC} $1 exists and is readable"
         return 0
     else
-        echo -e "${RED}✗${NC} $1 does not exist or is not readable"
+        echo -e "${RED}FAIL${NC} $1 does not exist or is not readable"
         return 1
     fi
 }
@@ -46,9 +46,9 @@ echo -e "\nChecking essential files:"
 check_file "$HOME/.zshrc"
 check_file "$HOME/.gitconfig"
 if [[ -f "$HOME/.tmux.conf" || -d "$HOME/.config/tmux" ]]; then
-    echo -e "${GREEN}✓${NC} tmux configuration present"
+    echo -e "${GREEN}OK${NC} tmux configuration present"
 else
-    echo -e "${RED}✗${NC} tmux configuration is missing"
+    echo -e "${RED}FAIL${NC} tmux configuration is missing"
 fi
 
 # Check if we're in WSL
@@ -66,9 +66,9 @@ fi
 # Check if secrets directory exists and is gitignored
 if [[ -d "$ROOT_DIR/secrets" ]]; then
     if git -C "$ROOT_DIR" check-ignore -q secrets; then
-        echo -e "${GREEN}✓${NC} secrets directory is properly gitignored"
+        echo -e "${GREEN}OK${NC} secrets directory is properly gitignored"
     else
-        echo -e "${RED}✗${NC} secrets directory is not gitignored"
+        echo -e "${RED}FAIL${NC} secrets directory is not gitignored"
     fi
 fi
 
@@ -76,9 +76,9 @@ fi
 echo -e "\nChecking script permissions:"
 for script in "$BIN_DIR"/*; do
     if [[ -x "$script" ]]; then
-        echo -e "${GREEN}✓${NC} $script is executable"
+        echo -e "${GREEN}OK${NC} $script is executable"
     else
-        echo -e "${RED}✗${NC} $script is not executable"
+        echo -e "${RED}FAIL${NC} $script is not executable"
     fi
 done
 
@@ -87,9 +87,9 @@ echo -e "\nChecking script shebangs:"
 for script in "$BIN_DIR"/*; do
     if [[ -f "$script" ]]; then
         if head -n 1 "$script" | grep -q "^#!"; then
-            echo -e "${GREEN}✓${NC} $script has a shebang"
+            echo -e "${GREEN}OK${NC} $script has a shebang"
         else
-            echo -e "${RED}✗${NC} $script is missing a shebang"
+            echo -e "${RED}FAIL${NC} $script is missing a shebang"
         fi
     fi
 done
