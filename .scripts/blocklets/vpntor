@@ -1,3 +1,0 @@
-cd ~/airvpn/
-airvpn
-urxvt -e sudo -u tor /usr/bin/tor
