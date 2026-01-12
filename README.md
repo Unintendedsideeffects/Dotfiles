@@ -1,110 +1,346 @@
-# Malcolm's Dotfiles
+# Malcolm's Dotfiles - Full NixOS Edition
 
-Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Proxmox, and WSL2.
+**Declarative, reproducible dotfiles and system configuration for NixOS and other Linux distributions.**
 
-## Features
+This repository provides both **full NixOS system configurations** and **Home Manager-only** setups for non-NixOS distributions.
 
-- **Universal**: Works on Arch, Debian/Ubuntu, Proxmox, and WSL2
-- **Smart Detection**: Automatically configures for your environment
-- **Interactive Bootstrap**: TUI for selecting components to install
-- **Optimized Packages**: Curated package lists per environment
-- **WSL Ready**: Special handling for WSL2 with Windows integration
+## 🌟 Features
 
-## Quick Setup
+- **Full NixOS Support**: Complete system configuration with modular architecture
+- **Home Manager Integration**: User-level packages and configurations
+- **Multi-Environment**: Works on NixOS, Arch, Debian/Ubuntu, Proxmox, and WSL2
+- **Declarative**: Everything defined in Nix for reproducibility
+- **Modular**: Easy to customize and extend
+- **Window Managers**: i3 (X11) and Sway (Wayland) configurations
+- **Modern CLI Tools**: ripgrep, fd, fzf, bat, eza, zoxide, starship, and more
 
-**One command install:**
+## 📋 Quick Start
+
+### For Full NixOS Installation
+
+If you want to install NixOS with this configuration:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
+# Follow the detailed guide
+see NIXOS_INSTALLATION.md
 ```
 
-**Or manual setup:**
+**TL;DR for existing NixOS:**
 ```bash
-git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git "$HOME/.cfg"
-alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.backup || true
-config checkout
-source "$HOME/.dotfiles/cli/config.sh"
-"$HOME/.dotfiles/shell/install.sh"
-"$HOME/.dotfiles/bin/bootstrap.sh"
+sudo git clone --branch nixos-full https://github.com/Unintendedsideeffects/Dotfiles.git /etc/nixos-dotfiles
+cd /etc/nixos-dotfiles
+sudo cp /etc/nixos/hardware-configuration.nix nixos/
+sudo nixos-rebuild switch --flake .#nixos-desktop
 ```
 
-## What You Get
+### For Home Manager Only (Non-NixOS)
 
-**Packages automatically installed based on your environment:**
-- **Development tools**: git, neovim, build tools, language runtimes
-- **Modern CLI tools**: ripgrep, fd, fzf, bat, eza, zoxide, atuin
-- **Shell setup**: zsh with smart completion and history
-- **WSL integration**: Windows path integration, WSL utilities
-- **X11 forwarding**: For remote GUI applications
+If you're on Arch, Debian, Ubuntu, or other distributions:
 
-**Environment-specific packages:**
-- **Arch/Arch WSL**: Uses pacman, includes AUR build tools
-- **Debian/Ubuntu/Ubuntu WSL**: Uses apt, includes build-essential
-- **Proxmox**: Conservative package set for server environments
-
-## Interactive Bootstrap
-
-The bootstrap script provides a TUI menu to install:
-
-1. **AUR Helper Setup** - Installs yay for AUR package management (Arch only)
-2. **Package Installation** - Automatically detects your environment and installs appropriate packages
-3. **WSL Configuration** - Fixes common WSL configuration issues (WSL only)
-4. **Headless GUI Setup** - X11 forwarding for remote desktop (Arch only)
-5. **Obsidian Headless** - Containerized Obsidian setup
-
-## WSL2 Special Features
-
-**Automatic WSL detection and configuration:**
-- Fixes common `/etc/wsl.conf` issues (invalid key formats)
-- Enables systemd support in WSL2
-- Includes Windows path integration
-- Adds WSL utilities (`wslu`) for Windows integration
-
-**WSL-optimized package lists:**
-- `arch-wsl.txt` - Arch WSL with WSL integration tools
-- `debian-wsl.txt` - Ubuntu/Debian WSL with WSL integration tools
-
-## Managing Your Dotfiles
-
-After installation, use the `config` command for git operations:
 ```bash
-config status           # Check dotfile changes
-config add .file        # Add a new dotfile
-config commit -m "msg"  # Commit changes
-config push             # Push to remote
+# Install Nix
+sh <(curl -L https://nixos.org/nix/install) --daemon
+
+# Enable flakes
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+
+# Clone repository
+git clone --branch nixos-full https://github.com/Unintendedsideeffects/Dotfiles.git ~/Dotfiles
+cd ~/Dotfiles
+
+# Apply configuration (choose your profile)
+nix run home-manager/master -- switch --flake ~/Dotfiles#arch
+# or: #debian, #wsl, #minimal, #proxmox
 ```
 
-## Customization
+## 🚀 What's New in nixos-full Branch
 
-- **Local settings**: Create `~/.zshrc.local` for machine-specific config
-- **Additional packages**: Add to `.dotfiles/pkglists/*.txt` files
-- **Environment tweaks**: Modify `.dotfiles/shell/zshrc.d/` files
+This branch provides **complete NixOS system configuration** in addition to Home Manager:
 
-## Manual Commands
+### Full NixOS System Configuration
+- **Modular architecture**: Boot, networking, desktop, services, users
+- **Multiple profiles**: Desktop, laptop, server, WSL
+- **Hardware abstraction**: Easy hardware configuration management
+- **Integrated Home Manager**: System + user configuration in one place
 
-If you prefer manual installation:
-```bash
-./.dotfiles/shell/install.sh      # Install shell configuration
-./.dotfiles/bin/setup-aur.sh      # Install yay AUR helper (Arch only)
-./.dotfiles/bin/setup-packages.sh # Install packages for your environment  
-./.dotfiles/bin/setup-wsl.sh      # Configure WSL (WSL only)
-./.dotfiles/bin/validate.sh       # Verify installation
+### Repository Structure
+
+```
+Dotfiles/
+├── flake.nix                      # Main flake with all configurations
+├── home.nix                       # Home Manager entry point
+├── NIXOS_INSTALLATION.md          # Full NixOS installation guide
+├── NIX_MIGRATION.md               # Home Manager migration guide
+│
+├── nixos/                         # NixOS system configuration
+│   ├── configuration.nix          # Main system config
+│   ├── hardware-configuration.nix.example
+│   ├── modules/                   # System modules
+│   │   ├── boot.nix              # Bootloader configuration
+│   │   ├── networking.nix        # Network and Bluetooth
+│   │   ├── desktop.nix           # Desktop environment
+│   │   ├── services.nix          # System services
+│   │   └── users.nix             # User management
+│   └── packages/
+│       └── dotfiles-scripts.nix  # Custom scripts as Nix package
+│
+├── modules/                       # Home Manager modules
+│   ├── packages.nix              # User packages
+│   ├── shell.nix                 # Shell configuration
+│   ├── git.nix                   # Git configuration
+│   ├── services.nix              # User services
+│   ├── scripts.nix               # Script management
+│   ├── programs/                 # Program configurations
+│   │   ├── neovim.nix
+│   │   ├── tmux.nix
+│   │   ├── starship.nix
+│   │   ├── i3.nix
+│   │   ├── sway.nix
+│   │   └── ...
+│   └── environments/             # Environment-specific configs
+│       ├── arch.nix
+│       ├── debian.nix
+│       ├── wsl.nix
+│       ├── minimal.nix
+│       └── gui.nix
+│
+├── .config/                       # Traditional dotfiles
+│   ├── nvim/
+│   ├── i3/
+│   ├── sway/
+│   ├── starship.toml
+│   └── ...
+│
+└── .dotfiles/                     # Legacy scripts and utilities
+    ├── bin/                       # Utility scripts
+    ├── cli/                       # Shell helpers
+    └── lib/                       # Shared libraries
 ```
 
-## X11 Forwarding
+## 📦 Available Configurations
 
-For remote GUI applications:
-1. Run `./.dotfiles/bin/setup-xforward.sh`
-2. Connect with `ssh -X user@host`
-3. Test with `xclock`
+### NixOS System Configurations
 
-## Troubleshooting
+For full NixOS installations:
 
-**Common issues:**
-- Make scripts executable: `chmod +x .dotfiles/bin/* .dotfiles/shell/*`
-- WSL configuration errors: Run `./.dotfiles/bin/setup-wsl.sh`
-- Missing packages: Check `.dotfiles/bin/validate.sh` output
+- **`nixos-desktop`**: Full desktop with i3/Sway, audio, Bluetooth
+- **`nixos-laptop`**: Desktop + power management (TLP, thermald)
+- **`nixos-server`**: Headless server configuration
+- **`nixos-wsl`**: Windows Subsystem for Linux
 
-**WSL-specific:**
-- After WSL configuration changes: `wsl --shutdown` then restart
-- Windows path issues: Check `.dotfiles/shell/zshrc.d/wsl.zsh`
+```bash
+sudo nixos-rebuild switch --flake /etc/nixos#nixos-desktop
+```
+
+### Home Manager Configurations
+
+For any Linux distribution (non-NixOS):
+
+- **`arch`**: Arch Linux with GUI support
+- **`debian`**: Debian/Ubuntu configuration
+- **`wsl`**: Windows Subsystem for Linux
+- **`minimal`**: Minimal headless configuration
+- **`proxmox`**: Proxmox server configuration
+
+```bash
+home-manager switch --flake ~/Dotfiles#arch
+```
+
+## 🛠️ Customization
+
+### System-Level (NixOS)
+
+Edit `flake.nix` to customize system configuration:
+
+```nix
+nixos-dotfiles = {
+  boot.enableSystemdBoot = true;
+  networking.hostName = "my-nixos";
+  desktop = {
+    enable = true;
+    windowManager = "both";  # i3 and sway
+  };
+  services = {
+    enableDocker = true;
+    enableVirtualization = true;
+  };
+};
+```
+
+### User-Level (All Systems)
+
+Edit module files in `modules/`:
+
+```bash
+# Add packages
+vim modules/packages.nix
+
+# Configure shell
+vim modules/shell.nix
+
+# Configure git
+vim modules/git.nix
+
+# Rebuild
+home-manager switch --flake ~/Dotfiles#arch
+```
+
+## 🔧 Common Tasks
+
+### Update Everything
+
+```bash
+# NixOS system
+sudo nixos-rebuild switch --flake /etc/nixos#nixos-desktop --update-input nixpkgs
+
+# Home Manager only
+cd ~/Dotfiles
+nix flake update
+home-manager switch --flake .#arch
+```
+
+### Add a New Package
+
+```bash
+# Edit packages.nix
+vim ~/Dotfiles/modules/packages.nix
+
+# Add your package to the appropriate list
+# Then rebuild
+home-manager switch --flake ~/Dotfiles#arch
+```
+
+### Rollback Changes
+
+```bash
+# NixOS system
+sudo nixos-rebuild switch --rollback
+
+# Home Manager
+home-manager generations
+home-manager switch --switch-generation <number>
+```
+
+### Clean Old Generations
+
+```bash
+# NixOS system
+sudo nix-collect-garbage -d
+
+# Home Manager
+home-manager expire-generations "-7 days"
+nix-collect-garbage
+```
+
+## 📚 Documentation
+
+- **[NIXOS_INSTALLATION.md](NIXOS_INSTALLATION.md)**: Complete NixOS installation guide
+- **[NIX_MIGRATION.md](NIX_MIGRATION.md)**: Migrating to Home Manager from traditional dotfiles
+- **[NIX_ADVANCED.md](NIX_ADVANCED.md)**: Advanced Nix configuration topics
+
+## 🎯 Use Cases
+
+### Fresh NixOS Install
+Perfect for:
+- New machine setup with complete system config
+- Reproducible development environments
+- Multi-machine synchronization
+
+### Existing Non-NixOS System
+Great for:
+- User-level package management without root
+- Consistent dotfiles across distributions
+- Trying NixOS ecosystem before full commitment
+
+### WSL Development
+Ideal for:
+- Windows developers using WSL2
+- Consistent dev environment on Windows
+- Integration with Windows tools
+
+## 🔑 Key Components
+
+### System Services (NixOS)
+- PipeWire audio
+- NetworkManager
+- Bluetooth (bluez)
+- Printing (CUPS)
+- Docker (optional)
+- libvirt/QEMU (optional)
+
+### Desktop Environment
+- **Window Managers**: i3 (X11), Sway (Wayland)
+- **Display Manager**: LightDM (configurable)
+- **Terminal**: kitty, ghostty, alacritty
+- **Launcher**: rofi, wofi
+- **Notifications**: dunst, mako
+- **Bar**: i3status, waybar
+
+### Development Tools
+- Neovim (with LSP support)
+- Git with enhanced configuration
+- tmux, zellij
+- Languages: Python, Go, Rust, Node.js
+- Docker, kubectl, k9s
+- Language servers: nil, rust-analyzer, etc.
+
+### Modern CLI Tools
+- **File navigation**: ranger, yazi
+- **Search**: ripgrep, fd, fzf
+- **Display**: bat, eza
+- **System monitoring**: htop, btop, bottom
+- **Shell**: zsh with starship prompt
+- **History**: atuin
+
+## 🆚 Master vs nixos-full Branch
+
+### Master Branch
+- Home Manager only
+- Hybrid Nix + traditional approach
+- Works on any distribution
+- User-level configuration
+
+### nixos-full Branch (This Branch)
+- Full NixOS system configuration
+- Complete declarative system
+- Home Manager integrated
+- System + user configuration
+- Modular architecture
+- Multiple system profiles
+
+## 🤝 Contributing
+
+Contributions are welcome! This is a personal dotfiles repository, but:
+
+- Bug fixes are always appreciated
+- Suggestions for improvements welcome
+- Share your own customizations via issues/discussions
+
+## 📝 License
+
+This repository is licensed under MIT. Feel free to use, modify, and share.
+
+## 🙏 Acknowledgments
+
+- NixOS community for the amazing ecosystem
+- Home Manager maintainers
+- All the open-source tools that make this possible
+
+## 💬 Support & Discussion
+
+- **Issues**: [GitHub Issues](https://github.com/Unintendedsideeffects/Dotfiles/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Unintendedsideeffects/Dotfiles/discussions)
+- **NixOS Discourse**: [discourse.nixos.org](https://discourse.nixos.org/)
+
+---
+
+**Note**: The master branch contains the hybrid approach with partial Nix support. Switch to `nixos-full` branch for complete NixOS system configuration.
+
+```bash
+# Switch to nixos-full branch
+git checkout nixos-full
+
+# Or clone directly
+git clone --branch nixos-full https://github.com/Unintendedsideeffects/Dotfiles.git
+```

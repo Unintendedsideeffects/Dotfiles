@@ -1,5 +1,5 @@
 {
-  description = "Nix-based dotfiles configuration with Home Manager";
+  description = "Full NixOS system configuration with Home Manager integration";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -25,7 +25,7 @@
         overlays = [ neovim-nightly-overlay.overlays.default ];
       };
 
-      # Common modules for all configurations
+      # Common modules for all Home Manager configurations
       commonModules = [
         ./modules/packages.nix
         ./modules/shell.nix
@@ -54,6 +54,59 @@
               nixpkgs.config.allowUnfree = true;
             }
           ];
+        };
+
+      # Helper to create NixOS configuration
+      mkNixosConfiguration = { hostname, system ? "x86_64-linux", modules ? [] }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./nixos/configuration.nix
+            home-manager.nixosModules.home-manager
+            {
+              networking.hostName = hostname;
+
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = { inherit inputs; };
+                users.malcolm = import ./home.nix;
+
+                # Share nixpkgs config with home-manager
+                sharedModules = [
+                  { nixpkgs.config.allowUnfree = true; }
+                ];
+              };
+
+              # NixOS-specific options
+              nixos-dotfiles = {
+                boot.enableSystemdBoot = true;
+                networking = {
+                  hostName = hostname;
+                  enableNetworkManager = true;
+                  enableBluetooth = true;
+                };
+                desktop = {
+                  enable = true;
+                  enableX11 = true;
+                  enableWayland = true;
+                  windowManager = "both";
+                  displayManager = "lightdm";
+                };
+                services = {
+                  enableAudio = true;
+                  enablePrinting = true;
+                  enableDocker = false;
+                  enableVirtualization = false;
+                };
+                users = {
+                  mainUser = "malcolm";
+                  mainUserFullName = "Malcolm";
+                };
+              };
+            }
+          ] ++ modules;
         };
     in
     {
@@ -105,22 +158,76 @@
             ./modules/environments/minimal.nix
           ];
         };
+
+        # NixOS with GUI (for use with NixOS system config)
+        "nixos-gui" = mkHomeConfiguration {
+          username = "malcolm";
+          homeDirectory = "/home/malcolm";
+          extraModules = [
+            ./modules/environments/gui.nix
+          ];
+        };
+
+        # NixOS minimal (for servers)
+        "nixos-minimal" = mkHomeConfiguration {
+          username = "malcolm";
+          homeDirectory = "/home/malcolm";
+          extraModules = [
+            ./modules/environments/minimal.nix
+          ];
+        };
       };
 
-      # NixOS configuration (optional, for full NixOS systems)
+      # NixOS system configurations
       nixosConfigurations = {
-        default = nixpkgs.lib.nixosSystem {
-          inherit system;
+        # Default desktop configuration
+        "nixos-desktop" = mkNixosConfiguration {
+          hostname = "nixos-desktop";
+        };
+
+        # Laptop configuration
+        "nixos-laptop" = mkNixosConfiguration {
+          hostname = "nixos-laptop";
           modules = [
-            ./nixos/configuration.nix
-            home-manager.nixosModules.home-manager
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.${builtins.getEnv "USER"} = import ./home.nix;
+              # Laptop-specific settings
+              services.tlp.enable = true;
+              powerManagement.enable = true;
+              services.thermald.enable = true;
             }
           ];
         };
+
+        # Minimal server configuration
+        "nixos-server" = mkNixosConfiguration {
+          hostname = "nixos-server";
+          modules = [
+            {
+              # Server-specific settings
+              nixos-dotfiles.desktop.enable = false;
+              services.openssh.openFirewall = true;
+            }
+          ];
+        };
+
+        # WSL configuration
+        "nixos-wsl" = mkNixosConfiguration {
+          hostname = "nixos-wsl";
+          modules = [
+            {
+              # WSL-specific settings
+              nixos-dotfiles.desktop.enable = false;
+              boot.isContainer = true;
+              wsl.enable = true;
+            }
+          ];
+        };
+      };
+
+      # Packages exposed by this flake
+      packages.${system} = {
+        # Custom scripts package
+        dotfiles-scripts = pkgs.callPackage ./nixos/packages/dotfiles-scripts.nix { };
       };
 
       # Development shell
@@ -128,8 +235,36 @@
         buildInputs = with pkgs; [
           nil # Nix language server
           nixpkgs-fmt
+          nixfmt
           home-manager
+          git
         ];
+
+        shellHook = ''
+          echo "NixOS Dotfiles Development Environment"
+          echo ""
+          echo "Available commands:"
+          echo "  nixos-rebuild - Rebuild NixOS system"
+          echo "  home-manager  - Manage home configuration"
+          echo "  nix flake check - Validate flake"
+          echo "  nix flake show  - Show flake outputs"
+        '';
+      };
+
+      # Formatter for 'nix fmt'
+      formatter.${system} = pkgs.nixpkgs-fmt;
+
+      # Installation templates
+      templates = {
+        default = {
+          path = ./nixos;
+          description = "NixOS system configuration template";
+        };
+
+        home-only = {
+          path = ./modules;
+          description = "Home Manager only configuration (for non-NixOS)";
+        };
       };
     };
 }
