@@ -86,6 +86,18 @@ run_cmd() {
   fi
 }
 
+select_rhel_pkg_manager() {
+  if command -v dnf >/dev/null 2>&1; then
+    echo "dnf"
+    return 0
+  fi
+  if command -v yum >/dev/null 2>&1; then
+    echo "yum"
+    return 0
+  fi
+  return 1
+}
+
 ensure_zsh_default_shell() {
   if ! command -v zsh >/dev/null 2>&1; then
     echo "zsh not installed, skipping default shell update"
@@ -168,6 +180,17 @@ install_pkgs() {
         echo "Installing AUR packages with yay..."
         yay -S --needed --noconfirm "${aur_pkgs[@]}"
       fi
+    fi
+  elif [[ "$ENV" == "rocky" ]]; then
+    local pkg_manager
+    if ! pkg_manager=$(select_rhel_pkg_manager); then
+      echo "No supported RHEL package manager found (dnf or yum)."
+      exit 1
+    fi
+    if [[ "$DRY" == true ]]; then
+      echo "[DRY-RUN] $pkg_manager install -y ${pkgs[*]}"
+    else
+      run_cmd "$pkg_manager" install -y "${pkgs[@]}"
     fi
   else
     if [[ "$DRY" == true ]]; then

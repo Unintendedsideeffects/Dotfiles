@@ -30,13 +30,28 @@ config() {
 
 # Handle existing dotfiles
 echo "🔄 Installing dotfiles (will overwrite existing files)..."
-if ! config checkout 2>/dev/null; then
+if ! checkout_output=$(config checkout 2>&1); then
     echo "⚠️  Some files already exist. Creating backup and forcing checkout..."
-    mkdir -p "$HOME/.dotfiles-backup.$(date +%s)"
-    
+    backup_dir="$HOME/.dotfiles-backup.$(date +%s)"
+    mkdir -p "$backup_dir"
+
+    mapfile -t conflict_files < <(printf '%s\n' "$checkout_output" | grep -E "^\s+\." | awk '{print $1}')
+    if [[ ${#conflict_files[@]} -eq 0 ]]; then
+        echo "❌ Failed to determine conflicting files for backup."
+        echo "$checkout_output"
+        exit 1
+    fi
+
+    for path in "${conflict_files[@]}"; do
+        if [[ -e "$HOME/$path" ]]; then
+            mkdir -p "$backup_dir/$(dirname "$path")"
+            mv "$HOME/$path" "$backup_dir/$path"
+        fi
+    done
+
     # Force checkout, overwriting existing files
     config checkout -f
-    echo "✅ Dotfiles installed (existing files backed up)"
+    echo "✅ Dotfiles installed (existing files backed up to $backup_dir)"
 else
     echo "✅ Dotfiles installed successfully"
 fi

@@ -16,6 +16,14 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
 ```
+This will back up any conflicting files to `~/.dotfiles-backup.<timestamp>`.
+
+**Safer install (review script first):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh -o /tmp/quick-install.sh
+less /tmp/quick-install.sh
+bash /tmp/quick-install.sh
+```
 
 **Or manual setup:**
 ```bash

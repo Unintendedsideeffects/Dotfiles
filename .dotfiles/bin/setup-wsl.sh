@@ -102,7 +102,8 @@ if grep -Eq '^\s*options\s*=.*fmask=000' /etc/wsl.conf; then
     echo "- fmask is already set to 000"
 else
     echo "- Updating fmask to 000 in /etc/wsl.conf"
-    run_cmd python3 - <<'PY'
+    if command -v python3 >/dev/null 2>&1; then
+        run_cmd python3 - <<'PY'
 import pathlib
 import re
 
@@ -138,6 +139,55 @@ else:
 if new_text != text:
     path.write_text(new_text)
 PY
+    else
+        tmpfile=$(mktemp)
+        if grep -Eq '^\s*options\s*=.*' /etc/wsl.conf; then
+            run_cmd awk '
+function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+function rebuild(value, out, i, n, parts, item) {
+  n = split(value, parts, ",")
+  for (i = 1; i <= n; i++) {
+    item = trim(parts[i])
+    if (item == "" || item ~ /^fmask=/) continue
+    out = out (out == "" ? "" : ",") item
+  }
+  out = out (out == "" ? "fmask=000" : out ",fmask=000")
+  return out
+}
+{
+  line = $0
+  if (!done && match(line, /^[ \t]*options[ \t]*=[ \t]*"(.*)"/, m)) {
+    newval = rebuild(m[1])
+    sub(/".*"/, "\"" newval "\"", line)
+    done = 1
+  }
+  print line
+}' /etc/wsl.conf > "$tmpfile"
+        elif grep -Eq '^\s*\[automount\]\s*$' /etc/wsl.conf; then
+            run_cmd awk '
+{
+  print
+  if (!inserted && $0 ~ /^[ \t]*\[automount\][ \t]*$/) {
+    print "options = \"fmask=000\""
+    inserted = 1
+  }
+}
+END {
+  if (!inserted) {
+    print ""
+    print "[automount]"
+    print "options = \"fmask=000\""
+  }
+}' /etc/wsl.conf > "$tmpfile"
+        else
+            printf '\n[automount]\noptions = "fmask=000"\n' | run_cmd tee -a /etc/wsl.conf >/dev/null
+            tmpfile=""
+        fi
+
+        if [[ -n "$tmpfile" ]]; then
+            run_cmd mv "$tmpfile" /etc/wsl.conf
+        fi
+    fi
     fmask_updated=1
 fi
 

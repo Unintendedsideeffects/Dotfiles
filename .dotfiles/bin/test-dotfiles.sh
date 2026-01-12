@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BIN_DIR="$ROOT_DIR/.dotfiles/bin"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -41,7 +45,11 @@ check_command tmux
 echo -e "\nChecking essential files:"
 check_file "$HOME/.zshrc"
 check_file "$HOME/.gitconfig"
-check_file "$HOME/.tmux.conf"
+if [[ -f "$HOME/.tmux.conf" || -d "$HOME/.config/tmux" ]]; then
+    echo -e "${GREEN}✓${NC} tmux configuration present"
+else
+    echo -e "${RED}✗${NC} tmux configuration is missing"
+fi
 
 # Check if we're in WSL
 if grep -qi microsoft /proc/version; then
@@ -56,8 +64,8 @@ if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
 fi
 
 # Check if secrets directory exists and is gitignored
-if [[ -d "secrets" ]]; then
-    if git check-ignore -q secrets; then
+if [[ -d "$ROOT_DIR/secrets" ]]; then
+    if git -C "$ROOT_DIR" check-ignore -q secrets; then
         echo -e "${GREEN}✓${NC} secrets directory is properly gitignored"
     else
         echo -e "${RED}✗${NC} secrets directory is not gitignored"
@@ -66,7 +74,7 @@ fi
 
 # Check if all scripts are executable
 echo -e "\nChecking script permissions:"
-for script in bin/*; do
+for script in "$BIN_DIR"/*; do
     if [[ -x "$script" ]]; then
         echo -e "${GREEN}✓${NC} $script is executable"
     else
@@ -76,7 +84,7 @@ done
 
 # Check if all scripts have proper shebangs
 echo -e "\nChecking script shebangs:"
-for script in bin/*; do
+for script in "$BIN_DIR"/*; do
     if [[ -f "$script" ]]; then
         if head -n 1 "$script" | grep -q "^#!"; then
             echo -e "${GREEN}✓${NC} $script has a shebang"

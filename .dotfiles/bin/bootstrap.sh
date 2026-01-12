@@ -12,6 +12,14 @@ LIB_DIR="$DOTFILES_DIR/lib"
 # shellcheck disable=SC1090
 source "$LIB_DIR/detect.sh"
 
+# Handle non-interactive dry-run calls (e.g., tests)
+for arg in "$@"; do
+  if [[ "$arg" == "--dry-run" ]]; then
+    echo "Dry-run: bootstrap would launch the interactive setup UI."
+    exit 0
+  fi
+done
+
 # Track background processes and temp files for cleanup
 declare -a CLEANUP_PIDS=()
 declare -a CLEANUP_FILES=()
