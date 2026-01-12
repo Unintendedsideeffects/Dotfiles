@@ -109,6 +109,10 @@ df_package_family() {
     return 0
   fi
 
+  if df_is_rhel_like; then
+    printf 'rocky'
+    return 0
+  fi
+
   return 1
 }
-

@@ -1,4 +1,5 @@
-FROM archlinux:latest
+ARG ARCH_IMAGE=archlinux:base-2024.12.01
+FROM ${ARCH_IMAGE}
 
 # ----------------------------------
 # Arch Linux base image with dotfiles
