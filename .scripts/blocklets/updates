@@ -1,9 +1,0 @@
-case $BLOCK_BUTTON in
-    1) urxvt -e nohup sh ~/dotfiles/scripts/blocklets/update &
-esac
-
-checkupd() {
-	sh checkupdates | wc -l | tr -d ' '
-}
-
-checkupd
