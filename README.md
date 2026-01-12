@@ -18,6 +18,19 @@ curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/mast
 ```
 This will back up any conflicting files to `~/.dotfiles-backup.<timestamp>`.
 
+**Safer one-liner (pin commit + verify checksum):**
+```bash
+COMMIT=<commit>
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/SHA256SUMS \
+  -o /tmp/SHA256SUMS &&
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.dotfiles/bin/quick-install.sh \
+  -o /tmp/quick-install.sh &&
+grep 'quick-install.sh' /tmp/SHA256SUMS | sha256sum -c - &&
+bash /tmp/quick-install.sh
+```
+
 **Safer install (review script first):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh -o /tmp/quick-install.sh
@@ -97,6 +110,13 @@ If you prefer manual installation:
 ./.dotfiles/bin/setup-packages.sh # Install packages for your environment  
 ./.dotfiles/bin/setup-wsl.sh      # Configure WSL (WSL only)
 ./.dotfiles/bin/validate.sh       # Verify installation
+```
+
+## Maintainer Notes
+
+When `quick-install.sh` changes, regenerate checksums:
+```bash
+./.dotfiles/bin/update-sha256sums.sh
 ```
 
 ## X11 Forwarding
