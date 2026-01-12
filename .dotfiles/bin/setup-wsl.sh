@@ -46,9 +46,9 @@ install_windows_nerd_fonts() {
     for font in "${fonts[@]}"; do
         echo "- Installing/updating $font via winget..."
         if powershell.exe -NoProfile -Command "winget install --id $font --accept-package-agreements --accept-source-agreements" >/dev/null 2>&1; then
-            echo "  ✔ $font installed"
+            echo "  OK  $font installed"
         else
-            echo "  ⚠ Failed to install $font automatically. You may need to install it manually via Windows Terminal: winget install --id $font"
+            echo "  WARN Failed to install $font automatically. You may need to install it manually via Windows Terminal: winget install --id $font"
         fi
     done
 
@@ -61,7 +61,7 @@ if [[ -f /etc/wsl.conf ]]; then
 
     # Check for invalid configurations
     if grep -q "wsl2\\." /etc/wsl.conf || grep -q 'kernelCommandLine = "' /etc/wsl.conf; then
-        echo "❌ Found invalid WSL configuration format"
+        echo "ERROR: Found invalid WSL configuration format"
         echo "Backing up current configuration to /etc/wsl.conf.backup"
         run_cmd cp /etc/wsl.conf /etc/wsl.conf.backup
 
@@ -71,12 +71,12 @@ if [[ -f /etc/wsl.conf ]]; then
         # Replace template variables
         run_cmd sed -i "s/\${USER}/$USER/g" /etc/wsl.conf
 
-        echo "✅ WSL configuration has been corrected"
-        echo "⚠️  You need to restart WSL for changes to take effect:"
+        echo "OK: WSL configuration has been corrected"
+        echo "WARNING: You need to restart WSL for changes to take effect:"
         echo "   wsl --shutdown"
         echo "   wsl"
     else
-        echo "✅ Existing WSL configuration appears valid"
+        echo "OK: Existing WSL configuration appears valid"
     fi
 else
     echo "Creating new WSL configuration..."
@@ -85,8 +85,8 @@ else
     # Replace template variables
     run_cmd sed -i "s/\${USER}/$USER/g" /etc/wsl.conf
 
-    echo "✅ WSL configuration created"
-    echo "⚠️  You need to restart WSL for changes to take effect:"
+    echo "OK: WSL configuration created"
+    echo "WARNING: You need to restart WSL for changes to take effect:"
     echo "   wsl --shutdown"
     echo "   wsl"
 fi
@@ -192,12 +192,12 @@ END {
 fi
 
 if [[ $fmask_updated -eq 1 ]]; then
-    echo "✅ Updated WSL automount options to include fmask=000"
-    echo "⚠️  You need to restart WSL for changes to take effect:"
+    echo "OK: Updated WSL automount options to include fmask=000"
+    echo "WARNING: You need to restart WSL for changes to take effect:"
     echo "   wsl --shutdown"
     echo "   wsl"
 else
-    echo "✅ WSL automount options already include fmask=000"
+    echo "OK: WSL automount options already include fmask=000"
 fi
 
 echo
@@ -223,6 +223,6 @@ while IFS='=' read -r key value; do
     run_cmd sysctl -w "$key=$value"
 done <<< "$SYSCTL_SETTINGS"
 
-echo "✅ Kernel tuning applied. Values will persist across WSL restarts."
+echo "OK: Kernel tuning applied. Values will persist across WSL restarts."
 
 install_windows_nerd_fonts

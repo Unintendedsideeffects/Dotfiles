@@ -5,22 +5,22 @@ set -euo pipefail
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 CONFIG_DIR="$HOME/.cfg"
 
-echo "🚀 Installing Malcolm's Dotfiles..."
+echo "Installing Malcolm's Dotfiles..."
 
 # Check if git is available
 if ! command -v git >/dev/null 2>&1; then
-    echo "❌ Git is required but not installed. Please install git first."
+    echo "ERROR: Git is required but not installed. Please install git first."
     exit 1
 fi
 
 # Backup existing .cfg if it exists
 if [[ -d "$CONFIG_DIR" ]]; then
-    echo "⚠️  Backing up existing .cfg directory..."
+    echo "WARNING: Backing up existing .cfg directory..."
     mv "$CONFIG_DIR" "${CONFIG_DIR}.backup.$(date +%s)"
 fi
 
 # Clone the bare repository
-echo "📥 Cloning dotfiles repository..."
+echo "Cloning dotfiles repository..."
 git clone --bare "$REPO_URL" "$CONFIG_DIR"
 
 # Set up the config alias temporarily
@@ -29,15 +29,15 @@ config() {
 }
 
 # Handle existing dotfiles
-echo "🔄 Installing dotfiles (will overwrite existing files)..."
+echo "Installing dotfiles (will overwrite existing files)..."
 if ! checkout_output=$(config checkout 2>&1); then
-    echo "⚠️  Some files already exist. Creating backup and forcing checkout..."
+    echo "WARNING: Some files already exist. Creating backup and forcing checkout..."
     backup_dir="$HOME/.dotfiles-backup.$(date +%s)"
     mkdir -p "$backup_dir"
 
     mapfile -t conflict_files < <(printf '%s\n' "$checkout_output" | grep -E "^\s+\." | awk '{print $1}')
     if [[ ${#conflict_files[@]} -eq 0 ]]; then
-        echo "❌ Failed to determine conflicting files for backup."
+        echo "ERROR: Failed to determine conflicting files for backup."
         echo "$checkout_output"
         exit 1
     fi
@@ -51,9 +51,9 @@ if ! checkout_output=$(config checkout 2>&1); then
 
     # Force checkout, overwriting existing files
     config checkout -f
-    echo "✅ Dotfiles installed (existing files backed up to $backup_dir)"
+    echo "OK: Dotfiles installed (existing files backed up to $backup_dir)"
 else
-    echo "✅ Dotfiles installed successfully"
+    echo "OK: Dotfiles installed successfully"
 fi
 
 # Make scripts executable
@@ -63,11 +63,11 @@ chmod +x "$HOME/.dotfiles/bin/"* "$HOME/.dotfiles/shell/"* 2>/dev/null || true
 source "$HOME/.dotfiles/cli/config.sh"
 
 # Install shell configuration
-echo "🐚 Installing shell configuration..."
+echo "Installing shell configuration..."
 "$HOME/.dotfiles/shell/install.sh"
 
 # Run interactive bootstrap
-echo "🎯 Starting interactive setup..."
+echo "Starting interactive setup..."
 echo "   - Select 'Install Packages' to get development tools"
 echo "   - Select 'WSL Configuration Setup' if you're on WSL"
 echo ""
@@ -76,11 +76,11 @@ read -p "Press Enter to continue with interactive setup..."
 "$HOME/.dotfiles/bin/bootstrap.sh"
 
 echo ""
-echo "✨ Installation complete!"
+echo "Installation complete!"
 echo ""
-echo "💡 Next steps:"
+echo "Next steps:"
 echo "   - Restart your shell or run: source ~/.zshrc"
 echo "   - Use 'config' command to manage your dotfiles"
 echo "   - Run 'validate.sh' to verify your setup"
 echo ""
-echo "📚 Learn more: https://github.com/Unintendedsideeffects/Dotfiles"
+echo "Learn more: https://github.com/Unintendedsideeffects/Dotfiles"

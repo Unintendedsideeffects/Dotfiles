@@ -6,18 +6,18 @@ set -euo pipefail
 
 # Check if running on Arch
 if ! command -v pacman >/dev/null 2>&1; then
-    echo "❌ This script is only for Arch Linux systems"
+    echo "ERROR: This script is only for Arch Linux systems"
     exit 1
 fi
 
 # Check if yay is already installed
 if command -v yay >/dev/null 2>&1; then
-    echo "✅ yay is already installed"
+    echo "OK: yay is already installed"
     yay --version
     exit 0
 fi
 
-echo "🔧 Installing yay AUR helper..."
+echo "Installing yay AUR helper..."
 
 # Helper function to run commands with sudo when needed
 run_cmd() {
@@ -29,7 +29,7 @@ run_cmd() {
 }
 
 # Ensure we have git and base-devel
-echo "📦 Installing prerequisites (including ccache)..."
+echo "Installing prerequisites (including ccache)..."
 run_cmd pacman -S --needed --noconfirm git base-devel ccache
 
 # Create temporary directory
@@ -37,16 +37,16 @@ TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
 # Clone yay repository with retry logic
-echo "📥 Cloning yay repository..."
+echo "Cloning yay repository..."
 for attempt in 1 2 3; do
     if git clone https://aur.archlinux.org/yay.git; then
         break
     else
-        echo "⚠️ Clone attempt $attempt failed, retrying..."
+        echo "WARNING: Clone attempt $attempt failed, retrying..."
         sleep 2
         rm -rf yay 2>/dev/null || true
         if [[ $attempt -eq 3 ]]; then
-            echo "❌ Failed to clone yay repository after 3 attempts"
+            echo "ERROR: Failed to clone yay repository after 3 attempts"
             echo "This might be a network connectivity issue."
             echo "You can try running this script again later."
             exit 1
@@ -55,10 +55,10 @@ for attempt in 1 2 3; do
 done
 
 # Build and install yay
-echo "🔨 Building yay..."
+echo "Building yay..."
 cd yay
 if ! makepkg -si --noconfirm; then
-    echo "❌ Failed to build yay"
+    echo "ERROR: Failed to build yay"
     echo "This might be due to missing dependencies or build errors."
     exit 1
 fi
@@ -69,18 +69,18 @@ rm -rf "$TMP_DIR"
 
 # Verify installation
 if command -v yay >/dev/null 2>&1; then
-    echo "✅ yay installed successfully!"
+    echo "OK: yay installed successfully!"
     yay --version
     
     # Configure yay with sensible defaults
-    echo "⚙️  Configuring yay..."
+    echo "Configuring yay..."
     yay --save --answerclean All --answerdiff None --answerupgrade None --cleanafter
     
-    echo "💡 yay is now ready to use!"
+    echo "yay is now ready to use!"
     echo "   - Install AUR packages: yay -S package-name"
     echo "   - Update all packages: yay -Syu"
     echo "   - Search packages: yay -Ss search-term"
 else
-    echo "❌ yay installation failed"
+    echo "ERROR: yay installation failed"
     exit 1
 fi

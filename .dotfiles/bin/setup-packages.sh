@@ -39,6 +39,10 @@ if [[ -z "$ENV" ]]; then
   exit 1
 fi
 
+if [[ "$ENV" == "rocky" && "${OS_ID:-}" == "fedora" ]]; then
+  echo "WARNING: Fedora detected. Using Rocky package lists; some packages may fail to install."
+fi
+
 # WSL detection
 IS_WSL=false
 if df_is_wsl; then
@@ -174,7 +178,7 @@ install_pkgs() {
 
     if ((${#aur_pkgs[@]})); then
       if ! command -v yay >/dev/null 2>&1; then
-        echo "⚠️  Skipping AUR packages (missing yay): ${aur_pkgs[*]}"
+        echo "WARNING: Skipping AUR packages (missing yay): ${aur_pkgs[*]}"
         echo "    Run setup-aur.sh to install yay, then rerun this script."
       else
         echo "Installing AUR packages with yay..."
