@@ -449,6 +449,61 @@ prompt_wsl_setup() {
   fi
 }
 
+prompt_locale_setup() {
+  local script="$BIN_DIR/setup-locale.sh"
+  if [[ ! -f "$script" ]]; then
+    whip --title "Locale Setup" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Locale Setup" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
+    return 1
+  fi
+
+  if whip --title "Locale Setup" --yesno "Configure UTF-8 locale?\n\nStarship and other tools require UTF-8 locale support.\n\nThis will:\n- Check if UTF-8 locale is available\n- Generate en_US.UTF-8 if needed\n- Set system locale to UTF-8\n\nSupports Arch, Debian/Ubuntu, and RHEL-based systems." 18 70; then
+    local tmpfile
+    tmpfile=$(mktemp)
+    CLEANUP_FILES+=("$tmpfile")
+    : >"$tmpfile"
+    echo "Checking locale configuration..." >>"$tmpfile"
+
+    whip --title "Locale Setup" --tailboxbg "$tmpfile" 20 80 &
+    local tail_pid=$!
+    CLEANUP_PIDS+=("$tail_pid")
+
+    local status=0
+    {
+      "$script" setup 2>&1
+      echo "$?" > "${tmpfile}.status"
+    } >> "$tmpfile" || true
+
+    status=$(cat "${tmpfile}.status" 2>/dev/null || echo "1")
+    rm -f "${tmpfile}.status"
+    CLEANUP_FILES+=("${tmpfile}.status")
+
+    # Kill background process with timeout
+    if kill "$tail_pid" 2>/dev/null; then
+      local timeout=5
+      while kill -0 "$tail_pid" 2>/dev/null && ((timeout > 0)); do
+        sleep 0.1
+        ((timeout--))
+      done
+      kill -9 "$tail_pid" 2>/dev/null || true
+    fi
+    wait "$tail_pid" 2>/dev/null || true
+
+    local output
+    output=$(cat "$tmpfile")
+
+    if [[ $status -eq 0 ]]; then
+      whip --title "Locale Setup" --scrolltext --msgbox "$output\n\nYou may need to log out and back in for changes to take effect.\nOr run: export LANG=en_US.UTF-8" 20 80
+    else
+      whip --title "Locale Setup Failed" --scrolltext --msgbox "$output" 20 80
+    fi
+
+    rm -f "$tmpfile"
+  fi
+}
+
 prompt_headless_gui() {
   # Only available on Arch-based systems because setup-headless-gui.sh is Arch-specific
   if ! is_arch; then
@@ -522,15 +577,16 @@ main_menu() {
 
   # Dynamically include options based on available scripts and distro
   options+=("git_config" "Configure Git User Settings" ON)
+  options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
 
   if is_arch; then
     options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
   fi
-  
+
   options+=("packages" "Install Packages" OFF)
   options+=("gui_autologin" "Configure GUI autostart (X11/Wayland)" OFF)
   options+=("validate" "Validate Environment" OFF)
-  
+
   if is_wsl; then
     options+=("wsl_setup" "WSL Configuration Setup" OFF)
   fi
@@ -561,6 +617,8 @@ main_menu() {
     case "$sel" in
       git_config)
         prompt_git_config ;;
+      locale_setup)
+        prompt_locale_setup ;;
       aur_setup)
         prompt_aur_setup ;;
       packages)
