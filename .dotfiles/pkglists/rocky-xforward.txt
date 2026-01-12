@@ -1,0 +1,5 @@
+openssh-server
+xorg-x11-xauth
+xorg-x11-xhost
+xorg-x11-apps
+mesa-demos
