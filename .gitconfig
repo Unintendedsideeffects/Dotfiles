@@ -1,2 +1,5 @@
 [include]
 	path = ~/.gitconfig-aliases
+
+[rerere]
+	enabled = true
