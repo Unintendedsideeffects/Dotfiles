@@ -95,6 +95,10 @@ config commit -m "msg"  # Commit changes
 config push             # Push to remote
 ```
 
+## Git Configuration
+
+This dotfiles repository includes git rerere (reuse recorded resolution) configuration to automatically resolve merge conflicts you've resolved before. Learn more: [Git Tools - Rerere](https://git-scm.com/book/en/v2/Git-Tools-Rerere)
+
 ## Customization
 
 - **Local settings**: Create `~/.zshrc.local` for machine-specific config
