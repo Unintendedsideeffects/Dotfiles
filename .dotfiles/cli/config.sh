@@ -3,10 +3,11 @@
 
 # Cleanup function to keep only the 5 most recent backups
 cleanup_old_backups() {
-    local backup_base_dir="$HOME/.backup/cfg"
+    local backup_base_dir="$HOME/.local/backups/cfg"
 
     # Check if backup directory exists
     if [[ ! -d "$backup_base_dir" ]]; then
+        mkdir -p "$backup_base_dir"
         return 0
     fi
 
@@ -52,7 +53,7 @@ config() {
             echo "Pull failed due to local changes. Backing up conflicting files."
 
             # Create a timestamped backup directory
-            local backup_dir="$HOME/.backup/cfg/$(date +'%Y%m%d-%H%M%S')"
+            local backup_dir="$HOME/.local/backups/cfg/$(date +'%Y%m%d-%H%M%S')"
             if ! mkdir -p "$backup_dir"; then
                 echo "Error: Failed to create backup directory."
                 return 1
@@ -125,8 +126,19 @@ config() {
 }
 
 safe_checkout() {
-  if config checkout 2>&1 | command grep -E "\s+\." | awk '{print $1}' | while read -r f; do mv "$HOME/$f" "$HOME/$f.backup"; done; then
+  local backup_dir="$HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
+  mkdir -p "$backup_dir"
+
+  if config checkout 2>&1 | command grep -E "\s+\." | awk '{print $1}' | while read -r f; do
+    mkdir -p "$backup_dir/$(dirname "$f")"
+    mv "$HOME/$f" "$backup_dir/$f"
+  done; then
     :
   fi
   config checkout
+
+  # Rotate backups
+  if [[ -x "$HOME/.local/bin/backup-rotate" ]]; then
+    "$HOME/.local/bin/backup-rotate" "$HOME/.local/backups/dotfiles" 5
+  fi
 }
