@@ -16,7 +16,8 @@ fi
 # Backup existing .cfg if it exists
 if [[ -d "$CONFIG_DIR" ]]; then
     echo "WARNING: Backing up existing .cfg directory..."
-    mv "$CONFIG_DIR" "${CONFIG_DIR}.backup.$(date +%s)"
+    mkdir -p "$HOME/.local/backups/cfg"
+    mv "$CONFIG_DIR" "$HOME/.local/backups/cfg/.cfg.backup.$(date +%s)"
 fi
 
 # Clone the bare repository
@@ -32,7 +33,7 @@ config() {
 echo "Installing dotfiles (will overwrite existing files)..."
 if ! checkout_output=$(config checkout 2>&1); then
     echo "WARNING: Some files already exist. Creating backup and forcing checkout..."
-    backup_dir="$HOME/.dotfiles-backup.$(date +%s)"
+    backup_dir="$HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
     mkdir -p "$backup_dir"
 
     mapfile -t conflict_files < <(printf '%s\n' "$checkout_output" | grep -E "^\s+\." | awk '{print $1}')
@@ -52,6 +53,11 @@ if ! checkout_output=$(config checkout 2>&1); then
     # Force checkout, overwriting existing files
     config checkout -f
     echo "OK: Dotfiles installed (existing files backed up to $backup_dir)"
+
+    # Rotate backups to keep only 5 most recent
+    if [[ -x "$HOME/.local/bin/backup-rotate" ]]; then
+        "$HOME/.local/bin/backup-rotate" "$HOME/.local/backups/dotfiles" 5
+    fi
 else
     echo "OK: Dotfiles installed successfully"
 fi

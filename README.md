@@ -16,7 +16,7 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
 ```
-This will back up any conflicting files to `~/.dotfiles-backup.<timestamp>`.
+This will back up any conflicting files to `~/.local/backups/dotfiles/` (keeping 5 most recent).
 
 **Safer one-liner (pin commit + verify checksum):**
 ```bash
@@ -42,7 +42,10 @@ bash /tmp/quick-install.sh
 ```bash
 git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git "$HOME/.cfg"
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.backup || true
+# Back up conflicting files
+backup_dir="$HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
+mkdir -p "$backup_dir"
+config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} bash -c "mkdir -p '$backup_dir/\$(dirname {})' && mv {} '$backup_dir/{}'" || true
 config checkout
 source "$HOME/.dotfiles/cli/config.sh"
 "$HOME/.dotfiles/shell/install.sh"
