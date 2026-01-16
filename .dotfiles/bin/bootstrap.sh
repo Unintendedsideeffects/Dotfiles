@@ -218,6 +218,11 @@ prompt_packages() {
   : >"$tmpfile"
   echo "Starting package installation ($package_type)..." >>"$tmpfile"
 
+  if ! USE_WHIPTAIL=1 "$script" --preflight; then
+    whip --title "Package Installation" --msgbox "Proxmox repository setup is required before installing packages." 10 70
+    return 1
+  fi
+
   whip --title "Package Installation" --tailboxbg "$tmpfile" 20 80 &
   local tail_pid=$!
   CLEANUP_PIDS+=("$tail_pid")
@@ -226,7 +231,7 @@ prompt_packages() {
   # Run script and capture all output to tmpfile
   # Using exec redirection to avoid process substitution issues
   {
-    "$script" "$package_type" 2>&1
+    "$script" --skip-preflight "$package_type" 2>&1
     echo "$?" > "${tmpfile}.status"
   } >> "$tmpfile" || true
 

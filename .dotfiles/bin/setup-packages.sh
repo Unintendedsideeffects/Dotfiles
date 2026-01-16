@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Package installation script with WSL detection
-# Usage: setup-packages.sh [--dry-run] [package-type]
+# Usage: setup-packages.sh [--dry-run] [--preflight] [--skip-preflight] [package-type]
 # package-type: cli, gui, xforward, wsl (auto-detected if not specified)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,6 +14,8 @@ source "$LIB_DIR/detect.sh"
 
 DRY=false
 PACKAGE_TYPE=""
+PREFLIGHT=false
+SKIP_PREFLIGHT=false
 APT_UPDATED=false
 PROXMOX_REPOS_CHANGED=false
 
@@ -22,6 +24,14 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run)
       DRY=true
+      shift
+      ;;
+    --preflight)
+      PREFLIGHT=true
+      shift
+      ;;
+    --skip-preflight)
+      SKIP_PREFLIGHT=true
       shift
       ;;
     *)
@@ -60,6 +70,11 @@ if [[ -z "$PACKAGE_TYPE" ]]; then
   fi
 fi
 
+if [[ "$PREFLIGHT" == true ]]; then
+  ensure_proxmox_no_subscription_repo
+  exit $?
+fi
+
 # Determine package list file
 PKGLIST="$ROOT_DIR/.dotfiles/pkglists/${ENV}-${PACKAGE_TYPE}.txt"
 if [[ ! -f "$PKGLIST" ]]; then 
@@ -90,6 +105,29 @@ run_cmd() {
   else
     "$@"
   fi
+}
+
+prompt_yes_no() {
+  local prompt="$1"
+  if [[ "${USE_WHIPTAIL:-}" == "1" ]]; then
+    if command -v whiptail >/dev/null 2>&1; then
+      whiptail --title "Proxmox Repositories" --yesno "$prompt" 12 70
+      return $?
+    fi
+    if command -v dialog >/dev/null 2>&1; then
+      dialog --title "Proxmox Repositories" --yesno "$prompt" 12 70
+      return $?
+    fi
+  fi
+
+  if [[ ! -r /dev/tty ]]; then
+    return 2
+  fi
+
+  local reply
+  read -p "$prompt (y/N): " -n 1 -r reply </dev/tty
+  echo
+  [[ "$reply" =~ ^[Yy]$ ]]
 }
 
 read_debian_codename() {
@@ -149,20 +187,14 @@ ensure_proxmox_no_subscription_repo() {
     return 0
   fi
 
-  local tty_ok=false
-  if [[ -r /dev/tty ]]; then
-    tty_ok=true
-  fi
-
-  local reply
   if ((${#enterprise_files[@]})); then
-    if [[ "$tty_ok" != true ]]; then
+    prompt_yes_no "Disable Proxmox enterprise repos (401 without subscription)?"
+    local prompt_rc=$?
+    if [[ $prompt_rc -eq 2 ]]; then
       echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
       return 1
     fi
-    read -p "Disable Proxmox enterprise repos (401 without subscription)? (y/N): " -n 1 -r reply </dev/tty
-    echo
-    if [[ "$reply" =~ ^[Yy]$ ]]; then
+    if [[ $prompt_rc -eq 0 ]]; then
       for file in "${enterprise_files[@]}"; do
         if [[ "$file" == *.sources ]]; then
           if grep -qi '^Enabled:\s*no' "$file"; then
@@ -185,13 +217,13 @@ ensure_proxmox_no_subscription_repo() {
   fi
 
   if [[ "$needs_repo" == true ]]; then
-    if [[ "$tty_ok" != true ]]; then
+    prompt_yes_no "Enable Proxmox no-subscription repos?"
+    local prompt_rc=$?
+    if [[ $prompt_rc -eq 2 ]]; then
       echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
       return 1
     fi
-    read -p "Enable Proxmox no-subscription repos? (y/N): " -n 1 -r reply </dev/tty
-    echo
-    if [[ "$reply" =~ ^[Yy]$ ]]; then
+    if [[ $prompt_rc -eq 0 ]]; then
       repo_file="/etc/apt/sources.list.d/pve-no-subscription.list"
       run_cmd mkdir -p /etc/apt/sources.list.d
       {
@@ -208,15 +240,13 @@ ensure_proxmox_no_subscription_repo() {
   fi
 
   if ! dpkg -s proxmox-archive-keyring >/dev/null 2>&1; then
-    if [[ "$tty_ok" != true ]]; then
+    prompt_yes_no "Install Proxmox archive keyring package?"
+    local prompt_rc=$?
+    if [[ $prompt_rc -eq 2 ]]; then
       echo "Proxmox keyring missing; rerun with a TTY to install proxmox-archive-keyring."
       return 1
     fi
-
-    local keyring_reply
-    read -p "Install Proxmox archive keyring package? (y/N): " -n 1 -r keyring_reply </dev/tty
-    echo
-    if [[ "$keyring_reply" =~ ^[Yy]$ ]]; then
+    if [[ $prompt_rc -eq 0 ]]; then
       if [[ "$PROXMOX_REPOS_CHANGED" == true && "$APT_UPDATED" == false ]]; then
         run_cmd apt-get update -y
         APT_UPDATED=true
@@ -335,9 +365,11 @@ install_pkgs() {
       run_cmd "$pkg_manager" install -y "${pkgs[@]}"
     fi
   else
-    if ! ensure_proxmox_no_subscription_repo; then
-      echo "Package installation halted until Proxmox repos are configured."
-      return 1
+    if [[ "$SKIP_PREFLIGHT" != true ]]; then
+      if ! ensure_proxmox_no_subscription_repo; then
+        echo "Package installation halted until Proxmox repos are configured."
+        return 1
+      fi
     fi
     if [[ "$DRY" == true ]]; then
       echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
