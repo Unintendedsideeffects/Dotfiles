@@ -177,6 +177,26 @@ ensure_proxmox_no_subscription_repo() {
       echo "Added $repo_file"
     fi
   fi
+
+  if [[ "$DRY" == true ]]; then
+    return
+  fi
+
+  if ! dpkg -s proxmox-archive-keyring >/dev/null 2>&1; then
+    if [[ ! -t 0 ]]; then
+      echo "Proxmox keyring missing; rerun with a TTY to install proxmox-archive-keyring."
+      return
+    fi
+
+    local keyring_reply
+    read -p "Install Proxmox archive keyring package? (y/N): " -n 1 -r keyring_reply </dev/tty
+    echo
+    if [[ "$keyring_reply" =~ ^[Yy]$ ]]; then
+      run_cmd apt-get update -y
+      run_cmd apt-get install -y proxmox-archive-keyring
+      echo "Installed proxmox-archive-keyring"
+    fi
+  fi
 }
 
 select_rhel_pkg_manager() {
