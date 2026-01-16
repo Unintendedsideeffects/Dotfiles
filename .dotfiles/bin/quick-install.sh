@@ -212,8 +212,8 @@ run_as_user() {
 # Backup existing .cfg if it exists
 if [[ -d "$CONFIG_DIR" ]]; then
     echo "WARNING: Backing up existing .cfg directory..."
-    run_as_user mkdir -p "$TARGET_HOME/.local/backups/cfg"
-    run_as_user mv "$CONFIG_DIR" "$TARGET_HOME/.local/backups/cfg/.cfg.backup.$(date +%s)"
+    run_as_user mkdir -p "$TARGET_HOME/.local/backups/cfg-repo"
+    run_as_user mv "$CONFIG_DIR" "$TARGET_HOME/.local/backups/cfg-repo/.cfg.backup.$(date +%s)"
 fi
 
 # Clone the bare repository
