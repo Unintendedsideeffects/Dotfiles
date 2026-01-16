@@ -86,6 +86,32 @@ ensure_tui() {
 }
 
 whip() {
+  local needs_tailboxbg=false
+  for arg in "$@"; do
+    if [[ "$arg" == "--tailboxbg" ]]; then
+      needs_tailboxbg=true
+      break
+    fi
+  done
+
+  if [[ "$needs_tailboxbg" == true ]]; then
+    if command -v dialog >/dev/null 2>&1; then
+      dialog "$@"
+      return
+    fi
+
+    local whiptail_args=()
+    for arg in "$@"; do
+      if [[ "$arg" == "--tailboxbg" ]]; then
+        whiptail_args+=("--textbox")
+      else
+        whiptail_args+=("$arg")
+      fi
+    done
+    whiptail "${whiptail_args[@]}"
+    return
+  fi
+
   if command -v whiptail >/dev/null 2>&1; then
     whiptail "$@"
   else
