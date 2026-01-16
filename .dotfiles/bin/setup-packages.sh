@@ -73,11 +73,6 @@ if [[ -z "$PACKAGE_TYPE" ]]; then
   fi
 fi
 
-if [[ "$PREFLIGHT" == true ]]; then
-  ensure_proxmox_no_subscription_repo
-  exit $?
-fi
-
 # Determine package list file
 PKGLIST="$ROOT_DIR/.dotfiles/pkglists/${ENV}-${PACKAGE_TYPE}.txt"
 if [[ ! -f "$PKGLIST" ]]; then 
@@ -260,6 +255,11 @@ ensure_proxmox_no_subscription_repo() {
   fi
   return 0
 }
+
+if [[ "$PREFLIGHT" == true ]]; then
+  ensure_proxmox_no_subscription_repo
+  exit $?
+fi
 
 select_rhel_pkg_manager() {
   if command -v dnf >/dev/null 2>&1; then
