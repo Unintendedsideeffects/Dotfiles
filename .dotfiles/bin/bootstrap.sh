@@ -211,54 +211,20 @@ prompt_packages() {
     return 1
   fi
   
-  # Install packages while streaming output
-  local tmpfile
-  tmpfile=$(mktemp)
-  CLEANUP_FILES+=("$tmpfile")
-  : >"$tmpfile"
-  echo "Starting package installation ($package_type)..." >>"$tmpfile"
-
   if ! USE_WHIPTAIL=1 "$script" --preflight; then
     whip --title "Package Installation" --msgbox "Proxmox repository setup is required before installing packages." 10 70
     return 1
   fi
 
-  whip --title "Package Installation" --tailboxbg "$tmpfile" 20 80 &
-  local tail_pid=$!
-  CLEANUP_PIDS+=("$tail_pid")
-
-  local status=0
-  # Run script and capture all output to tmpfile
-  # Using exec redirection to avoid process substitution issues
-  {
-    "$script" --skip-preflight "$package_type" 2>&1
-    echo "$?" > "${tmpfile}.status"
-  } >> "$tmpfile" || true
-
-  status=$(cat "${tmpfile}.status" 2>/dev/null || echo "1")
-  rm -f "${tmpfile}.status"
-  CLEANUP_FILES+=("${tmpfile}.status")
-
-  # Kill background process with timeout
-  if kill "$tail_pid" 2>/dev/null; then
-    local timeout=5
-    while kill -0 "$tail_pid" 2>/dev/null && ((timeout > 0)); do
-      sleep 0.1
-      ((timeout--))
-    done
-    kill -9 "$tail_pid" 2>/dev/null || true
-  fi
-  wait "$tail_pid" 2>/dev/null || true
+  local output status
+  output=$("$script" --skip-preflight "$package_type" 2>&1)
+  status=$?
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --msgbox "Package installation completed successfully!" 10 60
+    whip --title "Package Installation" --scrolltext --msgbox "$output" 20 80
   else
-    local output
-    output=$(cat "$tmpfile")
     whip --title "Package Installation Failed" --scrolltext --msgbox "$output" 20 80
   fi
-
-  rm -f "$tmpfile"
 }
 
 prompt_gui_autologin() {
