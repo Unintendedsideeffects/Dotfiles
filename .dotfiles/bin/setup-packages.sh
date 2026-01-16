@@ -119,18 +119,18 @@ ensure_proxmox_no_subscription_repo() {
   ceph_repo_line="deb http://download.proxmox.com/debian/ceph-squid ${codename} no-subscription"
 
   local needs_repo=false
-  if ! grep -RqsF "$pve_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+  if ! grep -RqsF "$pve_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null; then
     needs_repo=true
   fi
-  if ! grep -RqsF "$ceph_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+  if ! grep -RqsF "$ceph_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null; then
     needs_repo=true
   fi
 
   local enterprise_files=()
-  if grep -Rqs "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+  if grep -Rqs "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null; then
     while IFS= read -r file; do
       enterprise_files+=("$file")
-    done < <(grep -Rl "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null)
+    done < <(grep -Rl "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null)
   fi
 
   if [[ "$needs_repo" != true && ${#enterprise_files[@]} -eq 0 ]]; then
@@ -160,7 +160,20 @@ ensure_proxmox_no_subscription_repo() {
     echo
     if [[ "$reply" =~ ^[Yy]$ ]]; then
       for file in "${enterprise_files[@]}"; do
-        run_cmd sed -i 's/^[^#]/#&/' "$file"
+        if [[ "$file" == *.sources ]]; then
+          if grep -qi '^Enabled:\s*no' "$file"; then
+            continue
+          fi
+          run_cmd awk '
+            BEGIN { added=0 }
+            /^Enabled:/ { print "Enabled: no"; added=1; next }
+            { print }
+            END { if (added==0) print "Enabled: no" }
+          ' "$file" > "${file}.tmp"
+          run_cmd mv "${file}.tmp" "$file"
+        else
+          run_cmd sed -i 's/^[^#]/#&/' "$file"
+        fi
         echo "Disabled enterprise repo in $file"
       done
       PROXMOX_REPOS_CHANGED=true
