@@ -112,32 +112,71 @@ ensure_proxmox_no_subscription_repo() {
     return
   fi
 
-  repo_line="deb http://download.proxmox.com/debian/pve ${codename} pve-no-subscription"
-  if grep -RqsF "$repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+  local pve_repo_line ceph_repo_line
+  pve_repo_line="deb http://download.proxmox.com/debian/pve ${codename} pve-no-subscription"
+  ceph_repo_line="deb http://download.proxmox.com/debian/ceph-squid ${codename} no-subscription"
+
+  local needs_repo=false
+  if ! grep -RqsF "$pve_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+    needs_repo=true
+  fi
+  if ! grep -RqsF "$ceph_repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+    needs_repo=true
+  fi
+
+  local enterprise_files=()
+  if grep -Rqs "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+    while IFS= read -r file; do
+      enterprise_files+=("$file")
+    done < <(grep -Rl "enterprise.proxmox.com" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null)
+  fi
+
+  if [[ "$needs_repo" != true && ${#enterprise_files[@]} -eq 0 ]]; then
     return
   fi
 
   if [[ "$DRY" == true ]]; then
-    echo "[DRY-RUN] Enable Proxmox no-subscription repo: $repo_line"
+    if ((${#enterprise_files[@]})); then
+      echo "[DRY-RUN] Disable Proxmox enterprise repos in: ${enterprise_files[*]}"
+    fi
+    if [[ "$needs_repo" == true ]]; then
+      echo "[DRY-RUN] Enable Proxmox no-subscription repos:"
+      echo "[DRY-RUN]   $pve_repo_line"
+      echo "[DRY-RUN]   $ceph_repo_line"
+    fi
     return
   fi
 
   if [[ ! -t 0 ]]; then
-    echo "Proxmox detected. No-subscription repo not found; rerun with a TTY to enable it."
+    echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
     return
   fi
 
   local reply
-  read -p "Enable Proxmox no-subscription repo? (y/N): " -n 1 -r reply </dev/tty
-  echo
-  if [[ ! "$reply" =~ ^[Yy]$ ]]; then
-    return
+  if ((${#enterprise_files[@]})); then
+    read -p "Disable Proxmox enterprise repos (401 without subscription)? (y/N): " -n 1 -r reply </dev/tty
+    echo
+    if [[ "$reply" =~ ^[Yy]$ ]]; then
+      for file in "${enterprise_files[@]}"; do
+        run_cmd sed -i 's/^[^#]/#&/' "$file"
+        echo "Disabled enterprise repo in $file"
+      done
+    fi
   fi
 
-  repo_file="/etc/apt/sources.list.d/pve-no-subscription.list"
-  run_cmd mkdir -p /etc/apt/sources.list.d
-  printf '%s\n' "$repo_line" | run_cmd tee "$repo_file" >/dev/null
-  echo "Added $repo_file"
+  if [[ "$needs_repo" == true ]]; then
+    read -p "Enable Proxmox no-subscription repos? (y/N): " -n 1 -r reply </dev/tty
+    echo
+    if [[ "$reply" =~ ^[Yy]$ ]]; then
+      repo_file="/etc/apt/sources.list.d/pve-no-subscription.list"
+      run_cmd mkdir -p /etc/apt/sources.list.d
+      {
+        printf '%s\n' "$pve_repo_line"
+        printf '%s\n' "$ceph_repo_line"
+      } | run_cmd tee "$repo_file" >/dev/null
+      echo "Added $repo_file"
+    fi
+  fi
 }
 
 select_rhel_pkg_manager() {
