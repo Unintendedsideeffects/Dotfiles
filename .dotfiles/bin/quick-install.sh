@@ -224,6 +224,28 @@ run_as_user() {
     fi
 }
 
+# Config helper for managing dotfiles directly (no shell setup required).
+config() {
+    run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
+}
+
+if [[ "$SKIP_INSTALL" == true ]]; then
+    if [[ ! -d "$CONFIG_DIR" ]]; then
+        echo "WARNING: Existing dotfiles repo not found; continuing with reinstall."
+        SKIP_INSTALL=false
+    else
+        # Keep scripts current when rerunning, but don't overwrite local changes.
+        if [[ -n "$(config status --porcelain 2>/dev/null)" ]]; then
+            echo "WARNING: Local dotfiles changes detected; skipping update pull."
+        else
+            if ! config pull >/dev/null 2>&1; then
+                echo "WARNING: Failed to update dotfiles; continuing with reinstall."
+                SKIP_INSTALL=false
+            fi
+        fi
+    fi
+fi
+
 if [[ "$SKIP_INSTALL" != true ]]; then
     # Backup existing .cfg if it exists
     if [[ -d "$CONFIG_DIR" ]]; then
@@ -235,11 +257,6 @@ if [[ "$SKIP_INSTALL" != true ]]; then
     # Clone the bare repository
     echo "Cloning dotfiles repository..."
     run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
-
-    # Set up the config alias temporarily
-    config() {
-        run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
-    }
 
     # Handle existing dotfiles
     echo "Installing dotfiles (will overwrite existing files)..."
@@ -283,21 +300,6 @@ if [[ "$SKIP_INSTALL" != true ]]; then
             echo "WARNING: Directory not found: $dir"
         fi
     done
-else
-    # Already installed; define config helper for the menu/log output below.
-    config() {
-        run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
-    }
-
-    # Keep scripts current when rerunning, but don't overwrite local changes.
-    if [[ -n "$(config status --porcelain 2>/dev/null)" ]]; then
-        echo "WARNING: Local dotfiles changes detected; skipping update pull."
-        echo "         Run 'config pull' after committing or stashing your changes."
-    else
-        config pull >/dev/null 2>&1 || {
-            echo "WARNING: Failed to update dotfiles. Continuing with existing checkout."
-        }
-    fi
 fi
 
 # Verify repository and show what will be executed
