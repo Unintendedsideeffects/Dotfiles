@@ -176,17 +176,9 @@ CONFIG_DIR="$TARGET_HOME/.cfg"
 INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
 
 # Check if already installed
+SKIP_INSTALL=false
 if [[ -f "$INSTALL_MARKER" ]]; then
-    install_time=$(cat "$INSTALL_MARKER" 2>/dev/null || echo "unknown")
-    echo "Dotfiles already installed for $TARGET_USER (timestamp: $install_time)"
-    echo ""
-    read -p "Reinstall anyway? This will backup existing installation. (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled."
-        exit 0
-    fi
-    echo ""
+    SKIP_INSTALL=true
 fi
 
 echo ""
@@ -209,64 +201,71 @@ run_as_user() {
     fi
 }
 
-# Backup existing .cfg if it exists
-if [[ -d "$CONFIG_DIR" ]]; then
-    echo "WARNING: Backing up existing .cfg directory..."
-    run_as_user mkdir -p "$TARGET_HOME/.local/backups/cfg-repo"
-    run_as_user mv "$CONFIG_DIR" "$TARGET_HOME/.local/backups/cfg-repo/.cfg.backup.$(date +%s)"
-fi
-
-# Clone the bare repository
-echo "Cloning dotfiles repository..."
-run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
-
-# Set up the config alias temporarily
-config() {
-    run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
-}
-
-# Handle existing dotfiles
-echo "Installing dotfiles (will overwrite existing files)..."
-if ! checkout_output=$(config checkout 2>&1); then
-    echo "WARNING: Some files already exist. Creating backup and forcing checkout..."
-    backup_dir="$TARGET_HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
-    run_as_user mkdir -p "$backup_dir"
-
-    mapfile -t conflict_files < <(printf '%s\n' "$checkout_output" | grep -E "^\s+\." | awk '{print $1}')
-    if [[ ${#conflict_files[@]} -eq 0 ]]; then
-        echo "ERROR: Failed to determine conflicting files for backup."
-        echo "$checkout_output"
-        exit 1
+if [[ "$SKIP_INSTALL" != true ]]; then
+    # Backup existing .cfg if it exists
+    if [[ -d "$CONFIG_DIR" ]]; then
+        echo "WARNING: Backing up existing .cfg directory..."
+        run_as_user mkdir -p "$TARGET_HOME/.local/backups/cfg-repo"
+        run_as_user mv "$CONFIG_DIR" "$TARGET_HOME/.local/backups/cfg-repo/.cfg.backup.$(date +%s)"
     fi
 
-    for path in "${conflict_files[@]}"; do
-        if [[ -e "$TARGET_HOME/$path" ]]; then
-            run_as_user mkdir -p "$backup_dir/$(dirname "$path")"
-            run_as_user mv "$TARGET_HOME/$path" "$backup_dir/$path"
+    # Clone the bare repository
+    echo "Cloning dotfiles repository..."
+    run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
+
+    # Set up the config alias temporarily
+    config() {
+        run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
+    }
+
+    # Handle existing dotfiles
+    echo "Installing dotfiles (will overwrite existing files)..."
+    if ! checkout_output=$(config checkout 2>&1); then
+        echo "WARNING: Some files already exist. Creating backup and forcing checkout..."
+        backup_dir="$TARGET_HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
+        run_as_user mkdir -p "$backup_dir"
+
+        mapfile -t conflict_files < <(printf '%s\n' "$checkout_output" | grep -E "^\s+\." | awk '{print $1}')
+        if [[ ${#conflict_files[@]} -eq 0 ]]; then
+            echo "ERROR: Failed to determine conflicting files for backup."
+            echo "$checkout_output"
+            exit 1
+        fi
+
+        for path in "${conflict_files[@]}"; do
+            if [[ -e "$TARGET_HOME/$path" ]]; then
+                run_as_user mkdir -p "$backup_dir/$(dirname "$path")"
+                run_as_user mv "$TARGET_HOME/$path" "$backup_dir/$path"
+            fi
+        done
+
+        # Force checkout, overwriting existing files
+        config checkout -f
+        echo "OK: Dotfiles installed (existing files backed up to $backup_dir)"
+
+        # Rotate backups to keep only 5 most recent
+        if [[ -x "$TARGET_HOME/.local/bin/backup-rotate" ]]; then
+            run_as_user "$TARGET_HOME/.local/bin/backup-rotate" "$TARGET_HOME/.local/backups/dotfiles" 5
+        fi
+    else
+        echo "OK: Dotfiles installed successfully"
+    fi
+
+    # Make scripts executable
+    echo "Making scripts executable..."
+    for dir in "$TARGET_HOME/.dotfiles/bin" "$TARGET_HOME/.dotfiles/shell"; do
+        if [[ -d "$dir" ]]; then
+            run_as_user find "$dir" -type f -name "*.sh" -exec chmod +x {} \;
+        else
+            echo "WARNING: Directory not found: $dir"
         fi
     done
-
-    # Force checkout, overwriting existing files
-    config checkout -f
-    echo "OK: Dotfiles installed (existing files backed up to $backup_dir)"
-
-    # Rotate backups to keep only 5 most recent
-    if [[ -x "$TARGET_HOME/.local/bin/backup-rotate" ]]; then
-        run_as_user "$TARGET_HOME/.local/bin/backup-rotate" "$TARGET_HOME/.local/backups/dotfiles" 5
-    fi
 else
-    echo "OK: Dotfiles installed successfully"
+    # Already installed; define config helper for the menu/log output below.
+    config() {
+        run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
+    }
 fi
-
-# Make scripts executable
-echo "Making scripts executable..."
-for dir in "$TARGET_HOME/.dotfiles/bin" "$TARGET_HOME/.dotfiles/shell"; do
-    if [[ -d "$dir" ]]; then
-        run_as_user find "$dir" -type f -name "*.sh" -exec chmod +x {} \;
-    else
-        echo "WARNING: Directory not found: $dir"
-    fi
-done
 
 # Verify repository and show what will be executed
 echo ""
