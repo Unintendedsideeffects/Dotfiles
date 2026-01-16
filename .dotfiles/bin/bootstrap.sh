@@ -211,8 +211,11 @@ prompt_packages() {
     return 1
   fi
   
-  if ! USE_WHIPTAIL=1 "$script" --preflight; then
-    whip --title "Package Installation" --msgbox "Proxmox repository setup is required before installing packages." 10 70
+  local preflight_output preflight_status
+  preflight_output=$(USE_WHIPTAIL=1 "$script" --preflight 2>&1)
+  preflight_status=$?
+  if [[ $preflight_status -ne 0 ]]; then
+    whip --title "Package Installation" --scrolltext --msgbox "$preflight_output" 20 80
     return 1
   fi
 
