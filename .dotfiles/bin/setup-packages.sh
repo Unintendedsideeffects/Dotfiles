@@ -14,6 +14,8 @@ source "$LIB_DIR/detect.sh"
 
 DRY=false
 PACKAGE_TYPE=""
+APT_UPDATED=false
+PROXMOX_REPOS_CHANGED=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -161,6 +163,7 @@ ensure_proxmox_no_subscription_repo() {
         run_cmd sed -i 's/^[^#]/#&/' "$file"
         echo "Disabled enterprise repo in $file"
       done
+      PROXMOX_REPOS_CHANGED=true
     fi
   fi
 
@@ -175,6 +178,7 @@ ensure_proxmox_no_subscription_repo() {
         printf '%s\n' "$ceph_repo_line"
       } | run_cmd tee "$repo_file" >/dev/null
       echo "Added $repo_file"
+      PROXMOX_REPOS_CHANGED=true
     fi
   fi
 
@@ -192,7 +196,10 @@ ensure_proxmox_no_subscription_repo() {
     read -p "Install Proxmox archive keyring package? (y/N): " -n 1 -r keyring_reply </dev/tty
     echo
     if [[ "$keyring_reply" =~ ^[Yy]$ ]]; then
-      run_cmd apt-get update -y
+      if [[ "$PROXMOX_REPOS_CHANGED" == true && "$APT_UPDATED" == false ]]; then
+        run_cmd apt-get update -y
+        APT_UPDATED=true
+      fi
       run_cmd apt-get install -y proxmox-archive-keyring
       echo "Installed proxmox-archive-keyring"
     fi
@@ -310,7 +317,10 @@ install_pkgs() {
     if [[ "$DRY" == true ]]; then
       echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
     else
-      run_cmd apt-get update -y
+      if [[ "$APT_UPDATED" == false ]]; then
+        run_cmd apt-get update -y
+        APT_UPDATED=true
+      fi
       run_cmd apt-get install -y "${pkgs[@]}"
     fi
   fi

@@ -194,15 +194,15 @@ prompt_packages() {
       return 1
     fi
   elif is_arch; then
-    package_type=$(whip --title "Package Installation" --radiolist "Choose package set" 15 60 4 \
-      cli "CLI tools (development/terminal)" ON \
-      gui "GUI applications" OFF \
-      xforward "X11 forwarding tools" OFF \
+    package_type=$(whip --title "Package Installation" --menu "Choose package set" 15 60 4 \
+      cli "CLI tools (development/terminal)" \
+      gui "GUI applications" \
+      xforward "X11 forwarding tools" \
       3>&1 1>&2 2>&3) || return 1
   else
-    package_type=$(whip --title "Package Installation" --radiolist "Choose package set" 15 60 3 \
-      cli "CLI tools (development/terminal)" ON \
-      xforward "X11 forwarding tools" OFF \
+    package_type=$(whip --title "Package Installation" --menu "Choose package set" 15 60 3 \
+      cli "CLI tools (development/terminal)" \
+      xforward "X11 forwarding tools" \
       3>&1 1>&2 2>&3) || return 1
   fi
 
@@ -292,11 +292,23 @@ prompt_gui_autologin() {
     wayland_default="ON"
   fi
 
+  local disable_label x11_label wayland_label
+  disable_label="Leave CLI login only (no GUI autostart)"
+  x11_label="Start X11 via startx on tty1"
+  wayland_label="Run a Wayland compositor command (e.g., sway)"
+  if [[ "$disable_default" == "ON" ]]; then
+    disable_label+=" (current)"
+  elif [[ "$x11_default" == "ON" ]]; then
+    x11_label+=" (current)"
+  elif [[ "$wayland_default" == "ON" ]]; then
+    wayland_label+=" (current)"
+  fi
+
   local choice
-  choice=$(whip --title "GUI Autologin" --radiolist "Choose how (or if) to auto-start a GUI session on tty1" 16 78 3 \
-    disable "Leave CLI login only (no GUI autostart)" "$disable_default" \
-    x11 "Start X11 via startx on tty1" "$x11_default" \
-    wayland "Run a Wayland compositor command (e.g., sway)" "$wayland_default" \
+  choice=$(whip --title "GUI Autologin" --menu "Choose how (or if) to auto-start a GUI session on tty1" 16 78 3 \
+    disable "$disable_label" \
+    x11 "$x11_label" \
+    wayland "$wayland_label" \
     3>&1 1>&2 2>&3) || return 1
 
   local output
@@ -558,9 +570,9 @@ prompt_headless_gui() {
 
   local wm_choice vnc_enabled obsidian_enabled display_num vnc_port target_user
 
-  wm_choice=$(whip --title "Headless GUI" --radiolist "Choose window manager" 15 60 3 \
-    openbox "Openbox (lightweight)" ON \
-    i3 "i3 (tiling)" OFF \
+  wm_choice=$(whip --title "Headless GUI" --menu "Choose window manager" 15 60 3 \
+    openbox "Openbox (lightweight)" \
+    i3 "i3 (tiling)" \
     3>&1 1>&2 2>&3) || return 1
 
   if whip --title "Headless GUI" --yesno "Enable VNC server?" 10 60; then vnc_enabled=true; else vnc_enabled=false; fi
@@ -618,7 +630,7 @@ main_menu() {
   local options=()
 
   # Dynamically include options based on available scripts and distro
-  options+=("git_config" "Configure Git User Settings" ON)
+  options+=("git_config" "Configure Git User Settings" OFF)
   options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
 
   if is_arch; then
