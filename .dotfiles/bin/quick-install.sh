@@ -285,6 +285,16 @@ else
     config() {
         run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
     }
+
+    # Keep scripts current when rerunning, but don't overwrite local changes.
+    if [[ -n "$(config status --porcelain 2>/dev/null)" ]]; then
+        echo "WARNING: Local dotfiles changes detected; skipping update pull."
+        echo "         Run 'config pull' after committing or stashing your changes."
+    else
+        config pull >/dev/null 2>&1 || {
+            echo "WARNING: Failed to update dotfiles. Continuing with existing checkout."
+        }
+    fi
 fi
 
 # Verify repository and show what will be executed
