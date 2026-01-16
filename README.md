@@ -18,6 +18,16 @@ curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/mast
 ```
 This will back up any conflicting files to `~/.local/backups/dotfiles/` (keeping 5 most recent).
 
+**First-time root setup (creates new user):**
+```bash
+# Run as root for initial system setup
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
+# You'll be prompted to:
+#   - Create a new user (optional)
+#   - Set up passwordless sudo (optional, with warning)
+#   - Install dotfiles for root or the new user
+```
+
 **Safer one-liner (pin commit + verify checksum):**
 ```bash
 COMMIT=<commit>
