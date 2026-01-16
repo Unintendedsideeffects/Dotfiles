@@ -104,7 +104,7 @@ read_debian_codename() {
 
 ensure_proxmox_no_subscription_repo() {
   if ! df_is_proxmox; then
-    return
+    return 0
   fi
 
   local codename repo_line repo_file
@@ -134,7 +134,7 @@ ensure_proxmox_no_subscription_repo() {
   fi
 
   if [[ "$needs_repo" != true && ${#enterprise_files[@]} -eq 0 ]]; then
-    return
+    return 0
   fi
 
   if [[ "$DRY" == true ]]; then
@@ -146,16 +146,20 @@ ensure_proxmox_no_subscription_repo() {
       echo "[DRY-RUN]   $pve_repo_line"
       echo "[DRY-RUN]   $ceph_repo_line"
     fi
-    return
+    return 0
   fi
 
-  if [[ ! -t 0 ]]; then
-    echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
-    return
+  local tty_ok=false
+  if [[ -r /dev/tty ]]; then
+    tty_ok=true
   fi
 
   local reply
   if ((${#enterprise_files[@]})); then
+    if [[ "$tty_ok" != true ]]; then
+      echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
+      return 1
+    fi
     read -p "Disable Proxmox enterprise repos (401 without subscription)? (y/N): " -n 1 -r reply </dev/tty
     echo
     if [[ "$reply" =~ ^[Yy]$ ]]; then
@@ -181,6 +185,10 @@ ensure_proxmox_no_subscription_repo() {
   fi
 
   if [[ "$needs_repo" == true ]]; then
+    if [[ "$tty_ok" != true ]]; then
+      echo "Proxmox detected. Repo changes needed; rerun with a TTY to update repos."
+      return 1
+    fi
     read -p "Enable Proxmox no-subscription repos? (y/N): " -n 1 -r reply </dev/tty
     echo
     if [[ "$reply" =~ ^[Yy]$ ]]; then
@@ -196,13 +204,13 @@ ensure_proxmox_no_subscription_repo() {
   fi
 
   if [[ "$DRY" == true ]]; then
-    return
+    return 0
   fi
 
   if ! dpkg -s proxmox-archive-keyring >/dev/null 2>&1; then
-    if [[ ! -t 0 ]]; then
+    if [[ "$tty_ok" != true ]]; then
       echo "Proxmox keyring missing; rerun with a TTY to install proxmox-archive-keyring."
-      return
+      return 1
     fi
 
     local keyring_reply
@@ -217,6 +225,7 @@ ensure_proxmox_no_subscription_repo() {
       echo "Installed proxmox-archive-keyring"
     fi
   fi
+  return 0
 }
 
 select_rhel_pkg_manager() {
@@ -326,7 +335,10 @@ install_pkgs() {
       run_cmd "$pkg_manager" install -y "${pkgs[@]}"
     fi
   else
-    ensure_proxmox_no_subscription_repo
+    if ! ensure_proxmox_no_subscription_repo; then
+      echo "Package installation halted until Proxmox repos are configured."
+      return 1
+    fi
     if [[ "$DRY" == true ]]; then
       echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
     else
