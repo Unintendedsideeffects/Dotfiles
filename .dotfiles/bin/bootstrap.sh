@@ -212,7 +212,7 @@ prompt_packages() {
   fi
   
   local preflight_output preflight_status
-  preflight_output=$(USE_WHIPTAIL=1 "$script" --preflight 2>&1)
+  preflight_output=$(USE_WHIPTAIL=1 bash "$script" --preflight 2>&1)
   preflight_status=$?
   if [[ $preflight_status -ne 0 ]]; then
     whip --title "Package Installation" --scrolltext --msgbox "$preflight_output" 20 80
@@ -220,7 +220,7 @@ prompt_packages() {
   fi
 
   local output status
-  output=$("$script" --skip-preflight "$package_type" 2>&1)
+  output=$(bash "$script" --skip-preflight "$package_type" 2>&1)
   status=$?
 
   if [[ $status -eq 0 ]]; then
