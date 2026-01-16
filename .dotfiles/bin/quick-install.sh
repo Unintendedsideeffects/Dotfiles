@@ -280,7 +280,7 @@ echo "  - .dotfiles/bin/bootstrap.sh - Interactive system setup"
 echo ""
 echo "WARNING: These scripts will be executed with the privileges of user: $TARGET_USER"
 echo ""
-read -p "Continue with installation? (y/N): " -n 1 -r
+read -p "Continue with installation? (y/N): " -n 1 -r </dev/tty
 echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -302,7 +302,7 @@ echo "Starting interactive setup..."
 echo "   - Select 'Install Packages' to get development tools"
 echo "   - Select 'WSL Configuration Setup' if you're on WSL"
 echo ""
-read -p "Press Enter to continue with interactive setup..."
+read -p "Press Enter to continue with interactive setup..." </dev/tty
 
 run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
 
