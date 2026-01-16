@@ -158,7 +158,7 @@ prompt_aur_setup() {
     else
       local error_output
       error_output=$(cat "$tmpfile")
-      whip --title "AUR Setup Failed" --scrolltext --msgbox "$error_output" 20 80
+      whip --title "AUR Setup Failed" --msgbox "$error_output" 20 80
     fi
 
     # Cleanup
@@ -215,7 +215,7 @@ prompt_packages() {
   preflight_output=$(USE_WHIPTAIL=1 bash "$script" --preflight 2>&1)
   preflight_status=$?
   if [[ $preflight_status -ne 0 ]]; then
-    whip --title "Package Installation" --scrolltext --msgbox "$preflight_output" 20 80
+    whip --title "Package Installation" --msgbox "$preflight_output" 20 80
     return 1
   fi
 
@@ -224,9 +224,9 @@ prompt_packages() {
   status=$?
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --scrolltext --msgbox "$output" 20 80
+    whip --title "Package Installation" --msgbox "$output" 20 80
   else
-    whip --title "Package Installation Failed" --scrolltext --msgbox "$output" 20 80
+    whip --title "Package Installation Failed" --msgbox "$output" 20 80
   fi
 }
 
@@ -290,14 +290,14 @@ prompt_gui_autologin() {
   case "$choice" in
     disable)
       output=$("$script" disable 2>&1) || {
-        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        whip --title "GUI Autologin" --msgbox "$output" 20 80
         return 1
       }
       whip --title "GUI Autologin" --msgbox "GUI autostart disabled.\n\nYou will stay in the CLI unless you start a GUI manually." 12 70
       ;;
     x11)
       output=$("$script" enable --backend x11 2>&1) || {
-        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        whip --title "GUI Autologin" --msgbox "$output" 20 80
         return 1
       }
       whip --title "GUI Autologin" --msgbox "Configured startx to run automatically on tty1.\n\nIf X11 exits or fails you will drop back to the shell." 12 70
@@ -310,7 +310,7 @@ prompt_gui_autologin() {
         return 1
       fi
       output=$("$script" enable --backend wayland --command "$cmd_input" 2>&1) || {
-        whip --title "GUI Autologin" --scrolltext --msgbox "$output" 20 80
+        whip --title "GUI Autologin" --msgbox "$output" 20 80
         return 1
       }
       whip --title "GUI Autologin" --msgbox "Configured Wayland autostart.\n\nIf the compositor exits you will return to the shell." 12 70
@@ -365,9 +365,9 @@ prompt_validate() {
   output=$(cat "$tmpfile")
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Validation Results" --scrolltext --msgbox "$output" 20 70
+    whip --title "Validation Results" --msgbox "$output" 20 70
   else
-    whip --title "Validation Failed" --scrolltext --msgbox "$output" 20 70
+    whip --title "Validation Failed" --msgbox "$output" 20 70
   fi
 
   rm -f "$tmpfile"
@@ -472,7 +472,7 @@ prompt_wsl_setup() {
     if output=$("$script" 2>&1); then
       whip --title "WSL Setup" --msgbox "WSL configuration completed.\n\nYou may need to restart WSL:\n  wsl --shutdown\n  wsl" 12 60
     else
-      whip --title "WSL Setup Failed" --scrolltext --msgbox "$output" 20 80
+      whip --title "WSL Setup Failed" --msgbox "$output" 20 80
     fi
   fi
 }
@@ -523,9 +523,9 @@ prompt_locale_setup() {
     output=$(cat "$tmpfile")
 
     if [[ $status -eq 0 ]]; then
-      whip --title "Locale Setup" --scrolltext --msgbox "$output\n\nYou may need to log out and back in for changes to take effect.\nOr run: export LANG=en_US.UTF-8" 20 80
+      whip --title "Locale Setup" --msgbox "$output\n\nYou may need to log out and back in for changes to take effect.\nOr run: export LANG=en_US.UTF-8" 20 80
     else
-      whip --title "Locale Setup Failed" --scrolltext --msgbox "$output" 20 80
+      whip --title "Locale Setup Failed" --msgbox "$output" 20 80
     fi
 
     rm -f "$tmpfile"
