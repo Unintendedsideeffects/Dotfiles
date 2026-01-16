@@ -2,6 +2,22 @@
 # Quick install script for Malcolm's Dotfiles
 set -euo pipefail
 
+REINSTALL=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --reinstall)
+            REINSTALL=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--reinstall]"
+            exit 2
+            ;;
+    esac
+done
+
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
 # Track created resources for cleanup
@@ -178,7 +194,11 @@ INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
 # Check if already installed
 SKIP_INSTALL=false
 if [[ -f "$INSTALL_MARKER" ]]; then
-    SKIP_INSTALL=true
+    if [[ "$REINSTALL" == true ]]; then
+        SKIP_INSTALL=false
+    else
+        SKIP_INSTALL=true
+    fi
 fi
 
 echo ""
