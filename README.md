@@ -53,9 +53,10 @@ bash /tmp/quick-install.sh
 git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git "$HOME/.cfg"
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 # Back up conflicting files
+cd "$HOME"
 backup_dir="$HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
 mkdir -p "$backup_dir"
-config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} bash -c "mkdir -p '$backup_dir/\$(dirname {})' && mv {} '$backup_dir/{}'" || true
+config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} bash -c "mkdir -p '$backup_dir/\$(dirname \"{}\")' && mv \"$HOME/{}\" '$backup_dir/{}'" || true
 config checkout
 source "$HOME/.dotfiles/cli/config.sh"
 "$HOME/.dotfiles/shell/install.sh"
