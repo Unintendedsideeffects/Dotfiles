@@ -90,6 +90,56 @@ run_cmd() {
   fi
 }
 
+read_debian_codename() {
+  local codename=""
+  if [[ -r /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    codename="${VERSION_CODENAME:-${DEBIAN_CODENAME:-}}"
+  fi
+  printf '%s' "$codename"
+}
+
+ensure_proxmox_no_subscription_repo() {
+  if ! df_is_proxmox; then
+    return
+  fi
+
+  local codename repo_line repo_file
+  codename="$(read_debian_codename)"
+  if [[ -z "$codename" ]]; then
+    echo "WARNING: Unable to determine Debian codename for Proxmox; skipping repo setup."
+    return
+  fi
+
+  repo_line="deb http://download.proxmox.com/debian/pve ${codename} pve-no-subscription"
+  if grep -RqsF "$repo_line" /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+    return
+  fi
+
+  if [[ "$DRY" == true ]]; then
+    echo "[DRY-RUN] Enable Proxmox no-subscription repo: $repo_line"
+    return
+  fi
+
+  if [[ ! -t 0 ]]; then
+    echo "Proxmox detected. No-subscription repo not found; rerun with a TTY to enable it."
+    return
+  fi
+
+  local reply
+  read -p "Enable Proxmox no-subscription repo? (y/N): " -n 1 -r reply </dev/tty
+  echo
+  if [[ ! "$reply" =~ ^[Yy]$ ]]; then
+    return
+  fi
+
+  repo_file="/etc/apt/sources.list.d/pve-no-subscription.list"
+  run_cmd mkdir -p /etc/apt/sources.list.d
+  printf '%s\n' "$repo_line" | run_cmd tee "$repo_file" >/dev/null
+  echo "Added $repo_file"
+}
+
 select_rhel_pkg_manager() {
   if command -v dnf >/dev/null 2>&1; then
     echo "dnf"
@@ -197,6 +247,7 @@ install_pkgs() {
       run_cmd "$pkg_manager" install -y "${pkgs[@]}"
     fi
   else
+    ensure_proxmox_no_subscription_repo
     if [[ "$DRY" == true ]]; then
       echo "[DRY-RUN] apt-get update -y && apt-get install -y ${pkgs[*]}"
     else
