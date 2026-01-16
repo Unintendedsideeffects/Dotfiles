@@ -18,6 +18,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+IS_PIPED=false
+if [[ ! -t 0 ]]; then
+    IS_PIPED=true
+fi
+
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
 # Track created resources for cleanup
@@ -194,9 +199,7 @@ INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
 # Check if already installed
 SKIP_INSTALL=false
 if [[ -f "$INSTALL_MARKER" ]]; then
-    if [[ "$REINSTALL" == true ]]; then
-        SKIP_INSTALL=false
-    else
+    if [[ "$IS_PIPED" != true && "$REINSTALL" != true ]]; then
         SKIP_INSTALL=true
     fi
 fi
