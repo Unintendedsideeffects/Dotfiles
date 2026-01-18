@@ -229,6 +229,23 @@ config() {
     run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
 }
 
+configure_sparse_checkout() {
+    local apply="${1:-false}"
+
+    if config sparse-checkout init --cone >/dev/null 2>&1; then
+        config sparse-checkout set .dotfiles >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    config config core.sparseCheckout true
+    run_as_user mkdir -p "$CONFIG_DIR/info"
+    run_as_user bash -c "printf '/.dotfiles/\\n' > '$CONFIG_DIR/info/sparse-checkout'"
+
+    if [[ "$apply" == "true" ]]; then
+        config read-tree -mu HEAD >/dev/null 2>&1 || config checkout -f >/dev/null 2>&1 || true
+    fi
+}
+
 if [[ "$SKIP_INSTALL" == true ]]; then
     if [[ ! -d "$CONFIG_DIR" ]]; then
         echo "WARNING: Existing dotfiles repo not found; continuing with reinstall."
@@ -238,6 +255,7 @@ if [[ "$SKIP_INSTALL" == true ]]; then
         if [[ -n "$(config status --porcelain 2>/dev/null)" ]]; then
             echo "WARNING: Local dotfiles changes detected; skipping update pull."
         else
+            configure_sparse_checkout true
             if ! config pull >/dev/null 2>&1; then
                 echo "WARNING: Failed to update dotfiles; continuing with reinstall."
                 SKIP_INSTALL=false
@@ -259,13 +277,7 @@ if [[ "$SKIP_INSTALL" != true ]]; then
     run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
 
     # Limit checkout to .dotfiles to keep repo metadata (README, etc.) out of $HOME
-    if config sparse-checkout init --cone >/dev/null 2>&1; then
-        config sparse-checkout set .dotfiles >/dev/null 2>&1 || true
-    else
-        config config core.sparseCheckout true
-        run_as_user mkdir -p "$CONFIG_DIR/info"
-        printf "/.dotfiles/\n" > "$CONFIG_DIR/info/sparse-checkout"
-    fi
+    configure_sparse_checkout false
 
     # Handle existing dotfiles
     echo "Installing dotfiles (will overwrite existing files)..."
