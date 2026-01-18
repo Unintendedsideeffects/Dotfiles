@@ -258,6 +258,15 @@ if [[ "$SKIP_INSTALL" != true ]]; then
     echo "Cloning dotfiles repository..."
     run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
 
+    # Limit checkout to .dotfiles to keep repo metadata (README, etc.) out of $HOME
+    if config sparse-checkout init --cone >/dev/null 2>&1; then
+        config sparse-checkout set .dotfiles >/dev/null 2>&1 || true
+    else
+        config config core.sparseCheckout true
+        run_as_user mkdir -p "$CONFIG_DIR/info"
+        printf "/.dotfiles/\n" > "$CONFIG_DIR/info/sparse-checkout"
+    fi
+
     # Handle existing dotfiles
     echo "Installing dotfiles (will overwrite existing files)..."
     if ! checkout_output=$(config checkout 2>&1); then
