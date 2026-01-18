@@ -373,6 +373,26 @@ prompt_validate() {
   rm -f "$tmpfile"
 }
 
+prompt_claude_statusline() {
+  local script="$DOTFILES_DIR/claude/install.sh"
+  if [[ ! -f "$script" ]]; then
+    whip --title "Claude Statusline" --msgbox "Script not found: $script" 10 70
+    return 1
+  elif [[ ! -x "$script" ]]; then
+    whip --title "Claude Statusline" --msgbox "Script not executable: $script\n\nRun: chmod +x \"$script\"" 12 70
+    return 1
+  fi
+
+  if whip --title "Claude Statusline" --yesno "Install Claude Code statusline configuration?\n\nThis will:\n- Copy statusline-command.sh to ~/.claude\n- Install settings.json if missing\n\nRequires: jq" 16 70; then
+    local output
+    if output=$("$script" 2>&1); then
+      whip --title "Claude Statusline" --msgbox "$output" 18 70
+    else
+      whip --title "Claude Statusline Failed" --msgbox "$output" 20 80
+    fi
+  fi
+}
+
 prompt_git_config() {
   # Try to get git config from environment, existing git config, or .gitconfig.local
   local default_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
@@ -606,6 +626,7 @@ main_menu() {
   # Dynamically include options based on available scripts and distro
   options+=("git_config" "Configure Git User Settings" OFF)
   options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
+  options+=("claude_statusline" "Install Claude Code statusline" OFF)
 
   if is_arch; then
     options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
@@ -647,6 +668,8 @@ main_menu() {
         prompt_git_config ;;
       locale_setup)
         prompt_locale_setup ;;
+      claude_statusline)
+        prompt_claude_statusline ;;
       aur_setup)
         prompt_aur_setup ;;
       packages)
