@@ -88,13 +88,13 @@ if [[ $EUID -eq 0 ]]; then
     echo ""
 
     # Ask if they want to create a new user or install for root
-    read -p "Do you want to create a new user? (y/N): " -n 1 -r
+    read -p "Do you want to create a new user? (y/N): " -n 1 -r </dev/tty
     echo
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         # Create a new user
         while true; do
-            read -p "Enter username for new user: " new_username
+            read -p "Enter username for new user: " new_username </dev/tty
 
             # Validate username
             if [[ -z "$new_username" ]]; then
@@ -135,7 +135,7 @@ if [[ $EUID -eq 0 ]]; then
         echo "WARNING: Passwordless sudo allows the user to run commands as root without a password."
         echo "This is convenient but reduces security. Only enable on trusted systems."
         echo ""
-        read -p "Enable passwordless sudo for $new_username? (y/N): " -n 1 -r
+        read -p "Enable passwordless sudo for $new_username? (y/N): " -n 1 -r </dev/tty
         echo
 
         if [[ $REPLY =~ ^[Yy]$ ]]; then
