@@ -138,6 +138,13 @@ prompt_aur_setup() {
     return 1
   fi
 
+  # Check if running as root (not via sudo, but actual root user)
+  local actual_user="${SUDO_USER:-$USER}"
+  if [[ "$actual_user" == "root" ]] || [[ $EUID -eq 0 && -z "${SUDO_USER:-}" ]]; then
+    whip --title "AUR Setup" --msgbox "ERROR: Cannot install yay as root user.\n\nAUR helpers should not be run as root for security reasons.\n\nPlease:\n  1. Create a regular user account\n  2. Log in as that user\n  3. Run the bootstrap again" 16 70
+    return 1
+  fi
+
   local script="$BIN_DIR/setup-aur.sh"
   if [[ ! -f "$script" ]]; then
     whip --title "AUR Setup" --msgbox "Script not found: $script" 10 70

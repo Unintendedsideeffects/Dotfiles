@@ -10,6 +10,21 @@ if ! command -v pacman >/dev/null 2>&1; then
     exit 1
 fi
 
+# Check if running as root user (not just with sudo)
+actual_user="${SUDO_USER:-$USER}"
+if [[ "$actual_user" == "root" ]] || [[ $EUID -eq 0 && -z "${SUDO_USER:-}" ]]; then
+    echo "ERROR: Cannot install yay as root user"
+    echo ""
+    echo "AUR helpers should not be run as root for security reasons."
+    echo "makepkg (used to build AUR packages) refuses to run as root."
+    echo ""
+    echo "Please:"
+    echo "  1. Create a regular user account"
+    echo "  2. Log in as that user"
+    echo "  3. Run this script again"
+    exit 1
+fi
+
 # Check if yay is already installed
 if command -v yay >/dev/null 2>&1; then
     echo "OK: yay is already installed"
