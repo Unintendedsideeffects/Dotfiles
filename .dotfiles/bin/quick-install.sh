@@ -223,6 +223,9 @@ fi
     echo ""
 } >> "$LOG_FILE" 2>&1
 
+# Save original file descriptors for later restoration (needed for TUI programs)
+exec 3>&1 4>&2
+
 # Redirect all output to both terminal and log file
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -395,7 +398,14 @@ echo "   - Select 'WSL Configuration Setup' if you're on WSL"
 echo ""
 read -p "Press Enter to continue with interactive setup..." </dev/tty
 
+# Temporarily restore normal stdout/stderr for TUI programs (whiptail/dialog)
+# The tee redirection breaks terminal control needed for arrow keys and proper display
+exec 1>&3 2>&4
+
 run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
+
+# Re-enable logging after interactive bootstrap completes
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Mark installation as successful
 INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
@@ -418,6 +428,9 @@ echo "   - Run 'validate.sh' to verify your setup"
 echo "   - Review installation log: $LOG_FILE"
 echo ""
 echo "Learn more: https://github.com/Unintendedsideeffects/Dotfiles"
+
+# Close saved file descriptors
+exec 3>&- 4>&-
 
 # Disable cleanup trap on success
 trap - EXIT
