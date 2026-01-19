@@ -630,13 +630,24 @@ prompt_headless_gui() {
 main_menu() {
   local options=()
 
+  # Check if running as root (not via sudo, but actual root user)
+  local actual_user="${SUDO_USER:-$USER}"
+  local is_root=false
+  if [[ "$actual_user" == "root" ]] || [[ $EUID -eq 0 && -z "${SUDO_USER:-}" ]]; then
+    is_root=true
+  fi
+
   # Dynamically include options based on available scripts and distro
   options+=("git_config" "Configure Git User Settings" OFF)
   options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
   options+=("claude_statusline" "Install Claude Code statusline" OFF)
 
   if is_arch; then
-    options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
+    if [[ "$is_root" == true ]]; then
+      options+=("aur_setup" "Install AUR Helper (yay) [Not available for root]" OFF)
+    else
+      options+=("aur_setup" "Install AUR Helper (yay) [Arch]" OFF)
+    fi
   fi
 
   options+=("packages" "Install Packages" OFF)
