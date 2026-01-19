@@ -326,7 +326,7 @@ fi
 # Verify repository and show what will be executed
 echo ""
 echo "Repository cloned successfully. Recent commits:"
-config log --oneline -5
+config --no-pager log --oneline -5
 
 echo ""
 echo "The following scripts will be executed:"
