@@ -400,6 +400,71 @@ prompt_claude_statusline() {
   fi
 }
 
+prompt_passwordless_sudo() {
+  # Check if we have permission to modify sudoers
+  if [[ $EUID -ne 0 ]]; then
+    whip --title "Passwordless Sudo" --msgbox "ERROR: This option requires root privileges.\n\nPlease run the bootstrap as root or with sudo." 12 70
+    return 1
+  fi
+
+  # Determine target user
+  local target_user="${SUDO_USER:-}"
+  if [[ -z "$target_user" || "$target_user" == "root" ]]; then
+    # Running as actual root, ask which user
+    target_user=$(whip --title "Passwordless Sudo" --inputbox "Enter username to grant passwordless sudo:" 10 60 "" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]] || [[ -z "$target_user" ]]; then
+      return 1
+    fi
+
+    # Validate user exists
+    if ! id "$target_user" >/dev/null 2>&1; then
+      whip --title "Passwordless Sudo" --msgbox "ERROR: User '$target_user' does not exist." 10 60
+      return 1
+    fi
+
+    if [[ "$target_user" == "root" ]]; then
+      whip --title "Passwordless Sudo" --msgbox "ERROR: Cannot configure passwordless sudo for root user.\n\nRoot already has all permissions." 12 60
+      return 1
+    fi
+  fi
+
+  # Check if already configured
+  if [[ -f "/etc/sudoers.d/$target_user" ]]; then
+    if grep -q "NOPASSWD:ALL" "/etc/sudoers.d/$target_user" 2>/dev/null; then
+      whip --title "Passwordless Sudo" --msgbox "User '$target_user' already has passwordless sudo configured.\n\nFile: /etc/sudoers.d/$target_user" 12 70
+      return 0
+    fi
+  fi
+
+  # Show warning and confirm
+  if ! whip --title "Passwordless Sudo" --yesno "Enable passwordless sudo for user: $target_user?\n\nWARNING: This allows $target_user to run any command as root without entering a password.\n\nThis is convenient but reduces security.\nOnly enable on trusted systems.\n\nContinue?" 16 70; then
+    return 0
+  fi
+
+  # Create sudoers entry
+  local sudoers_entry="$target_user ALL=(ALL) NOPASSWD:ALL"
+  local temp_sudoers=$(mktemp)
+
+  echo "$sudoers_entry" > "$temp_sudoers"
+  chmod 0440 "$temp_sudoers"
+
+  # Validate with visudo
+  if ! visudo -c -f "$temp_sudoers" >/dev/null 2>&1; then
+    rm -f "$temp_sudoers"
+    whip --title "Passwordless Sudo" --msgbox "ERROR: Invalid sudoers syntax. This should not happen.\n\nPlease report this issue." 12 70
+    return 1
+  fi
+
+  # Move to sudoers.d
+  if mv "$temp_sudoers" "/etc/sudoers.d/$target_user"; then
+    whip --title "Passwordless Sudo" --msgbox "SUCCESS: Passwordless sudo enabled for $target_user\n\nConfiguration file: /etc/sudoers.d/$target_user\n\nThe user can now run sudo commands without a password." 14 70
+  else
+    rm -f "$temp_sudoers"
+    whip --title "Passwordless Sudo" --msgbox "ERROR: Failed to create /etc/sudoers.d/$target_user\n\nCheck permissions and try again." 12 70
+    return 1
+  fi
+}
+
 prompt_git_config() {
   # Try to get git config from environment, existing git config, or .gitconfig.local
   local default_username="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || echo "")}"
@@ -642,6 +707,11 @@ main_menu() {
   options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
   options+=("claude_statusline" "Install Claude Code statusline" OFF)
 
+  # Passwordless sudo - only show if running as root or with sudo
+  if [[ $EUID -eq 0 ]]; then
+    options+=("passwordless_sudo" "Setup Passwordless Sudo" OFF)
+  fi
+
   if is_arch; then
     if [[ "$is_root" == true ]]; then
       options+=("aur_setup" "Install AUR Helper (yay) [Not available for root]" OFF)
@@ -688,6 +758,8 @@ main_menu() {
         prompt_locale_setup ;;
       claude_statusline)
         prompt_claude_statusline ;;
+      passwordless_sudo)
+        prompt_passwordless_sudo ;;
       aur_setup)
         prompt_aur_setup ;;
       packages)
