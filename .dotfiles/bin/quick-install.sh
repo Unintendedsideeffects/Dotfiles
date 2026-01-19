@@ -34,6 +34,11 @@ cleanup_on_error() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
         echo ""
+        echo "========================================"
+        echo "Installation FAILED: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Exit code: $exit_code"
+        echo "========================================"
+        echo ""
         echo "ERROR: Installation failed with exit code $exit_code"
         echo "Performing cleanup..."
 
@@ -196,6 +201,31 @@ fi
 CONFIG_DIR="$TARGET_HOME/.cfg"
 INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
 
+# Setup installation logging
+LOG_DIR="$TARGET_HOME/.dotfiles"
+LOG_FILE="$LOG_DIR/install.log"
+
+# Create log directory if it doesn't exist
+if [[ "$TARGET_USER" != "$(whoami)" ]]; then
+    sudo -u "$TARGET_USER" mkdir -p "$LOG_DIR" 2>/dev/null || true
+else
+    mkdir -p "$LOG_DIR" 2>/dev/null || true
+fi
+
+# Start logging with timestamp header
+{
+    echo ""
+    echo "========================================"
+    echo "Installation started: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "User: $TARGET_USER"
+    echo "Home: $TARGET_HOME"
+    echo "========================================"
+    echo ""
+} >> "$LOG_FILE" 2>&1
+
+# Redirect all output to both terminal and log file
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # Check if already installed
 SKIP_INSTALL=false
 if [[ -f "$INSTALL_MARKER" ]]; then
@@ -207,6 +237,7 @@ fi
 echo ""
 echo "Installing Malcolm's Dotfiles for user: $TARGET_USER"
 echo "Home directory: $TARGET_HOME"
+echo "Log file: $LOG_FILE"
 echo ""
 
 # Helper to run commands as target user
@@ -339,6 +370,11 @@ read -p "Continue with installation? (y/N): " -n 1 -r </dev/tty
 echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "========================================"
+    echo "Installation cancelled: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "========================================"
+    echo ""
     echo "Installation cancelled by user."
     exit 0
 fi
@@ -366,6 +402,10 @@ INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"
 echo "$(date +%s)" | run_as_user tee "$INSTALL_MARKER" >/dev/null
 
 echo ""
+echo "========================================"
+echo "Installation completed: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "========================================"
+echo ""
 echo "Installation complete!"
 echo ""
 echo "Next steps:"
@@ -375,6 +415,7 @@ fi
 echo "   - Restart your shell or run: source ~/.zshrc"
 echo "   - Use 'config' command to manage your dotfiles"
 echo "   - Run 'validate.sh' to verify your setup"
+echo "   - Review installation log: $LOG_FILE"
 echo ""
 echo "Learn more: https://github.com/Unintendedsideeffects/Dotfiles"
 
