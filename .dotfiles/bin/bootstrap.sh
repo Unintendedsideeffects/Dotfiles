@@ -839,9 +839,9 @@ EOF
       menu_list_height=5
     fi
 
-    dialog --backtitle "Dotfiles Bootstrap" \
-      --begin 1 1 --no-shadow --infobox "$(cat "$art_file")" "$art_height" "$art_width" \
-      --and-widget --begin 1 "$menu_col" --checklist "Select components to configure" \
+    dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+      --begin 0 0 --no-shadow --infobox "$(cat "$art_file")" "$art_height" "$art_width" \
+      --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 2> "$tmpfile" || exit 1
     selections=$(cat "$tmpfile")
