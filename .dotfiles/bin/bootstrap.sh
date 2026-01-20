@@ -855,13 +855,55 @@ src_h = len(lines)
 src_w = max(len(line) for line in lines)
 lines = [line.ljust(src_w) for line in lines]
 
-for y in range(target_h):
-    sy = int(y * src_h / target_h)
-    row = []
-    for x in range(target_w):
-        sx = int(x * src_w / target_w)
-        row.append(lines[sy][sx])
-    print("".join(row))
+def downsample(lines, target_w, target_h):
+    out = []
+    for y in range(target_h):
+        sy = int(y * src_h / target_h)
+        row = []
+        for x in range(target_w):
+            sx = int(x * src_w / target_w)
+            row.append(lines[sy][sx])
+        out.append("".join(row))
+    return out
+
+def upscale(lines, target_w, target_h):
+    scale_x = max(1, target_w // src_w)
+    scale_y = max(1, target_h // src_h)
+    expanded = []
+    for line in lines:
+        expanded_line = "".join(ch * scale_x for ch in line)
+        for _ in range(scale_y):
+            expanded.append(expanded_line)
+
+    # Center-crop/pad height
+    if len(expanded) > target_h:
+        start = (len(expanded) - target_h) // 2
+        expanded = expanded[start:start + target_h]
+    elif len(expanded) < target_h:
+        pad_top = (target_h - len(expanded)) // 2
+        pad_bottom = target_h - len(expanded) - pad_top
+        expanded = ([" " * len(expanded[0])] * pad_top) + expanded + ([" " * len(expanded[0])] * pad_bottom)
+
+    # Center-crop/pad width
+    out = []
+    for line in expanded:
+        if len(line) > target_w:
+            start = (len(line) - target_w) // 2
+            line = line[start:start + target_w]
+        elif len(line) < target_w:
+            pad_left = (target_w - len(line)) // 2
+            pad_right = target_w - len(line) - pad_left
+            line = (" " * pad_left) + line + (" " * pad_right)
+        out.append(line)
+    return out
+
+if target_w < src_w or target_h < src_h:
+    output = downsample(lines, target_w, target_h)
+else:
+    output = upscale(lines, target_w, target_h)
+
+for line in output:
+    print(line)
 PY
     elif command -v python >/dev/null 2>&1; then
       python - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
@@ -886,13 +928,55 @@ src_h = len(lines)
 src_w = max(len(line) for line in lines)
 lines = [line.ljust(src_w) for line in lines]
 
-for y in range(target_h):
-    sy = int(y * src_h / target_h)
-    row = []
-    for x in range(target_w):
-        sx = int(x * src_w / target_w)
-        row.append(lines[sy][sx])
-    print("".join(row))
+def downsample(lines, target_w, target_h):
+    out = []
+    for y in range(target_h):
+        sy = int(y * src_h / target_h)
+        row = []
+        for x in range(target_w):
+            sx = int(x * src_w / target_w)
+            row.append(lines[sy][sx])
+        out.append("".join(row))
+    return out
+
+def upscale(lines, target_w, target_h):
+    scale_x = max(1, target_w // src_w)
+    scale_y = max(1, target_h // src_h)
+    expanded = []
+    for line in lines:
+        expanded_line = "".join(ch * scale_x for ch in line)
+        for _ in range(scale_y):
+            expanded.append(expanded_line)
+
+    # Center-crop/pad height
+    if len(expanded) > target_h:
+        start = (len(expanded) - target_h) // 2
+        expanded = expanded[start:start + target_h]
+    elif len(expanded) < target_h:
+        pad_top = (target_h - len(expanded)) // 2
+        pad_bottom = target_h - len(expanded) - pad_top
+        expanded = ([" " * len(expanded[0])] * pad_top) + expanded + ([" " * len(expanded[0])] * pad_bottom)
+
+    # Center-crop/pad width
+    out = []
+    for line in expanded:
+        if len(line) > target_w:
+            start = (len(line) - target_w) // 2
+            line = line[start:start + target_w]
+        elif len(line) < target_w:
+            pad_left = (target_w - len(line)) // 2
+            pad_right = target_w - len(line) - pad_left
+            line = (" " * pad_left) + line + (" " * pad_right)
+        out.append(line)
+    return out
+
+if target_w < src_w or target_h < src_h:
+    output = downsample(lines, target_w, target_h)
+else:
+    output = upscale(lines, target_w, target_h)
+
+for line in output:
+    print(line)
 PY
     else
       awk -v width="$art_render_width" -v target="$art_render_height" '
