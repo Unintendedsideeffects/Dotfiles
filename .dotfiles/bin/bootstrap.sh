@@ -807,16 +807,15 @@ EOF
     term_lines=$(tput lines 2>/dev/null || stty size 2>/dev/null | awk '{print $1}' || echo 24)
 
     menu_height=$((term_lines - 2))
-    max_menu_height=$((term_lines - 2))
-    if ((menu_height > max_menu_height)); then
-      menu_height=$max_menu_height
-    fi
     if ((menu_height < 10)); then
       menu_height=10
     fi
 
     art_height=$menu_height
-    art_width=$((art_content_width + 2))
+    art_width=$((term_cols / 3))
+    if ((art_width < 20)); then
+      art_width=20
+    fi
     if ((art_width > term_cols - 4)); then
       art_width=$((term_cols - 4))
     fi
