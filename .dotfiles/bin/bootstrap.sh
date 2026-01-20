@@ -226,14 +226,20 @@ prompt_packages() {
     return 1
   fi
 
-  local output status
-  output=$(bash "$script" --skip-preflight "$package_type" 2>&1)
-  status=$?
+  local output status tmpfile
+  tmpfile=$(mktemp)
+  CLEANUP_FILES+=("$tmpfile")
+
+  set +e
+  bash "$script" --skip-preflight "$package_type" 2>&1 | tee "$tmpfile"
+  status=${PIPESTATUS[0]}
+  set -e
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --msgbox "$output" 20 80
+    whip --title "Package Installation" --msgbox "Package installation completed.\n\nLog file:\n$tmpfile" 12 70
   else
-    whip --title "Package Installation Failed" --msgbox "$output" 20 80
+    output=$(tail -n 200 "$tmpfile" 2>/dev/null || true)
+    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed. Log file:\n$tmpfile}" 20 80
   fi
 }
 
