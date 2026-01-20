@@ -802,19 +802,70 @@ EOF
     art_content_height=$(wc -l < "$art_file" | tr -d ' ')
     art_content_width=$(LC_ALL=C.UTF-8 awk '{ if (length > max) max = length } END { print max }' "$art_file")
 
-    art_height=$((art_content_height + 2))
-    art_width=$((art_content_width + 2))
-
     local term_cols term_lines max_menu_height
     term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
     term_lines=$(tput lines 2>/dev/null || stty size 2>/dev/null | awk '{print $1}' || echo 24)
 
-    if ((art_height > term_lines - 2)); then
-      art_height=$((term_lines - 2))
+    menu_height=$((term_lines - 2))
+    max_menu_height=$((term_lines - 2))
+    if ((menu_height > max_menu_height)); then
+      menu_height=$max_menu_height
     fi
+    if ((menu_height < 10)); then
+      menu_height=10
+    fi
+
+    art_height=$menu_height
+    art_width=$((art_content_width + 2))
     if ((art_width > term_cols - 4)); then
       art_width=$((term_cols - 4))
     fi
+
+    local art_render_width art_render_height art_render_file
+    art_render_width=$((art_width - 2))
+    art_render_height=$((art_height - 2))
+    if ((art_render_width < 1)); then
+      art_render_width=1
+    fi
+    if ((art_render_height < 1)); then
+      art_render_height=1
+    fi
+
+    art_render_file=$(mktemp)
+    CLEANUP_FILES+=("$art_render_file")
+    awk -v width="$art_render_width" -v target="$art_render_height" '
+      {
+        lines[++n] = $0
+      }
+      END {
+        if (target < 1) target = n
+        if (n > target) {
+          start = int((n - target) / 2) + 1
+          end = start + target - 1
+        } else {
+          start = 1
+          end = n
+        }
+        shown = end - start + 1
+        if (shown < target) {
+          pad_top = int((target - shown) / 2)
+          pad_bottom = target - shown - pad_top
+        } else {
+          pad_top = 0
+          pad_bottom = 0
+        }
+        for (i = 0; i < pad_top; i++) {
+          printf "%-*s\n", width, ""
+        }
+        for (i = start; i <= end; i++) {
+          line = substr(lines[i], 1, width)
+          printf "%-*s\n", width, line
+        }
+        for (i = 0; i < pad_bottom; i++) {
+          printf "%-*s\n", width, ""
+        }
+      }
+    ' "$art_file" > "$art_render_file"
 
     menu_col=$((art_width + 2))
     menu_width=$((term_cols - menu_col - 2))
@@ -825,22 +876,13 @@ EOF
       fi
     fi
 
-    menu_height=$((term_lines - 2))
-    max_menu_height=$((term_lines - 2))
-    if ((menu_height > max_menu_height)); then
-      menu_height=$max_menu_height
-    fi
-    if ((menu_height < art_height)); then
-      menu_height=$art_height
-    fi
-
     menu_list_height=$((menu_height - 8))
     if ((menu_list_height < 5)); then
       menu_list_height=5
     fi
 
     dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
-      --begin 0 0 --no-shadow --infobox "$(cat "$art_file")" "$art_height" "$art_width" \
+      --begin 0 0 --no-shadow --infobox "$(cat "$art_render_file")" "$art_height" "$art_width" \
       --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 2> "$tmpfile" || exit 1
