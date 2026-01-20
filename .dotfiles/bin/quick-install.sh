@@ -25,6 +25,62 @@ fi
 
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
+TTY_AVAILABLE=false
+if [[ -r /dev/tty ]]; then
+    TTY_AVAILABLE=true
+fi
+
+read_tty_line() {
+    local prompt="$1"
+    local __var="$2"
+    local default="${3:-}"
+    local reply=""
+
+    if [[ "$TTY_AVAILABLE" == true ]]; then
+        IFS= read -r -p "$prompt" reply </dev/tty || reply=""
+    else
+        IFS= read -r -p "$prompt" reply || reply=""
+    fi
+
+    if [[ -z "$reply" && -n "$default" ]]; then
+        reply="$default"
+    fi
+
+    printf -v "$__var" '%s' "$reply"
+}
+
+prompt_yes_no() {
+    local prompt="$1"
+    local default="${2:-N}"
+    local auto_yes="${3:-false}"
+    local reply=""
+
+    if [[ "$TTY_AVAILABLE" != true ]]; then
+        if [[ "$auto_yes" == "true" ]]; then
+            echo "WARNING: No TTY available; auto-accepting to continue." >&2
+            return 0
+        fi
+        [[ "$default" =~ ^[Yy]$ ]] && return 0 || return 1
+    fi
+
+    read_tty_line "$prompt" reply "$default"
+    case "${reply:0:1}" in
+        [Yy]) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+pause_for_enter() {
+    local prompt="$1"
+    local reply=""
+
+    if [[ "$TTY_AVAILABLE" == true ]]; then
+        IFS= read -r -p "$prompt" reply </dev/tty || true
+    else
+        echo "WARNING: No TTY available; continuing without pause." >&2
+    fi
+}
+
 # Track created resources for cleanup
 declare -a CREATED_USERS=()
 declare -a CREATED_FILES=()
@@ -46,9 +102,7 @@ cleanup_on_error() {
         if [[ ${#CREATED_USERS[@]} -gt 0 ]]; then
             for user in "${CREATED_USERS[@]}"; do
                 echo ""
-                read -p "Remove user $user? (y/N): " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                if prompt_yes_no "Remove user $user? (y/N): " "N"; then
                     userdel -r "$user" 2>/dev/null || true
                     rm -f "/etc/sudoers.d/$user"
                     echo "User $user removed"
@@ -88,10 +142,7 @@ if [[ $EUID -eq 0 ]]; then
     echo ""
 
     # Ask if they want to create a new user or install for root
-    read -p "Do you want to create a new user? (y/N): " -n 1 -r </dev/tty
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if prompt_yes_no "Do you want to create a new user? (y/N): " "N"; then
         # Create a new user
         while true; do
             read -p "Enter username for new user: " new_username </dev/tty
@@ -135,10 +186,7 @@ if [[ $EUID -eq 0 ]]; then
         echo "WARNING: Passwordless sudo allows the user to run commands as root without a password."
         echo "This is convenient but reduces security. Only enable on trusted systems."
         echo ""
-        read -p "Enable passwordless sudo for $new_username? (y/N): " -n 1 -r </dev/tty
-        echo
-
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if prompt_yes_no "Enable passwordless sudo for $new_username? (y/N): " "N"; then
             # Use visudo to validate sudoers entry before writing
             sudoers_entry="$new_username ALL=(ALL) NOPASSWD:ALL"
             temp_sudoers=$(mktemp)
@@ -369,16 +417,7 @@ echo "  - .dotfiles/bin/bootstrap.sh - Interactive system setup"
 echo ""
 echo "WARNING: These scripts will be executed with the privileges of user: $TARGET_USER"
 echo ""
-if ! read -p "Continue with installation? (y/N): " -n 1 -r </dev/tty; then
-    REPLY=""
-    if [[ "$IS_PIPED" == true ]]; then
-        echo "WARNING: No TTY available; auto-accepting to continue." >&2
-        REPLY="y"
-    fi
-fi
-echo
-
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+if ! prompt_yes_no "Continue with installation? (y/N): " "N" "$IS_PIPED"; then
     echo ""
     echo "========================================"
     echo "Installation cancelled: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -402,18 +441,14 @@ echo "Starting interactive setup..."
 echo "   - Select 'Install Packages' to get development tools"
 echo "   - Select 'WSL Configuration Setup' if you're on WSL"
 echo ""
-if ! read -p "Press Enter to continue with interactive setup..." </dev/tty; then
-    echo "WARNING: No TTY available; continuing without pause." >&2
-fi
+pause_for_enter "Press Enter to continue with interactive setup..."
 
 # Temporarily restore normal stdout/stderr for TUI programs (whiptail/dialog)
 # The tee redirection breaks terminal control needed for arrow keys and proper display
 exec 1>&3 2>&4
 
-if [[ -t 0 ]]; then
-    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
-elif [[ -r /dev/tty ]]; then
-    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty
+if [[ -r /dev/tty ]]; then
+    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1
 else
     echo "ERROR: No TTY available for interactive bootstrap." >&2
     exit 1
