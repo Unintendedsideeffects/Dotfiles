@@ -38,41 +38,42 @@ read_tty_line() {
     local prompt="$1"
     local __var="$2"
     local default="${3:-}"
-    local reply=""
+    local __value=""
 
     if [[ "$TTY_AVAILABLE" == true ]]; then
         printf '%s' "$prompt" >&$TTY_OUT_FD
-        IFS= read -r -u "$TTY_IN_FD" reply || reply=""
+        IFS= read -r -u "$TTY_IN_FD" __value || __value=""
     else
-        IFS= read -r -p "$prompt" reply || reply=""
+        IFS= read -r -p "$prompt" __value || __value=""
     fi
 
-    if [[ -z "$reply" && -n "$default" ]]; then
-        reply="$default"
+    if [[ -z "$__value" && -n "$default" ]]; then
+        __value="$default"
     fi
 
-    printf -v "$__var" '%s' "$reply"
+    printf -v "$__var" '%s' "$__value"
 }
 
 read_tty_key() {
     local prompt="$1"
     local __var="$2"
-    local reply=""
+    local __value=""
+    local __discard=""
 
     if [[ "$TTY_AVAILABLE" == true ]]; then
         printf '%s' "$prompt" >&$TTY_OUT_FD
-        IFS= read -r -n 1 -u "$TTY_IN_FD" reply || reply=""
-        IFS= read -r -u "$TTY_IN_FD" _ || true
-        case "$reply" in
-            $'\n'|$'\r') reply="" ;;
+        IFS= read -r -n 1 -u "$TTY_IN_FD" __value || __value=""
+        IFS= read -r -u "$TTY_IN_FD" __discard || true
+        case "$__value" in
+            $'\n'|$'\r') __value="" ;;
         esac
         printf '\n' >&$TTY_OUT_FD
     else
-        IFS= read -r -n 1 -p "$prompt" reply || reply=""
-        IFS= read -r _ || true
+        IFS= read -r -n 1 -p "$prompt" __value || __value=""
+        IFS= read -r __discard || true
     fi
 
-    printf -v "$__var" '%s' "$reply"
+    printf -v "$__var" '%s' "$__value"
 }
 
 prompt_yes_no() {
