@@ -724,15 +724,7 @@ main_menu() {
   fi
 
   # Dynamically include options based on available scripts and distro
-  options+=("git_config" "Configure Git User Settings" OFF)
-  options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
-  options+=("claude_statusline" "Install Claude Code statusline" OFF)
-
-  # Passwordless sudo - only show if running as root or with sudo
-  if [[ $EUID -eq 0 ]]; then
-    options+=("passwordless_sudo" "Setup Passwordless Sudo" OFF)
-  fi
-
+  options+=("packages" "Install Packages" OFF)
   if is_arch; then
     if [[ "$is_root" == true ]]; then
       options+=("aur_setup" "Install AUR Helper (yay) [Not available for root]" OFF)
@@ -741,13 +733,21 @@ main_menu() {
     fi
   fi
 
-  options+=("packages" "Install Packages" OFF)
-  options+=("gui_autologin" "Configure GUI autostart (X11/Wayland)" OFF)
-  options+=("validate" "Validate Environment" OFF)
+  options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
+  options+=("git_config" "Configure Git User Settings" OFF)
+  options+=("claude_statusline" "Install Claude Code statusline" OFF)
+
+  # Passwordless sudo - only show if running as root or with sudo
+  if [[ $EUID -eq 0 ]]; then
+    options+=("passwordless_sudo" "Setup Passwordless Sudo" OFF)
+  fi
 
   if is_wsl; then
     options+=("wsl_setup" "WSL Configuration Setup" OFF)
   fi
+
+  options+=("gui_autologin" "Configure GUI autostart (X11/Wayland)" OFF)
+
   if is_arch; then
     options+=("headless_gui" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" OFF)
     options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Arch]" OFF)
@@ -756,15 +756,48 @@ main_menu() {
     options+=("headless_obsidian" "Headless Obsidian (Xvfb/Openbox/VNC) [Debian/Ubuntu]" OFF)
   fi
 
+  options+=("validate" "Validate Environment" OFF)
+
   if [[ ${#options[@]} -eq 0 ]]; then
     whip --title "Dotfiles Bootstrap" --msgbox "No interactive components available for this distro." 10 70
     exit 0
   fi
 
   local selections
-  selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
-    "${options[@]}" \
-    3>&1 1>&2 2>&3) || exit 1
+  if command -v dialog >/dev/null 2>&1; then
+    local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
+    art_file=$(mktemp)
+    tmpfile=$(mktemp)
+    CLEANUP_FILES+=("$art_file" "$tmpfile")
+    cat >"$art_file" <<'EOF'
+     .------.
+   .'  .--.  '.
+  /   (o  o)   \
+ |     .--.     |
+ |    (____)    |
+ |  .--.  .--.  |
+  \ '  '--'  ' /
+   '.        .'
+     '------'
+EOF
+    art_height=20
+    art_width=28
+    menu_height=20
+    menu_width=76
+    menu_list_height=10
+    menu_col=$((art_width + 3))
+
+    dialog --backtitle "Dotfiles Bootstrap" \
+      --begin 1 1 --no-shadow --textbox "$art_file" "$art_height" "$art_width" \
+      --and-widget --begin 1 "$menu_col" --checklist "Select components to configure" \
+      "$menu_height" "$menu_width" "$menu_list_height" \
+      "${options[@]}" 2> "$tmpfile" || exit 1
+    selections=$(cat "$tmpfile")
+  else
+    selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
+      "${options[@]}" \
+      3>&1 1>&2 2>&3) || exit 1
+  fi
 
   # Parse whiptail's space-separated quoted output into array
   local selection_array=()
