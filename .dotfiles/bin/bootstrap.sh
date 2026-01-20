@@ -766,10 +766,17 @@ main_menu() {
   local selections
   if command -v dialog >/dev/null 2>&1; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
-    art_file=$(mktemp)
+    local art_path
+    art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
     tmpfile=$(mktemp)
-    CLEANUP_FILES+=("$art_file" "$tmpfile")
-    cat >"$art_file" <<'EOF'
+    CLEANUP_FILES+=("$tmpfile")
+
+    if [[ -r "$art_path" ]]; then
+      art_file="$art_path"
+    else
+      art_file=$(mktemp)
+      CLEANUP_FILES+=("$art_file")
+      cat >"$art_file" <<'EOF'
       __
      |__|
      |  |
@@ -789,8 +796,10 @@ main_menu() {
      ||||
      ||||
 EOF
-    art_height=20
-    art_width=28
+    fi
+
+    art_height=$(wc -l < "$art_file" | tr -d ' ')
+    art_width=$(awk '{ if (length > max) max = length } END { print max }' "$art_file")
     menu_height=20
     menu_width=76
     menu_list_height=10
