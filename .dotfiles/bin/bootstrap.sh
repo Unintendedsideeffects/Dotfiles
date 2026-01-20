@@ -767,7 +767,11 @@ main_menu() {
   if command -v dialog >/dev/null 2>&1; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
-    art_path="$DOTFILES_DIR/assets/pixellated_plain.txt"
+    if [[ -r "$DOTFILES_DIR/assets/pixellated_bw.txt" ]]; then
+      art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
+    else
+      art_path="$DOTFILES_DIR/assets/pixellated_plain.txt"
+    fi
     tmpfile=$(mktemp)
     CLEANUP_FILES+=("$tmpfile")
 
