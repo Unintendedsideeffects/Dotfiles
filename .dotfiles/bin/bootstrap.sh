@@ -798,14 +798,25 @@ main_menu() {
 EOF
     fi
 
-    art_height=$(wc -l < "$art_file" | tr -d ' ')
-    art_width=$(LC_ALL=C.UTF-8 awk '{ if (length > max) max = length } END { print max }' "$art_file")
+    local art_content_height art_content_width
+    art_content_height=$(wc -l < "$art_file" | tr -d ' ')
+    art_content_width=$(LC_ALL=C.UTF-8 awk '{ if (length > max) max = length } END { print max }' "$art_file")
+
+    art_height=$((art_content_height + 2))
+    art_width=$((art_content_width + 2))
 
     local term_cols term_lines max_menu_height
     term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
     term_lines=$(tput lines 2>/dev/null || stty size 2>/dev/null | awk '{print $1}' || echo 24)
 
-    menu_col=$((art_width + 3))
+    if ((art_height > term_lines - 2)); then
+      art_height=$((term_lines - 2))
+    fi
+    if ((art_width > term_cols - 4)); then
+      art_width=$((term_cols - 4))
+    fi
+
+    menu_col=$((art_width + 2))
     menu_width=$((term_cols - menu_col - 2))
     if ((menu_width < 40)); then
       menu_width=$((term_cols - menu_col - 2))
@@ -814,10 +825,13 @@ EOF
       fi
     fi
 
-    menu_height=$((art_height > 20 ? art_height : 20))
+    menu_height=$((term_lines - 2))
     max_menu_height=$((term_lines - 2))
     if ((menu_height > max_menu_height)); then
       menu_height=$max_menu_height
+    fi
+    if ((menu_height < art_height)); then
+      menu_height=$art_height
     fi
 
     menu_list_height=$((menu_height - 8))
