@@ -404,7 +404,7 @@ exec 1>&3 2>&4
 
 run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
 
-# Re-enable logging after interactive bootstrap completes
+: "Re-enable logging after interactive bootstrap completes"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Mark installation as successful
