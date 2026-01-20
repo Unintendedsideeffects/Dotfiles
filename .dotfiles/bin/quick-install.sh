@@ -26,8 +26,12 @@ fi
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
 TTY_AVAILABLE=false
-if [[ -r /dev/tty ]]; then
+TTY_IN_FD=""
+TTY_OUT_FD=""
+if exec 5</dev/tty 6>/dev/tty; then
     TTY_AVAILABLE=true
+    TTY_IN_FD=5
+    TTY_OUT_FD=6
 fi
 
 read_tty_line() {
@@ -37,13 +41,35 @@ read_tty_line() {
     local reply=""
 
     if [[ "$TTY_AVAILABLE" == true ]]; then
-        IFS= read -r -p "$prompt" reply </dev/tty || reply=""
+        printf '%s' "$prompt" >&$TTY_OUT_FD
+        IFS= read -r -u "$TTY_IN_FD" reply || reply=""
     else
         IFS= read -r -p "$prompt" reply || reply=""
     fi
 
     if [[ -z "$reply" && -n "$default" ]]; then
         reply="$default"
+    fi
+
+    printf -v "$__var" '%s' "$reply"
+}
+
+read_tty_key() {
+    local prompt="$1"
+    local __var="$2"
+    local reply=""
+
+    if [[ "$TTY_AVAILABLE" == true ]]; then
+        printf '%s' "$prompt" >&$TTY_OUT_FD
+        IFS= read -r -n 1 -u "$TTY_IN_FD" reply || reply=""
+        IFS= read -r -u "$TTY_IN_FD" _ || true
+        case "$reply" in
+            $'\n'|$'\r') reply="" ;;
+        esac
+        printf '\n' >&$TTY_OUT_FD
+    else
+        IFS= read -r -n 1 -p "$prompt" reply || reply=""
+        IFS= read -r _ || true
     fi
 
     printf -v "$__var" '%s' "$reply"
@@ -63,7 +89,11 @@ prompt_yes_no() {
         [[ "$default" =~ ^[Yy]$ ]] && return 0 || return 1
     fi
 
-    read_tty_line "$prompt" reply "$default"
+    read_tty_key "$prompt" reply
+    if [[ -z "$reply" && -n "$default" ]]; then
+        reply="$default"
+    fi
+
     case "${reply:0:1}" in
         [Yy]) return 0 ;;
         *) return 1 ;;
@@ -72,10 +102,9 @@ prompt_yes_no() {
 
 pause_for_enter() {
     local prompt="$1"
-    local reply=""
 
     if [[ "$TTY_AVAILABLE" == true ]]; then
-        IFS= read -r -p "$prompt" reply </dev/tty || true
+        read_tty_line "$prompt" _ || true
     else
         echo "WARNING: No TTY available; continuing without pause." >&2
     fi
@@ -145,7 +174,7 @@ if [[ $EUID -eq 0 ]]; then
     if prompt_yes_no "Do you want to create a new user? (y/N): " "N"; then
         # Create a new user
         while true; do
-            read -p "Enter username for new user: " new_username </dev/tty
+            read_tty_line "Enter username for new user: " new_username
 
             # Validate username
             if [[ -z "$new_username" ]]; then
