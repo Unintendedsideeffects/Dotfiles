@@ -26,6 +26,15 @@ done
 declare -a CLEANUP_PIDS=()
 declare -a CLEANUP_FILES=()
 
+# Force monochrome dialog when whiptail is unavailable.
+DIALOGRC_PATH=$(mktemp)
+CLEANUP_FILES+=("$DIALOGRC_PATH")
+cat >"$DIALOGRC_PATH" <<'EOF'
+use_shadow = OFF
+use_colors = OFF
+EOF
+export DIALOGRC="$DIALOGRC_PATH"
+
 # Cleanup handler
 cleanup_handler() {
   local exit_code=$?
