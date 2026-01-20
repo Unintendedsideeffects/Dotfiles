@@ -31,14 +31,18 @@ curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/mast
 **Safer one-liner (pin commit + verify checksum):**
 ```bash
 COMMIT=<commit>
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+SUMS_FILE="$(mktemp "$CACHE_DIR/dotfiles.SHA256SUMS.XXXXXX")"
+SCRIPT_FILE="$(mktemp "$CACHE_DIR/dotfiles.quick-install.XXXXXX")"
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/SHA256SUMS \
-  -o /tmp/SHA256SUMS &&
+  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.SHA256SUMS \
+  -o "$SUMS_FILE" &&
 curl --proto '=https' --tlsv1.2 -fsSL \
   https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.dotfiles/bin/quick-install.sh \
-  -o /tmp/quick-install.sh &&
-grep 'quick-install.sh' /tmp/SHA256SUMS | sha256sum -c - &&
-bash /tmp/quick-install.sh
+  -o "$SCRIPT_FILE" &&
+grep 'quick-install.sh' "$SUMS_FILE" | sha256sum -c - &&
+bash "$SCRIPT_FILE"
+rm -f "$SUMS_FILE" "$SCRIPT_FILE"
 ```
 
 **Safer install (review script first):**
