@@ -345,13 +345,13 @@ configure_sparse_checkout() {
     local apply="${1:-false}"
 
     if config sparse-checkout init --cone >/dev/null 2>&1; then
-        config sparse-checkout set .dotfiles >/dev/null 2>&1 || true
+        config sparse-checkout set .dotfiles .config >/dev/null 2>&1 || true
         return 0
     fi
 
     config config core.sparseCheckout true
     run_as_user mkdir -p "$CONFIG_DIR/info"
-    run_as_user bash -c "printf '/.dotfiles/\\n' > '$CONFIG_DIR/info/sparse-checkout'"
+    run_as_user bash -c "printf '/.dotfiles/\\n/.config/\\n' > '$CONFIG_DIR/info/sparse-checkout'"
 
     if [[ "$apply" == "true" ]]; then
         config read-tree -mu HEAD >/dev/null 2>&1 || config checkout -f >/dev/null 2>&1 || true
@@ -388,7 +388,7 @@ if [[ "$SKIP_INSTALL" != true ]]; then
     echo "Cloning dotfiles repository..."
     run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
 
-    # Limit checkout to .dotfiles to keep repo metadata (README, etc.) out of $HOME
+    # Limit checkout to .dotfiles and .config to keep repo metadata (README, etc.) out of $HOME
     configure_sparse_checkout false
 
     # Handle existing dotfiles
