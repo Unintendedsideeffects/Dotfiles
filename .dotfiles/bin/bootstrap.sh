@@ -806,7 +806,7 @@ EOF
     menu_col=$((art_width + 3))
 
     dialog --backtitle "Dotfiles Bootstrap" \
-      --begin 1 1 --no-shadow --textbox "$art_file" "$art_height" "$art_width" \
+      --begin 1 1 --no-shadow --infobox "$(cat "$art_file")" "$art_height" "$art_width" \
       --and-widget --begin 1 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 2> "$tmpfile" || exit 1
