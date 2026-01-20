@@ -767,7 +767,7 @@ main_menu() {
   if command -v dialog >/dev/null 2>&1; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
-    art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
+    art_path="$DOTFILES_DIR/assets/pixellated_plain.txt"
     tmpfile=$(mktemp)
     CLEANUP_FILES+=("$tmpfile")
 
@@ -832,39 +832,103 @@ EOF
 
     art_render_file=$(mktemp)
     CLEANUP_FILES+=("$art_render_file")
-    awk -v width="$art_render_width" -v target="$art_render_height" '
-      {
-        lines[++n] = $0
-      }
-      END {
-        if (target < 1) target = n
-        if (n > target) {
-          start = int((n - target) / 2) + 1
-          end = start + target - 1
-        } else {
-          start = 1
-          end = n
+    if command -v python3 >/dev/null 2>&1; then
+      python3 - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+target_w = int(sys.argv[2])
+target_h = int(sys.argv[3])
+
+with open(path, "r", encoding="utf-8", errors="replace") as fh:
+    text = fh.read()
+text = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
+lines = [line.rstrip("\n") for line in text.splitlines()]
+
+if not lines:
+    for _ in range(target_h):
+        print(" " * target_w)
+    raise SystemExit(0)
+
+src_h = len(lines)
+src_w = max(len(line) for line in lines)
+lines = [line.ljust(src_w) for line in lines]
+
+for y in range(target_h):
+    sy = int(y * src_h / target_h)
+    row = []
+    for x in range(target_w):
+        sx = int(x * src_w / target_w)
+        row.append(lines[sy][sx])
+    print("".join(row))
+PY
+    elif command -v python >/dev/null 2>&1; then
+      python - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+target_w = int(sys.argv[2])
+target_h = int(sys.argv[3])
+
+with open(path, "r", encoding="utf-8", errors="replace") as fh:
+    text = fh.read()
+text = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
+lines = [line.rstrip("\n") for line in text.splitlines()]
+
+if not lines:
+    for _ in range(target_h):
+        print(" " * target_w)
+    raise SystemExit(0)
+
+src_h = len(lines)
+src_w = max(len(line) for line in lines)
+lines = [line.ljust(src_w) for line in lines]
+
+for y in range(target_h):
+    sy = int(y * src_h / target_h)
+    row = []
+    for x in range(target_w):
+        sx = int(x * src_w / target_w)
+        row.append(lines[sy][sx])
+    print("".join(row))
+PY
+    else
+      awk -v width="$art_render_width" -v target="$art_render_height" '
+        {
+          lines[++n] = $0
         }
-        shown = end - start + 1
-        if (shown < target) {
-          pad_top = int((target - shown) / 2)
-          pad_bottom = target - shown - pad_top
-        } else {
-          pad_top = 0
-          pad_bottom = 0
+        END {
+          if (target < 1) target = n
+          if (n > target) {
+            start = int((n - target) / 2) + 1
+            end = start + target - 1
+          } else {
+            start = 1
+            end = n
+          }
+          shown = end - start + 1
+          if (shown < target) {
+            pad_top = int((target - shown) / 2)
+            pad_bottom = target - shown - pad_top
+          } else {
+            pad_top = 0
+            pad_bottom = 0
+          }
+          for (i = 0; i < pad_top; i++) {
+            printf "%-*s\n", width, ""
+          }
+          for (i = start; i <= end; i++) {
+            line = substr(lines[i], 1, width)
+            printf "%-*s\n", width, line
+          }
+          for (i = 0; i < pad_bottom; i++) {
+            printf "%-*s\n", width, ""
+          }
         }
-        for (i = 0; i < pad_top; i++) {
-          printf "%-*s\n", width, ""
-        }
-        for (i = start; i <= end; i++) {
-          line = substr(lines[i], 1, width)
-          printf "%-*s\n", width, line
-        }
-        for (i = 0; i < pad_bottom; i++) {
-          printf "%-*s\n", width, ""
-        }
-      }
-    ' "$art_file" > "$art_render_file"
+      ' "$art_file" > "$art_render_file"
+    fi
 
     menu_col=$((art_width + 2))
     menu_width=$((term_cols - menu_col - 2))
