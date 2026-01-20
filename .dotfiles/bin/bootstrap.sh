@@ -31,7 +31,28 @@ DIALOGRC_PATH=$(mktemp)
 CLEANUP_FILES+=("$DIALOGRC_PATH")
 cat >"$DIALOGRC_PATH" <<'EOF'
 use_shadow = OFF
-use_colors = OFF
+use_colors = ON
+screen_color = (WHITE,BLACK,OFF)
+shadow_color = (WHITE,BLACK,OFF)
+dialog_color = (WHITE,BLACK,OFF)
+title_color = (WHITE,BLACK,OFF)
+border_color = (WHITE,BLACK,OFF)
+button_active_color = (BLACK,WHITE,OFF)
+button_inactive_color = (WHITE,BLACK,OFF)
+button_key_active_color = (BLACK,WHITE,OFF)
+button_key_inactive_color = (WHITE,BLACK,OFF)
+button_label_active_color = (BLACK,WHITE,OFF)
+button_label_inactive_color = (WHITE,BLACK,OFF)
+checkbox_color = (WHITE,BLACK,OFF)
+checkbox_focus_color = (BLACK,WHITE,OFF)
+listbox_color = (WHITE,BLACK,OFF)
+listbox_focus_color = (BLACK,WHITE,OFF)
+entry_color = (WHITE,BLACK,OFF)
+entry_focus_color = (BLACK,WHITE,OFF)
+tag_color = (WHITE,BLACK,OFF)
+tag_focus_color = (BLACK,WHITE,OFF)
+item_color = (WHITE,BLACK,OFF)
+item_focus_color = (BLACK,WHITE,OFF)
 EOF
 export DIALOGRC="$DIALOGRC_PATH"
 
@@ -1032,8 +1053,11 @@ PY
       menu_list_height=5
     fi
 
-    dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
-      --begin 0 0 --no-shadow --infobox "$(cat "$art_render_file")" "$art_height" "$art_width" \
+    local art_text
+    art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
+
+    dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
       --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 2> "$tmpfile" || exit 1
