@@ -5,6 +5,8 @@ set -euo pipefail
 # Presents a TUI to select and configure optional components, similar to archinstall.
 # Currently supports: Headless GUI (Arch-based) via setup-headless-gui.sh
 
+export NEWT_COLORS='root=white,black;border=white,black;window=white,black;shadow=white,black;title=white,black;button=black,white;actbutton=white,black;checkbox=white,black;actcheckbox=black,white;entry=white,black;label=white,black;listbox=white,black;actlistbox=black,white;textbox=white,black;helpline=white,black;roottext=white,black'
+
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIN_DIR="$DOTFILES_DIR/bin"
 LIB_DIR="$DOTFILES_DIR/lib"
@@ -198,7 +200,8 @@ prompt_packages() {
     if whip --title "Package Installation" --yesno "Install WSL-optimized packages for $distro_name?\n\nThis includes CLI tools plus WSL integration utilities." 12 70; then
       package_type="wsl"
     else
-      return 1
+      whip --title "Package Installation" --msgbox "Package installation skipped." 10 60 || true
+      return 0
     fi
   elif is_arch; then
     package_type=$(whip --title "Package Installation" --menu "Choose package set" 15 60 4 \
@@ -215,7 +218,8 @@ prompt_packages() {
 
   # For non-WSL, ask for confirmation again
   if [[ "$package_type" != "wsl" ]] && ! whip --title "Package Installation" --yesno "Install $package_type packages?\n\nThis will install development tools, utilities, and applications." 12 70; then
-    return 1
+    whip --title "Package Installation" --msgbox "Package installation skipped." 10 60 || true
+    return 0
   fi
   
   local preflight_output preflight_status
@@ -223,7 +227,7 @@ prompt_packages() {
   preflight_status=$?
   if [[ $preflight_status -ne 0 ]]; then
     whip --title "Package Installation" --msgbox "$preflight_output" 20 80
-    return 1
+    return 0
   fi
 
   local output status tmpfile
@@ -241,6 +245,8 @@ prompt_packages() {
     output=$(tail -n 200 "$tmpfile" 2>/dev/null || true)
     whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed. Log file:\n$tmpfile}" 20 80
   fi
+
+  return 0
 }
 
 prompt_gui_autologin() {
