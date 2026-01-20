@@ -1060,12 +1060,25 @@ PY
       --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
       --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
-      "${options[@]}" 2> "$tmpfile" || exit 1
-    selections=$(cat "$tmpfile")
+      "${options[@]}" 2> "$tmpfile"
+    local dialog_rc=$?
+    if [[ $dialog_rc -eq 0 ]]; then
+      selections=$(cat "$tmpfile")
+    elif [[ $dialog_rc -eq 1 || $dialog_rc -eq 255 ]]; then
+      return 0
+    else
+      if command -v whiptail >/dev/null 2>&1; then
+        selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
+          "${options[@]}" \
+          3>&1 1>&2 2>&3) || return 0
+      else
+        return 0
+      fi
+    fi
   else
     selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
       "${options[@]}" \
-      3>&1 1>&2 2>&3) || exit 1
+      3>&1 1>&2 2>&3) || return 0
   fi
 
   # Parse whiptail's space-separated quoted output into array
