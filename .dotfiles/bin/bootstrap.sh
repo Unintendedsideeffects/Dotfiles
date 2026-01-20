@@ -119,36 +119,59 @@ ensure_tui() {
 
 whip() {
   local needs_tailboxbg=false
+  local nonfatal=false
   for arg in "$@"; do
-    if [[ "$arg" == "--tailboxbg" ]]; then
-      needs_tailboxbg=true
-      break
-    fi
+    case "$arg" in
+      --tailboxbg)
+        needs_tailboxbg=true
+        nonfatal=true
+        ;;
+      --msgbox|--textbox|--infobox|--tailbox)
+        nonfatal=true
+        ;;
+    esac
   done
+
+  local rc=0
+  local errexit_was_set=0
+  case $- in *e*) errexit_was_set=1 ;; esac
+  set +e
 
   if [[ "$needs_tailboxbg" == true ]]; then
     if command -v dialog >/dev/null 2>&1; then
       dialog "$@"
-      return
+      rc=$?
+    else
+      local whiptail_args=()
+      for arg in "$@"; do
+        if [[ "$arg" == "--tailboxbg" ]]; then
+          whiptail_args+=("--textbox")
+        else
+          whiptail_args+=("$arg")
+        fi
+      done
+      whiptail "${whiptail_args[@]}"
+      rc=$?
     fi
-
-    local whiptail_args=()
-    for arg in "$@"; do
-      if [[ "$arg" == "--tailboxbg" ]]; then
-        whiptail_args+=("--textbox")
-      else
-        whiptail_args+=("$arg")
-      fi
-    done
-    whiptail "${whiptail_args[@]}"
-    return
-  fi
-
-  if command -v whiptail >/dev/null 2>&1; then
-    whiptail "$@"
   else
-    dialog "$@"
+    if command -v whiptail >/dev/null 2>&1; then
+      whiptail "$@"
+      rc=$?
+    else
+      dialog "$@"
+      rc=$?
+    fi
   fi
+
+  if ((errexit_was_set)); then
+    set -e
+  fi
+
+  if [[ "$nonfatal" == true ]]; then
+    return 0
+  fi
+
+  return "$rc"
 }
 
 # --- Debian/Ubuntu: Headless Obsidian (Xvfb/Openbox/VNC) ---
@@ -453,8 +476,10 @@ prompt_passwordless_sudo() {
   local target_user="${SUDO_USER:-}"
   if [[ -z "$target_user" || "$target_user" == "root" ]]; then
     # Running as actual root, ask which user
-    target_user=$(whip --title "Passwordless Sudo" --inputbox "Enter username to grant passwordless sudo:" 10 60 "" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]] || [[ -z "$target_user" ]]; then
+    if ! target_user=$(whip --title "Passwordless Sudo" --inputbox "Enter username to grant passwordless sudo:" 10 60 "" 3>&1 1>&2 2>&3); then
+      return 1
+    fi
+    if [[ -z "$target_user" ]]; then
       return 1
     fi
 
@@ -529,8 +554,7 @@ prompt_git_config() {
 
   # Always show TUI prompts with pre-populated defaults
   local git_username
-  git_username=$(whip --title "Git Configuration" --inputbox "Enter your Git username:" 10 60 "$default_username" 3>&1 1>&2 2>&3)
-  if [[ $? -ne 0 ]]; then
+  if ! git_username=$(whip --title "Git Configuration" --inputbox "Enter your Git username:" 10 60 "$default_username" 3>&1 1>&2 2>&3); then
     whip --title "Git Configuration" --msgbox "Git configuration cancelled." 10 60
     return 1
   fi
@@ -545,8 +569,7 @@ prompt_git_config() {
   fi
 
   local git_email
-  git_email=$(whip --title "Git Configuration" --inputbox "Enter your Git email:" 10 60 "$default_email" 3>&1 1>&2 2>&3)
-  if [[ $? -ne 0 ]]; then
+  if ! git_email=$(whip --title "Git Configuration" --inputbox "Enter your Git email:" 10 60 "$default_email" 3>&1 1>&2 2>&3); then
     whip --title "Git Configuration" --msgbox "Git configuration cancelled." 10 60
     return 1
   fi
@@ -1056,12 +1079,16 @@ PY
     local art_text
     art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
 
-    dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+    local dialog_rc=0
+    if dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
       --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
       --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
-      "${options[@]}" 2> "$tmpfile"
-    local dialog_rc=$?
+      "${options[@]}" 2> "$tmpfile"; then
+      dialog_rc=0
+    else
+      dialog_rc=$?
+    fi
     if [[ $dialog_rc -eq 0 ]]; then
       selections=$(cat "$tmpfile")
     elif [[ $dialog_rc -eq 1 || $dialog_rc -eq 255 ]]; then
@@ -1089,27 +1116,27 @@ PY
   for sel in "${selection_array[@]}"; do
     case "$sel" in
       git_config)
-        prompt_git_config ;;
+        prompt_git_config || true ;;
       locale_setup)
-        prompt_locale_setup ;;
+        prompt_locale_setup || true ;;
       claude_statusline)
-        prompt_claude_statusline ;;
+        prompt_claude_statusline || true ;;
       passwordless_sudo)
-        prompt_passwordless_sudo ;;
+        prompt_passwordless_sudo || true ;;
       aur_setup)
-        prompt_aur_setup ;;
+        prompt_aur_setup || true ;;
       packages)
-        prompt_packages ;;
+        prompt_packages || true ;;
       gui_autologin)
-        prompt_gui_autologin ;;
+        prompt_gui_autologin || true ;;
       validate)
-        prompt_validate ;;
+        prompt_validate || true ;;
       wsl_setup)
-        prompt_wsl_setup ;;
+        prompt_wsl_setup || true ;;
       headless_gui)
-        prompt_headless_gui ;;
+        prompt_headless_gui || true ;;
       headless_obsidian)
-        prompt_headless_obsidian ;;
+        prompt_headless_obsidian || true ;;
     esac
   done
 

@@ -478,7 +478,12 @@ pause_for_enter "Press Enter to continue with interactive setup..."
 exec 1>&3 2>&4
 
 if [[ -r /dev/tty ]]; then
-    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1
+    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1; then
+        :
+    else
+        bootstrap_rc=$?
+        echo "WARNING: Interactive bootstrap exited with code $bootstrap_rc; continuing installation." >&2
+    fi
 else
     echo "ERROR: No TTY available for interactive bootstrap." >&2
     exit 1
