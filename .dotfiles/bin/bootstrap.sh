@@ -600,7 +600,7 @@ prompt_locale_setup() {
     return 1
   fi
 
-  if whip --title "Locale Setup" --yesno "Configure UTF-8 locale?\n\nStarship and other tools require UTF-8 locale support.\n\nThis will:\n- Check if UTF-8 locale is available\n- Generate en_US.UTF-8 if needed\n- Set system locale to UTF-8\n\nSupports Arch, Debian/Ubuntu, and RHEL-based systems." 18 70; then
+  if whip --title "Locale Setup" --yesno "Configure UTF-8 locale?\n\nStarship and other tools require UTF-8 locale support.\n\nThis will:\n- Check if UTF-8 locale is available\n- Let you select a UTF-8 locale if needed\n- Set system locale to UTF-8\n\nSupports Arch, Debian/Ubuntu, and RHEL-based systems." 18 70; then
     local tmpfile
     tmpfile=$(mktemp)
     CLEANUP_FILES+=("$tmpfile")

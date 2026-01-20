@@ -10,27 +10,39 @@ LIB_DIR="$DOTFILES_DIR/lib"
 # shellcheck disable=SC1090
 source "$LIB_DIR/detect.sh"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Colors for output (disabled when not on a TTY or NO_COLOR is set)
+USE_COLOR=true
+if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
+  USE_COLOR=false
+fi
+
+RED=''
+GREEN=''
+YELLOW=''
+BLUE=''
+NC=''
+if [[ "$USE_COLOR" == true ]]; then
+  RED=$'\033[0;31m'
+  GREEN=$'\033[0;32m'
+  YELLOW=$'\033[1;33m'
+  BLUE=$'\033[0;34m'
+  NC=$'\033[0m'
+fi
 
 log_info() {
-  echo -e "${BLUE}[INFO]${NC} $*"
+  printf '%s\n' "${BLUE}[INFO]${NC} $*"
 }
 
 log_success() {
-  echo -e "${GREEN}[SUCCESS]${NC} $*"
+  printf '%s\n' "${GREEN}[SUCCESS]${NC} $*"
 }
 
 log_warning() {
-  echo -e "${YELLOW}[WARNING]${NC} $*"
+  printf '%s\n' "${YELLOW}[WARNING]${NC} $*"
 }
 
 log_error() {
-  echo -e "${RED}[ERROR]${NC} $*"
+  printf '%s\n' "${RED}[ERROR]${NC} $*"
 }
 
 # Check if running with sudo when needed
@@ -42,10 +54,9 @@ run_with_sudo_if_needed() {
   fi
 }
 
-# Detect if UTF-8 locale is available
+# Detect if UTF-8 locale is available (ignore C.UTF-8 false positives)
 check_utf8_locale() {
-  # Check if any UTF-8 locale is available
-  if locale -a 2>/dev/null | grep -qi "utf"; then
+  if locale -a 2>/dev/null | grep -Eqi '^[[:alpha:]]{2}_[[:alpha:]]{2}.*utf-?8'; then
     return 0
   fi
   return 1
@@ -56,7 +67,7 @@ check_current_locale() {
   local current_lang="${LANG:-}"
   local current_lc_all="${LC_ALL:-}"
 
-  if [[ -z "$current_lang" ]] || [[ "$current_lang" == "C" ]] || [[ "$current_lang" == "POSIX" ]]; then
+  if [[ -z "$current_lang" ]] || [[ "$current_lang" == "C" ]] || [[ "$current_lang" == "POSIX" ]] || [[ "$current_lang" == C.* ]]; then
     return 1
   fi
 
@@ -65,6 +76,127 @@ check_current_locale() {
   fi
 
   return 1
+}
+
+# --- TUI helpers (whiptail/dialog) ---
+has_whiptail() { command -v whiptail >/dev/null 2>&1; }
+has_dialog() { command -v dialog >/dev/null 2>&1; }
+
+tui_inputbox() {
+  local title="$1"
+  local prompt="$2"
+  local default="${3:-}"
+  local value=""
+
+  if has_whiptail; then
+    value=$(whiptail --title "$title" --inputbox "$prompt" 10 70 "$default" 3>&1 1>&2 2>&3) || return 1
+    printf '%s' "$value"
+    return 0
+  fi
+
+  if has_dialog; then
+    value=$(dialog --title "$title" --inputbox "$prompt" 10 70 "$default" 3>&1 1>&2 2>&3) || return 1
+    printf '%s' "$value"
+    return 0
+  fi
+
+  if [[ -r /dev/tty ]]; then
+    IFS= read -r -p "$prompt" value </dev/tty || return 1
+    printf '%s' "$value"
+    return 0
+  fi
+
+  return 1
+}
+
+tui_msgbox() {
+  local title="$1"
+  local message="$2"
+
+  if has_whiptail; then
+    whiptail --title "$title" --msgbox "$message" 10 70
+    return 0
+  fi
+
+  if has_dialog; then
+    dialog --title "$title" --msgbox "$message" 10 70
+    return 0
+  fi
+
+  printf '%s\n' "$message"
+}
+
+tui_checklist() {
+  local title="$1"
+  local prompt="$2"
+  shift 2
+  local selections=""
+
+  if has_whiptail; then
+    selections=$(whiptail --title "$title" --checklist "$prompt" 20 78 12 "$@" 3>&1 1>&2 2>&3) || return 1
+  elif has_dialog; then
+    selections=$(dialog --title "$title" --checklist "$prompt" 20 78 12 "$@" 3>&1 1>&2 2>&3) || return 1
+  else
+    return 1
+  fi
+
+  selections=${selections//\"/}
+  printf '%s' "$selections"
+  return 0
+}
+
+list_arch_utf8_locales() {
+  local locale_gen_file="$1"
+  awk '/UTF-8/ {
+    line=$0
+    sub(/^[[:space:]]*#?[[:space:]]*/, "", line)
+    split(line, fields, /[[:space:]]+/)
+    if (fields[1] ~ /^[A-Za-z]{2}_[A-Za-z]{2}.*UTF-8$/) {
+      print fields[1]
+    }
+  }' "$locale_gen_file" | sort -u
+}
+
+select_arch_locales() {
+  local locale_gen_file="$1"
+  local locales prefix filtered selections
+
+  locales=$(list_arch_utf8_locales "$locale_gen_file")
+  if [[ -z "$locales" ]]; then
+    log_error "No UTF-8 locales found in $locale_gen_file"
+    return 1
+  fi
+
+  while true; do
+    prefix=$(tui_inputbox "Locale Setup" "Enter a two-letter language code (e.g., en for English, it for Italian):" "en") || return 1
+    prefix=${prefix,,}
+    if [[ ! "$prefix" =~ ^[a-z]{2}$ ]]; then
+      tui_msgbox "Locale Setup" "Please enter exactly two letters (e.g., en, it, fr)."
+      continue
+    fi
+
+    filtered=$(printf '%s\n' "$locales" | grep -E "^${prefix}_" || true)
+    if [[ -z "$filtered" ]]; then
+      tui_msgbox "Locale Setup" "No UTF-8 locales found for '$prefix'. Try another two-letter code."
+      continue
+    fi
+
+    local options=()
+    while IFS= read -r locale; do
+      options+=("$locale" "UTF-8 locale" OFF)
+    done <<< "$filtered"
+
+    selections=$(tui_checklist "Locale Setup" "Select locale(s) to enable" "${options[@]}") || return 1
+    if [[ -z "$selections" ]]; then
+      tui_msgbox "Locale Setup" "Select at least one locale to continue."
+      continue
+    fi
+
+    local selected_array=()
+    read -r -a selected_array <<< "$selections"
+    printf '%s\n' "${selected_array[@]}"
+    return 0
+  done
 }
 
 # Generate locale on Arch Linux
@@ -79,27 +211,31 @@ setup_locale_arch() {
     return 1
   fi
 
-  # Check if en_US.UTF-8 is already uncommented
-  if grep -q "^en_US\.UTF-8 UTF-8" "$locale_gen_file"; then
-    log_info "en_US.UTF-8 is already enabled in locale.gen"
+  local selected_locales=()
+  if mapfile -t selected_locales < <(select_arch_locales "$locale_gen_file"); then
+    :
   else
-    log_info "Enabling en_US.UTF-8 in locale.gen..."
-    run_with_sudo_if_needed sed -i 's/^#\s*en_US\.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' "$locale_gen_file"
-
-    # If that didn't work (line doesn't exist), append it
-    if ! grep -q "^en_US\.UTF-8 UTF-8" "$locale_gen_file"; then
-      log_info "Adding en_US.UTF-8 to locale.gen..."
-      run_with_sudo_if_needed sh -c "echo 'en_US.UTF-8 UTF-8' >> $locale_gen_file"
-    fi
+    log_error "Locale selection cancelled."
+    return 1
   fi
+
+  for locale in "${selected_locales[@]}"; do
+    if grep -Eq "^[[:space:]]*${locale}[[:space:]]+UTF-8" "$locale_gen_file"; then
+      log_info "$locale is already enabled in locale.gen"
+      continue
+    fi
+    log_info "Adding $locale to locale.gen..."
+    run_with_sudo_if_needed sh -c "printf '\n%s UTF-8\n' '$locale' >> '$locale_gen_file'"
+  done
 
   # Generate locales
   log_info "Running locale-gen..."
   run_with_sudo_if_needed locale-gen
 
-  # Set system-wide locale
-  log_info "Setting system locale to en_US.UTF-8..."
-  run_with_sudo_if_needed sh -c "echo 'LANG=en_US.UTF-8' > $locale_conf_file"
+  # Set system-wide locale (use the first selected locale)
+  local default_locale="${selected_locales[0]}"
+  log_info "Setting system locale to ${default_locale}..."
+  run_with_sudo_if_needed sh -c "echo 'LANG=${default_locale}' > $locale_conf_file"
 
   log_success "Locale configured successfully!"
 }
