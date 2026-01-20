@@ -369,7 +369,13 @@ echo "  - .dotfiles/bin/bootstrap.sh - Interactive system setup"
 echo ""
 echo "WARNING: These scripts will be executed with the privileges of user: $TARGET_USER"
 echo ""
-read -p "Continue with installation? (y/N): " -n 1 -r </dev/tty
+if ! read -p "Continue with installation? (y/N): " -n 1 -r </dev/tty; then
+    REPLY=""
+    if [[ "$IS_PIPED" == true ]]; then
+        echo "WARNING: No TTY available; auto-accepting to continue." >&2
+        REPLY="y"
+    fi
+fi
 echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -396,7 +402,9 @@ echo "Starting interactive setup..."
 echo "   - Select 'Install Packages' to get development tools"
 echo "   - Select 'WSL Configuration Setup' if you're on WSL"
 echo ""
-read -p "Press Enter to continue with interactive setup..." </dev/tty
+if ! read -p "Press Enter to continue with interactive setup..." </dev/tty; then
+    echo "WARNING: No TTY available; continuing without pause." >&2
+fi
 
 # Temporarily restore normal stdout/stderr for TUI programs (whiptail/dialog)
 # The tee redirection breaks terminal control needed for arrow keys and proper display
