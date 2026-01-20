@@ -410,7 +410,14 @@ fi
 # The tee redirection breaks terminal control needed for arrow keys and proper display
 exec 1>&3 2>&4
 
-run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
+if [[ -t 0 ]]; then
+    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"
+elif [[ -r /dev/tty ]]; then
+    run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty
+else
+    echo "ERROR: No TTY available for interactive bootstrap." >&2
+    exit 1
+fi
 
 exec > >(tee -a "$LOG_FILE") 2>&1 # Re-enable logging after interactive bootstrap completes
 
