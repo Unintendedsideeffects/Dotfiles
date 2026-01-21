@@ -73,6 +73,21 @@ if [[ -z "$PACKAGE_TYPE" ]]; then
   fi
 fi
 
+# Normalize package type if user passed OS name by mistake.
+case "$PACKAGE_TYPE" in
+  cli|gui|xforward|wsl)
+    ;;
+  *)
+    if [[ "$PACKAGE_TYPE" == "$ENV" ]]; then
+      echo "WARNING: Package type '$PACKAGE_TYPE' looks like an OS name; using 'cli' package list."
+      PACKAGE_TYPE="cli"
+    else
+      echo "Unknown package type: $PACKAGE_TYPE (valid: cli, gui, xforward, wsl)"
+      exit 1
+    fi
+    ;;
+esac
+
 # Determine package list file
 PKGLIST="$ROOT_DIR/.dotfiles/pkglists/${ENV}-${PACKAGE_TYPE}.txt"
 if [[ ! -f "$PKGLIST" ]]; then 
