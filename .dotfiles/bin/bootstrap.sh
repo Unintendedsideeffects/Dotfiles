@@ -926,7 +926,8 @@ main_menu() {
     exit 0
   fi
 
-  local selections
+  local selections=""
+  local selection_array=()
   if command_exists dialog; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
@@ -1239,18 +1240,65 @@ PY
           "${options[@]}" \
           3>&1 1>&2 2>&3) || return 0
       else
-        return 0
+        echo "Dotfiles Bootstrap (no TUI available)"
+        echo "Select components by number (space-separated), or press Enter to quit:"
+        local keys=()
+        local idx=1
+        for ((i=0; i<${#options[@]}; i+=3)); do
+          keys+=("${options[i]}")
+          printf '  [%d] %s\n' "$idx" "${options[i+1]}"
+          ((idx++))
+        done
+        local reply
+        read -r -p "> " reply || return 0
+        if [[ -z "$reply" ]]; then
+          return 0
+        fi
+        for token in $reply; do
+          if [[ "$token" =~ ^[0-9]+$ ]] && (( token>=1 && token<=${#keys[@]} )); then
+            selection_array+=("${keys[token-1]}")
+          fi
+        done
+        if [[ ${#selection_array[@]} -eq 0 ]]; then
+          return 0
+        fi
       fi
     fi
   else
-    selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
-      "${options[@]}" \
-      3>&1 1>&2 2>&3) || return 0
+    if command_exists whiptail; then
+      selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
+        "${options[@]}" \
+        3>&1 1>&2 2>&3) || return 0
+    else
+      echo "Dotfiles Bootstrap (no TUI available)"
+      echo "Select components by number (space-separated), or press Enter to quit:"
+      local keys=()
+      local idx=1
+      for ((i=0; i<${#options[@]}; i+=3)); do
+        keys+=("${options[i]}")
+        printf '  [%d] %s\n' "$idx" "${options[i+1]}"
+        ((idx++))
+      done
+      local reply
+      read -r -p "> " reply || return 0
+      if [[ -z "$reply" ]]; then
+        return 0
+      fi
+      for token in $reply; do
+        if [[ "$token" =~ ^[0-9]+$ ]] && (( token>=1 && token<=${#keys[@]} )); then
+          selection_array+=("${keys[token-1]}")
+        fi
+      done
+      if [[ ${#selection_array[@]} -eq 0 ]]; then
+        return 0
+      fi
+    fi
   fi
 
-  # Parse whiptail's space-separated quoted output into array
-  local selection_array=()
-  eval "selection_array=($selections)"
+  # Parse whiptail/dialog output into array
+  if [[ ${#selection_array[@]} -eq 0 ]]; then
+    eval "selection_array=($selections)"
+  fi
 
   # Process each selection
   for sel in "${selection_array[@]}"; do
