@@ -447,17 +447,6 @@ echo "The following scripts will be executed:"
 echo "  - .dotfiles/shell/install.sh - Install shell configuration"
 echo "  - .dotfiles/bin/bootstrap.sh - Interactive system setup"
 echo ""
-echo "WARNING: These scripts will be executed with the privileges of user: $TARGET_USER"
-echo ""
-if ! prompt_yes_no "Continue with installation? (y/N): " "N" "$IS_PIPED"; then
-    echo ""
-    echo "========================================"
-    echo "Installation cancelled: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "========================================"
-    echo ""
-    echo "Installation cancelled by user."
-    exit 0
-fi
 
 # Source the config to get the config alias
 run_as_user bash -c "source '$TARGET_HOME/.dotfiles/cli/config.sh'"

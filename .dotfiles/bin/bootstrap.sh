@@ -375,6 +375,46 @@ prompt_gui_autologin() {
   fi
 }
 
+prompt_tailscale() {
+  # Check if Tailscale is already installed
+  if command_exists tailscale; then
+    local version
+    version=$(tailscale version 2>/dev/null | head -n1 || echo "unknown")
+    if ! whip --title "Tailscale" --yesno "Tailscale is already installed.\n\nVersion: $version\n\nDo you want to reinstall it?" 12 70; then
+      return 0
+    fi
+  fi
+
+  # Show confirmation dialog
+  if ! whip --title "Tailscale Setup" --yesno "Install Tailscale VPN?\n\nThis will:\n- Download and run the official Tailscale installer\n- Install Tailscale system service\n- Enable the Tailscale daemon\n\nAfter installation, run:\n  sudo tailscale up\n\nto connect to your network." 18 70; then
+    return 0
+  fi
+
+  # Create temporary file for output
+  local tmpfile
+  tmpfile=$(mktemp)
+  CLEANUP_FILES+=("$tmpfile")
+
+  # Run the installation
+  local status=0
+  {
+    curl -fsSL https://tailscale.com/install.sh | run_with_sudo_if_needed sh
+    echo "$?" > "${tmpfile}.status"
+  } >> "$tmpfile" 2>&1 || true
+
+  status=$(cat "${tmpfile}.status" 2>/dev/null || echo "1")
+  rm -f "${tmpfile}.status"
+
+  local output
+  output=$(cat "$tmpfile")
+
+  if [[ $status -eq 0 ]]; then
+    whip --title "Tailscale Setup" --msgbox "Tailscale installed successfully!\n\nNext steps:\n1. Start Tailscale:\n   sudo tailscale up\n\n2. Authenticate in your browser\n\n3. Check status:\n   tailscale status" 18 70
+  else
+    whip --title "Tailscale Setup Failed" --msgbox "Installation failed.\n\n$output" 20 80
+  fi
+}
+
 prompt_headless_gui() {
   if ! is_arch; then
     whip --title "Headless GUI" --msgbox "Headless GUI setup is currently implemented for Arch-based systems only." 10 70
@@ -656,6 +696,7 @@ main_menu() {
   options+=("locale_setup" "Configure UTF-8 Locale (for Starship)" OFF)
   options+=("git_config" "Configure Git User Settings" OFF)
   options+=("claude_statusline" "Install Claude Code statusline" OFF)
+  options+=("tailscale" "Install Tailscale VPN" OFF)
 
   if is_wsl; then
     options+=("wsl_setup" "WSL Configuration Setup" OFF)
@@ -712,6 +753,7 @@ main_menu() {
       git_config) prompt_git_config || true ;;
       locale_setup) prompt_locale_setup || true ;;
       claude_statusline) prompt_claude_statusline || true ;;
+      tailscale) prompt_tailscale || true ;;
       aur_setup) prompt_aur_setup || true ;;
       packages) prompt_packages || true ;;
       gui_autologin) prompt_gui_autologin || true ;;
