@@ -543,12 +543,11 @@ EOF
 
 run_dialog_menu() {
   local tmpfile="$1"
-  local art_width="$2"
-  local art_height="$3"
-  shift 3
+  shift 1
   local options=("$@")
 
   local term_cols term_lines menu_height menu_width menu_list_height menu_col
+  local art_width
   term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
   term_lines=$(tput lines 2>/dev/null || stty size 2>/dev/null | awk '{print $1}' || echo 24)
 
@@ -557,10 +556,39 @@ run_dialog_menu() {
     menu_height=10
   fi
 
+  local art_min=20
+  local menu_min=40
+  local natural_width
+  if [[ -r "$DOTFILES_DIR/assets/ascii-art.txt" ]]; then
+    natural_width=$(LC_ALL=C awk '{ if (length > max) max = length } END { print max }' "$DOTFILES_DIR/assets/ascii-art.txt")
+  else
+    natural_width=$art_min
+  fi
+  if [[ -z "$natural_width" ]]; then
+    natural_width=$art_min
+  fi
+
+  local max_art=$((term_cols - menu_min - 4))
+  if ((max_art < art_min)); then
+    max_art=$art_min
+  fi
+  art_width=$natural_width
+  if ((art_width > max_art)); then
+    art_width=$max_art
+  fi
+  if ((art_width < art_min)); then
+    art_width=$art_min
+  fi
+
   menu_col=$((art_width + 2))
   menu_width=$((term_cols - menu_col - 2))
-  if ((menu_width < 20)); then
-    menu_width=20
+  if ((menu_width < menu_min)); then
+    menu_width=$menu_min
+    menu_col=$((term_cols - menu_width - 2))
+    if ((menu_col < art_min)); then
+      menu_col=$((art_min + 2))
+      menu_width=$((term_cols - menu_col - 2))
+    fi
   fi
 
   menu_list_height=$((menu_height - 8))
@@ -660,8 +688,7 @@ main_menu() {
     tmpfile=$(mktemp)
     CLEANUP_FILES+=("$tmpfile")
 
-    local art_width=44
-    run_dialog_menu "$tmpfile" "$art_width" "0" "${options[@]}" || true
+    run_dialog_menu "$tmpfile" "${options[@]}" || true
     local dialog_rc=$?
 
     if [[ $dialog_rc -eq 0 ]]; then
