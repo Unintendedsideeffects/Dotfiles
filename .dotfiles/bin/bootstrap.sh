@@ -931,7 +931,14 @@ main_menu() {
   if command_exists dialog; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
-    if [[ -r "$DOTFILES_DIR/assets/pixellated_bw.txt" ]]; then
+    local use_unicode_art=true
+    local charmap
+    charmap=$(locale charmap 2>/dev/null || echo "")
+    if [[ "${charmap^^}" != "UTF-8" && "${charmap^^}" != "UTF8" ]]; then
+      use_unicode_art=false
+    fi
+
+    if [[ "$use_unicode_art" == true && -r "$DOTFILES_DIR/assets/pixellated_bw.txt" ]]; then
       art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
     else
       art_path="$DOTFILES_DIR/assets/pixellated_plain.txt"
@@ -1146,6 +1153,8 @@ EOF
     fi
     if [[ $dialog_rc -eq 0 ]]; then
       selections=$(cat "$tmpfile")
+    elif [[ $dialog_rc -eq 1 || $dialog_rc -eq 255 ]]; then
+      return 0
     else
       if command_exists whiptail; then
         selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
