@@ -454,7 +454,7 @@ EODIALOG
 render_art() {
   local width="$1"
   local height="$2"
-  local art_file="$DOTFILES_DIR/assets/pixellated_plain.txt"
+  local art_file="$DOTFILES_DIR/assets/ascii-art.txt"
   local art_render
   local src_file
 
