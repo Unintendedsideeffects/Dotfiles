@@ -106,8 +106,8 @@ run_with_sudo_if_needed() {
 
 # --- Ensure TUI dependency ---
 ensure_tui() {
-  if command -v whiptail >/dev/null 2>&1; then return 0; fi
-  if command -v dialog >/dev/null 2>&1; then return 0; fi
+  if command_exists whiptail; then return 0; fi
+  if command_exists dialog; then return 0; fi
 
   if is_arch; then
     run_with_sudo_if_needed pacman -Sy --noconfirm --needed dialog
@@ -115,9 +115,9 @@ ensure_tui() {
     run_with_sudo_if_needed apt-get update -y
     run_with_sudo_if_needed apt-get install -y whiptail || run_with_sudo_if_needed apt-get install -y dialog
   elif is_rhel_like; then
-    if command -v dnf >/dev/null 2>&1; then
+    if command_exists dnf; then
       run_with_sudo_if_needed dnf install -y dialog
-    elif command -v yum >/dev/null 2>&1; then
+    elif command_exists yum; then
       run_with_sudo_if_needed yum install -y dialog
     fi
   fi
@@ -144,8 +144,8 @@ whip() {
   set +e
 
   if [[ "$needs_tailboxbg" == true ]]; then
-    if command -v dialog >/dev/null 2>&1; then
-      dialog "$@"
+    if command_exists dialog; then
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog "$@"
       rc=$?
     else
       local whiptail_args=()
@@ -156,15 +156,15 @@ whip() {
           whiptail_args+=("$arg")
         fi
       done
-      whiptail "${whiptail_args[@]}"
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" whiptail "${whiptail_args[@]}"
       rc=$?
     fi
   else
-    if command -v whiptail >/dev/null 2>&1; then
-      whiptail "$@"
+    if command_exists whiptail; then
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" whiptail "$@"
       rc=$?
     else
-      dialog "$@"
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog "$@"
       rc=$?
     fi
   fi
@@ -927,7 +927,7 @@ main_menu() {
   fi
 
   local selections
-  if command -v dialog >/dev/null 2>&1; then
+  if command_exists dialog; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
     if [[ -r "$DOTFILES_DIR/assets/pixellated_bw.txt" ]]; then
@@ -1216,13 +1216,13 @@ PY
     if [[ "$use_art" == true ]]; then
       local art_text
       art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
-      dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
         --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
         --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
         "$menu_height" "$menu_width" "$menu_list_height" \
         "${options[@]}" 2> "$tmpfile"
     else
-      dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
         --checklist "Select components to configure" 20 80 10 \
         "${options[@]}" 2> "$tmpfile"
     fi
@@ -1234,7 +1234,7 @@ PY
     if [[ $dialog_rc -eq 0 ]]; then
       selections=$(cat "$tmpfile")
     else
-      if command -v whiptail >/dev/null 2>&1; then
+      if command_exists whiptail; then
         selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
           "${options[@]}" \
           3>&1 1>&2 2>&3) || return 0
