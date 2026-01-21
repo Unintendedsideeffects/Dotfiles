@@ -149,12 +149,18 @@ cleanup_on_error() {
 
 trap cleanup_on_error EXIT
 
+# Helper function to check for commands with extended PATH
+# /usr/sbin is not in default PATH for non-root users on Debian
+command_exists() {
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" command -v "$1" >/dev/null 2>&1
+}
+
 # Check all required dependencies upfront
 required_commands=("git" "sudo" "awk" "grep" "getent" "useradd" "usermod" "visudo")
 missing_commands=()
 
 for cmd in "${required_commands[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
+    if ! command_exists "$cmd"; then
         missing_commands+=("$cmd")
     fi
 done
