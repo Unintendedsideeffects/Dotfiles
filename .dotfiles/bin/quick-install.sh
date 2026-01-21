@@ -26,8 +26,12 @@ fi
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
 TTY_AVAILABLE=false
-if [[ -t 0 && -t 1 && -t 2 ]]; then
+TTY_IN_FD=""
+TTY_OUT_FD=""
+if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
     TTY_AVAILABLE=true
+    TTY_IN_FD=5
+    TTY_OUT_FD=6
 fi
 
 read_tty_line() {
@@ -36,7 +40,12 @@ read_tty_line() {
     local default="${3:-}"
     local __value=""
 
-    IFS= read -r -p "$prompt" __value || __value=""
+    if [[ "$TTY_AVAILABLE" == true ]]; then
+        printf '%s' "$prompt" >&$TTY_OUT_FD
+        IFS= read -r -u "$TTY_IN_FD" __value || __value=""
+    else
+        IFS= read -r -p "$prompt" __value || __value=""
+    fi
 
     if [[ -z "$__value" && -n "$default" ]]; then
         __value="$default"
@@ -51,12 +60,18 @@ read_tty_key() {
     local __value=""
     local __discard=""
 
-    IFS= read -r -n 1 -p "$prompt" __value || __value=""
-    IFS= read -r __discard || true
-    case "$__value" in
-        $'\n'|$'\r') __value="" ;;
-    esac
-    echo ""
+    if [[ "$TTY_AVAILABLE" == true ]]; then
+        printf '%s' "$prompt" >&$TTY_OUT_FD
+        IFS= read -r -n 1 -u "$TTY_IN_FD" __value || __value=""
+        IFS= read -r -u "$TTY_IN_FD" __discard || true
+        case "$__value" in
+            $'\n'|$'\r') __value="" ;;
+        esac
+        printf '\n' >&$TTY_OUT_FD
+    else
+        IFS= read -r -n 1 -p "$prompt" __value || __value=""
+        IFS= read -r __discard || true
+    fi
 
     printf -v "$__var" '%s' "$__value"
 }
@@ -409,10 +424,10 @@ pause_for_enter "Press Enter to continue with interactive setup..."
 
 # Temporarily restore normal stdout/stderr for TUI programs (whiptail/dialog)
 # The tee redirection breaks terminal control needed for arrow keys and proper display
-exec 1>&3 2>&4 3>&- 4>&-
+exec 1>&3 2>&4
 
 if [[ "$TTY_AVAILABLE" == true ]]; then
-    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"; then
+    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1; then
         :
     else
         bootstrap_rc=$?
@@ -423,8 +438,6 @@ else
     echo "You can run the bootstrap menu later with: ~/.dotfiles/bin/bootstrap.sh" >&2
 fi
 
-# Save terminal file descriptors again for next logging section
-exec 3>&1 4>&2
 exec > >(tee -a "$LOG_FILE") 2>&1 # Re-enable logging after interactive bootstrap completes
 
 # Mark installation as successful
