@@ -189,99 +189,21 @@ done
 
 if [[ "$USER_CREATION_AVAILABLE" != true ]]; then
     echo "WARNING: User creation commands not available: ${missing_user_commands[*]}"
-    echo "User creation flow will be skipped."
+    echo "User creation will not be available in the setup menu."
 fi
+
+# Export flag for bootstrap menu
+export DF_USER_CREATION_AVAILABLE="$USER_CREATION_AVAILABLE"
 
 # Determine target user and home directory
 if [[ $EUID -eq 0 ]]; then
-    # Running as root
-    echo "Running as root."
+    # Running as root - install for root
+    # User creation is now available in the bootstrap menu
+    TARGET_USER="root"
+    TARGET_HOME="/root"
+    echo "Running as root. Installing for root user."
+    echo "User creation and passwordless sudo are available in the setup menu."
     echo ""
-
-    # Ask if they want to create a new user or install for root (only if user creation is available)
-    if [[ "$USER_CREATION_AVAILABLE" == true ]] && prompt_yes_no "Do you want to create a new user? (y/N): " "N"; then
-        # Create a new user
-        while true; do
-            read_tty_line "Enter username for new user: " new_username
-
-            # Validate username
-            if [[ -z "$new_username" ]]; then
-                echo "ERROR: Username cannot be empty."
-                continue
-            fi
-
-            if ! [[ "$new_username" =~ ^[a-z_][a-z0-9_-]*\$?$ ]]; then
-                echo "ERROR: Invalid username. Use lowercase letters, numbers, underscore, and hyphen."
-                continue
-            fi
-
-            if id "$new_username" >/dev/null 2>&1; then
-                echo "ERROR: User '$new_username' already exists."
-                continue
-            fi
-
-            break
-        done
-
-        echo ""
-        echo "Creating user: $new_username"
-        if ! useradd -m -s /bin/bash "$new_username"; then
-            echo "ERROR: Failed to create user '$new_username'"
-            exit 1
-        fi
-        CREATED_USERS+=("$new_username")
-
-        echo ""
-        echo "Set password for $new_username:"
-        if ! passwd "$new_username"; then
-            echo "ERROR: Failed to set password for '$new_username'"
-            exit 1
-        fi
-
-        # Ask about passwordless sudo
-        echo ""
-        echo "WARNING: Passwordless sudo allows the user to run commands as root without a password."
-        echo "This is convenient but reduces security. Only enable on trusted systems."
-        echo ""
-        if prompt_yes_no "Enable passwordless sudo for $new_username? (y/N): " "N"; then
-            # Use visudo to validate sudoers entry before writing
-            sudoers_entry="$new_username ALL=(ALL) NOPASSWD:ALL"
-            temp_sudoers=$(mktemp)
-            CREATED_FILES+=("$temp_sudoers")
-
-            echo "$sudoers_entry" > "$temp_sudoers"
-            chmod 0440 "$temp_sudoers"
-
-            # Validate with visudo
-            if visudo -c -f "$temp_sudoers" >/dev/null 2>&1; then
-                mv "$temp_sudoers" "/etc/sudoers.d/$new_username"
-                CREATED_FILES+=("/etc/sudoers.d/$new_username")
-                echo "Passwordless sudo enabled for $new_username"
-            else
-                rm -f "$temp_sudoers"
-                echo "ERROR: Invalid sudoers syntax. This should not happen."
-                exit 1
-            fi
-        else
-            # Regular sudo access - try both common group names
-            if usermod -aG sudo "$new_username" 2>/dev/null; then
-                echo "Added $new_username to sudo group"
-            elif usermod -aG wheel "$new_username" 2>/dev/null; then
-                echo "Added $new_username to wheel group"
-            else
-                echo "ERROR: Could not add $new_username to sudo/wheel group"
-                echo "Your system may use a different group for sudo access."
-                exit 1
-            fi
-        fi
-
-        TARGET_USER="$new_username"
-        TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
-    else
-        # Install for root
-        TARGET_USER="root"
-        TARGET_HOME="/root"
-    fi
 elif [[ -n "${SUDO_USER:-}" ]]; then
     # Running with sudo as regular user
     TARGET_USER="$SUDO_USER"
