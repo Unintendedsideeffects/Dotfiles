@@ -1059,21 +1059,21 @@ EOF
       local art_text
       art_text=$(cat "$art_render_file")
       if [[ -r /dev/tty && -w /dev/tty ]]; then
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
           --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
           --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
           "$menu_height" "$menu_width" "$menu_list_height" \
-          "${options[@]}" 2> "$tmpfile" < /dev/tty > /dev/tty; then
+          "${options[@]}" 3> "$tmpfile" < /dev/tty > /dev/tty; then
           dialog_rc=0
         else
           dialog_rc=$?
         fi
       else
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
           --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
           --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
           "$menu_height" "$menu_width" "$menu_list_height" \
-          "${options[@]}" 2> "$tmpfile"; then
+          "${options[@]}" 3> "$tmpfile"; then
           dialog_rc=0
         else
           dialog_rc=$?
@@ -1083,21 +1083,21 @@ EOF
       if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
         export DIALOGRC="/dev/null"
         if [[ -r /dev/tty && -w /dev/tty ]]; then
-          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
             --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
             --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
             "$menu_height" "$menu_width" "$menu_list_height" \
-            "${options[@]}" 2> "$tmpfile" < /dev/tty > /dev/tty; then
+            "${options[@]}" 3> "$tmpfile" < /dev/tty > /dev/tty; then
             dialog_rc=0
           else
             dialog_rc=$?
           fi
         else
-          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
             --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
             --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
             "$menu_height" "$menu_width" "$menu_list_height" \
-            "${options[@]}" 2> "$tmpfile"; then
+            "${options[@]}" 3> "$tmpfile"; then
             dialog_rc=0
           else
             dialog_rc=$?
@@ -1106,17 +1106,17 @@ EOF
       fi
     else
       if [[ -r /dev/tty && -w /dev/tty ]]; then
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
           --checklist "Select components to configure" 20 80 10 \
-          "${options[@]}" 2> "$tmpfile" < /dev/tty > /dev/tty; then
+          "${options[@]}" 3> "$tmpfile" < /dev/tty > /dev/tty; then
           dialog_rc=0
         else
           dialog_rc=$?
         fi
       else
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
           --checklist "Select components to configure" 20 80 10 \
-          "${options[@]}" 2> "$tmpfile"; then
+          "${options[@]}" 3> "$tmpfile"; then
           dialog_rc=0
         else
           dialog_rc=$?
@@ -1126,17 +1126,17 @@ EOF
       if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
         export DIALOGRC="/dev/null"
         if [[ -r /dev/tty && -w /dev/tty ]]; then
-          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
             --checklist "Select components to configure" 20 80 10 \
-            "${options[@]}" 2> "$tmpfile" < /dev/tty > /dev/tty; then
+            "${options[@]}" 3> "$tmpfile" < /dev/tty > /dev/tty; then
             dialog_rc=0
           else
             dialog_rc=$?
           fi
         else
-          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
+          if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
             --checklist "Select components to configure" 20 80 10 \
-            "${options[@]}" 2> "$tmpfile"; then
+            "${options[@]}" 3> "$tmpfile"; then
             dialog_rc=0
           else
             dialog_rc=$?
