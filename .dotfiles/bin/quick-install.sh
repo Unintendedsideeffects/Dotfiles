@@ -158,7 +158,8 @@ command_exists() {
 }
 
 # Check all required dependencies upfront
-required_commands=("git" "sudo" "awk" "grep" "getent" "useradd" "usermod" "visudo")
+# Core commands needed for basic operation
+required_commands=("git" "sudo" "awk" "grep" "getent")
 missing_commands=()
 
 for cmd in "${required_commands[@]}"; do
@@ -173,14 +174,32 @@ if [[ ${#missing_commands[@]} -gt 0 ]]; then
     exit 1
 fi
 
+# Check optional commands for user creation flow
+# These are only needed when creating a new user as root
+USER_CREATION_AVAILABLE=true
+user_creation_commands=("useradd" "usermod" "visudo")
+missing_user_commands=()
+
+for cmd in "${user_creation_commands[@]}"; do
+    if ! command_exists "$cmd"; then
+        missing_user_commands+=("$cmd")
+        USER_CREATION_AVAILABLE=false
+    fi
+done
+
+if [[ "$USER_CREATION_AVAILABLE" == false ]]; then
+    echo "WARNING: User creation commands not available: ${missing_user_commands[*]}"
+    echo "User creation flow will be skipped."
+fi
+
 # Determine target user and home directory
 if [[ $EUID -eq 0 ]]; then
     # Running as root
     echo "Running as root."
     echo ""
 
-    # Ask if they want to create a new user or install for root
-    if prompt_yes_no "Do you want to create a new user? (y/N): " "N"; then
+    # Ask if they want to create a new user or install for root (only if user creation is available)
+    if [[ "$USER_CREATION_AVAILABLE" == true ]] && prompt_yes_no "Do you want to create a new user? (y/N): " "N"; then
         # Create a new user
         while true; do
             read_tty_line "Enter username for new user: " new_username
