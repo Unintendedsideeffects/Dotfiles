@@ -931,18 +931,7 @@ main_menu() {
   if command_exists dialog; then
     local art_file tmpfile art_height art_width menu_height menu_width menu_list_height menu_col
     local art_path
-    local use_unicode_art=true
-    local charmap
-    charmap=$(locale charmap 2>/dev/null || echo "")
-    if [[ "${charmap^^}" != "UTF-8" && "${charmap^^}" != "UTF8" ]]; then
-      use_unicode_art=false
-    fi
-
-    if [[ "$use_unicode_art" == true && -r "$DOTFILES_DIR/assets/pixellated_bw.txt" ]]; then
-      art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
-    else
-      art_path="$DOTFILES_DIR/assets/pixellated_plain.txt"
-    fi
+    art_path="$DOTFILES_DIR/assets/pixellated_bw.txt"
     tmpfile=$(mktemp)
     CLEANUP_FILES+=("$tmpfile")
 
@@ -1009,38 +998,48 @@ EOF
       {
         gsub(/\r$/, "", $0)
         lines[++n] = $0
-        if ($0 ~ /[^[:space:]]/) {
-          if (!has_content) { min_row = n; max_row = n }
-          if (n < min_row) min_row = n
-          if (n > max_row) max_row = n
-          first = match($0, /[^[:space:]]/)
-          last = length($0)
-          while (last > 0 && substr($0, last, 1) ~ /[[:space:]]/) last--
-          if (!has_content || first < min_col) min_col = first
-          if (!has_content || last > max_col) max_col = last
-          has_content = 1
-        }
+        if (length($0) > max_len) max_len = length($0)
       }
       END {
-        if (!has_content) {
-          for (y = 0; y < h; y++) printf "%*s\n", w, ""
+        if (n == 0) {
+          for (i = 0; i < h; i++) printf "%*s\n", w, ""
           exit
         }
-        src_h = max_row - min_row + 1
-        src_w = max_col - min_col + 1
-        for (y = 0; y < h; y++) {
-          sy = int(y * src_h / h) + min_row
-          line = lines[sy]
-          if (length(line) < max_col) line = line sprintf("%*s", max_col - length(line), "")
-          line = substr(line, min_col, src_w)
-          out = ""
-          for (x = 0; x < w; x++) {
-            sx = int(x * src_w / w) + 1
-            out = out substr(line, sx, 1)
-          }
-          if (length(out) < w) out = out sprintf("%*s", w - length(out), "")
-          print out
+
+        # Center-crop/pad vertically
+        start = 1
+        if (n > h) {
+          start = int((n - h) / 2) + 1
+          end = start + h - 1
+        } else {
+          end = n
         }
+
+        pad_top = 0
+        pad_bottom = 0
+        if (n < h) {
+          pad_top = int((h - n) / 2)
+          pad_bottom = h - n - pad_top
+        }
+
+        for (i = 0; i < pad_top; i++) printf "%*s\n", w, ""
+
+        for (i = start; i <= end; i++) {
+          line = lines[i]
+          # Center-crop/pad horizontally
+          if (length(line) > w) {
+            left = int((length(line) - w) / 2) + 1
+            line = substr(line, left, w)
+          } else if (length(line) < w) {
+            pad_left = int((w - length(line)) / 2)
+            pad_right = w - length(line) - pad_left
+            line = sprintf("%*s%s%*s", pad_left, "", line, pad_right, "")
+          }
+          if (length(line) < w) line = sprintf("%-*s", w, line)
+          print line
+        }
+
+        for (i = 0; i < pad_bottom; i++) printf "%*s\n", w, ""
       }
     ' "$art_file" > "$art_render_file"
     if [[ ! -s "$art_render_file" ]]; then
