@@ -26,12 +26,8 @@ fi
 REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 
 TTY_AVAILABLE=false
-TTY_IN_FD=""
-TTY_OUT_FD=""
-if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
+if [[ -t 0 && -t 1 && -t 2 ]]; then
     TTY_AVAILABLE=true
-    TTY_IN_FD=5
-    TTY_OUT_FD=6
 fi
 
 read_tty_line() {
@@ -40,12 +36,7 @@ read_tty_line() {
     local default="${3:-}"
     local __value=""
 
-    if [[ "$TTY_AVAILABLE" == true ]]; then
-        printf '%s' "$prompt" >&$TTY_OUT_FD
-        IFS= read -r -u "$TTY_IN_FD" __value || __value=""
-    else
-        IFS= read -r -p "$prompt" __value || __value=""
-    fi
+    IFS= read -r -p "$prompt" __value || __value=""
 
     if [[ -z "$__value" && -n "$default" ]]; then
         __value="$default"
@@ -60,18 +51,12 @@ read_tty_key() {
     local __value=""
     local __discard=""
 
-    if [[ "$TTY_AVAILABLE" == true ]]; then
-        printf '%s' "$prompt" >&$TTY_OUT_FD
-        IFS= read -r -n 1 -u "$TTY_IN_FD" __value || __value=""
-        IFS= read -r -u "$TTY_IN_FD" __discard || true
-        case "$__value" in
-            $'\n'|$'\r') __value="" ;;
-        esac
-        printf '\n' >&$TTY_OUT_FD
-    else
-        IFS= read -r -n 1 -p "$prompt" __value || __value=""
-        IFS= read -r __discard || true
-    fi
+    IFS= read -r -n 1 -p "$prompt" __value || __value=""
+    IFS= read -r __discard || true
+    case "$__value" in
+        $'\n'|$'\r') __value="" ;;
+    esac
+    echo ""
 
     printf -v "$__var" '%s' "$__value"
 }
