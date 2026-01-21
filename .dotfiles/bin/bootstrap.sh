@@ -966,8 +966,14 @@ EOF
     fi
 
     local art_content_height art_content_width
+    local awk_locale="C"
+    if locale -a 2>/dev/null | grep -qx "C.UTF-8"; then
+      awk_locale="C.UTF-8"
+    elif locale -a 2>/dev/null | grep -qx "C.utf8"; then
+      awk_locale="C.utf8"
+    fi
     art_content_height=$(wc -l < "$art_file" | tr -d ' ')
-    art_content_width=$(LC_ALL=C.UTF-8 awk '{ if (length > max) max = length } END { print max }' "$art_file")
+    art_content_width=$(LC_ALL="$awk_locale" awk '{ if (length > max) max = length } END { print max }' "$art_file")
 
     local term_cols term_lines max_menu_height
     term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
