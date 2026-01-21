@@ -579,19 +579,26 @@ run_dialog_menu() {
     menu_list_height=5
   fi
 
-  local art_text
-  art_text=$(render_art "$art_width" "$menu_height")
-
   if [[ -r /dev/tty && -w /dev/tty ]]; then
+    local art_text
+    art_text=$(render_art "$art_width" "$menu_height")
+    {
+      tput clear
+      local row=0
+      while IFS= read -r line; do
+        tput cup "$row" 0
+        printf '%-*s' "$art_width" "$line"
+        ((row++))
+      done <<< "$art_text"
+    } > /dev/tty
+
     dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
-      --begin 0 0 --no-shadow --infobox "$art_text" "$menu_height" "$art_width" \
-      --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
+      --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 3>"$tmpfile" < /dev/tty > /dev/tty
   else
     dialog --backtitle "Dotfiles Bootstrap" --no-collapse --output-fd 3 \
-      --begin 0 0 --no-shadow --infobox "$art_text" "$menu_height" "$art_width" \
-      --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
+      --begin 0 "$menu_col" --checklist "Select components to configure" \
       "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" 3>"$tmpfile"
   fi
