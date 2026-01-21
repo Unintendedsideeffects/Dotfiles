@@ -16,7 +16,12 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
 ```
-This will back up any conflicting files to `~/.local/backups/dotfiles/` (keeping 5 most recent).
+This will:
+- Clone the dotfiles repository
+- Back up any conflicting files to `~/.local/backups/dotfiles/` (keeping 5 most recent)
+- Install shell configuration
+- Skip interactive bootstrap (no TTY available when piped)
+- To access the full setup menu, run `~/.dotfiles/bin/bootstrap.sh` after installation
 
 **First-time root setup (creates new user):**
 ```bash
