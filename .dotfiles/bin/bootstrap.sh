@@ -89,6 +89,12 @@ is_rhel_like() { df_is_rhel_like; }
 is_wsl() { df_is_wsl; }
 
 # --- Helpers ---
+# Helper function to check for commands with extended PATH
+# /usr/sbin is not in default PATH for non-root users on Debian
+command_exists() {
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" command -v "$1" >/dev/null 2>&1
+}
+
 # Helper function to run commands with sudo when needed
 run_with_sudo_if_needed() {
   if [[ $EUID -ne 0 ]]; then
@@ -465,6 +471,105 @@ prompt_claude_statusline() {
   fi
 }
 
+prompt_create_user() {
+  # Check if we have permission to create users
+  if [[ $EUID -ne 0 ]]; then
+    whip --title "Create User" --msgbox "ERROR: This option requires root privileges.\n\nPlease run the bootstrap as root or with sudo." 12 70
+    return 1
+  fi
+
+  # Check if required commands are available
+  if ! command_exists useradd || ! command_exists usermod || ! command_exists visudo; then
+    whip --title "Create User" --msgbox "ERROR: Required commands not available.\n\nMissing one or more of: useradd, usermod, visudo\n\nThese commands are typically in /usr/sbin." 14 70
+    return 1
+  fi
+
+  # Get username
+  local new_username
+  if ! new_username=$(whip --title "Create User" --inputbox "Enter username for new user:\n\n(lowercase letters, numbers, underscore, hyphen)" 12 60 "" 3>&1 1>&2 2>&3); then
+    return 1
+  fi
+
+  # Validate username
+  if [[ -z "$new_username" ]]; then
+    whip --title "Create User" --msgbox "ERROR: Username cannot be empty." 10 60
+    return 1
+  fi
+
+  if ! [[ "$new_username" =~ ^[a-z_][a-z0-9_-]*\$?$ ]]; then
+    whip --title "Create User" --msgbox "ERROR: Invalid username.\n\nUse lowercase letters, numbers, underscore, and hyphen.\nMust start with a letter or underscore." 12 60
+    return 1
+  fi
+
+  # Check if user already exists
+  if id "$new_username" >/dev/null 2>&1; then
+    whip --title "Create User" --msgbox "ERROR: User '$new_username' already exists." 10 60
+    return 1
+  fi
+
+  if [[ "$new_username" == "root" ]]; then
+    whip --title "Create User" --msgbox "ERROR: Cannot create a user named 'root'." 10 60
+    return 1
+  fi
+
+  # Confirm creation
+  if ! whip --title "Create User" --yesno "Create user: $new_username?\n\nThe user will be created with:\n- Home directory: /home/$new_username\n- Default shell: /bin/bash\n- Sudo access (requires password)\n\nContinue?" 14 70; then
+    return 0
+  fi
+
+  # Create the user
+  if ! useradd -m -s /bin/bash "$new_username" 2>/dev/null; then
+    whip --title "Create User" --msgbox "ERROR: Failed to create user '$new_username'\n\nCheck system logs for details." 12 70
+    return 1
+  fi
+
+  # Set password
+  whip --title "Create User" --msgbox "Next, you will be prompted to set a password for $new_username.\n\nPress OK to continue." 10 70
+  
+  if ! passwd "$new_username"; then
+    whip --title "Create User" --msgbox "WARNING: User '$new_username' was created but password setup failed.\n\nYou can set the password manually with:\n  passwd $new_username" 12 70
+  fi
+
+  # Add to sudo group
+  local sudo_success=false
+  if usermod -aG sudo "$new_username" 2>/dev/null; then
+    sudo_success=true
+  elif usermod -aG wheel "$new_username" 2>/dev/null; then
+    sudo_success=true
+  fi
+
+  if [[ "$sudo_success" == true ]]; then
+    # Ask about passwordless sudo
+    if whip --title "Create User" --yesno "User '$new_username' created successfully!\n\nWould you like to enable passwordless sudo?\n\nWARNING: This allows $new_username to run commands as root without a password.\n\nThis is convenient but reduces security.\nOnly enable on trusted systems.\n\nEnable passwordless sudo?" 18 70; then
+      # Create sudoers entry
+      local sudoers_entry="$new_username ALL=(ALL) NOPASSWD:ALL"
+      local temp_sudoers=$(mktemp)
+
+      echo "$sudoers_entry" > "$temp_sudoers"
+      chmod 0440 "$temp_sudoers"
+
+      # Validate with visudo
+      if ! visudo -c -f "$temp_sudoers" >/dev/null 2>&1; then
+        rm -f "$temp_sudoers"
+        whip --title "Create User" --msgbox "ERROR: Invalid sudoers syntax. This should not happen.\n\nPasswordless sudo was not configured." 12 70
+      else
+        # Move to sudoers.d
+        if mv "$temp_sudoers" "/etc/sudoers.d/$new_username"; then
+          whip --title "Create User" --msgbox "SUCCESS!\n\nUser '$new_username' created with passwordless sudo.\n\nConfiguration: /etc/sudoers.d/$new_username" 12 70
+        else
+          rm -f "$temp_sudoers"
+          whip --title "Create User" --msgbox "ERROR: Failed to create sudoers configuration.\n\nUser was created but passwordless sudo was not configured." 12 70
+        fi
+      fi
+    else
+      whip --title "Create User" --msgbox "SUCCESS!\n\nUser '$new_username' created with sudo access.\n\nThe user will need to enter their password for sudo commands." 12 70
+    fi
+  else
+    whip --title "Create User" --msgbox "WARNING: User '$new_username' was created but could not be added to sudo/wheel group.\n\nYour system may use a different group for sudo access.\n\nManual configuration may be required." 14 70
+    return 1
+  fi
+}
+
 prompt_passwordless_sudo() {
   # Check if we have permission to modify sudoers
   if [[ $EUID -ne 0 ]]; then
@@ -781,8 +886,22 @@ main_menu() {
   options+=("git_config" "Configure Git User Settings" OFF)
   options+=("claude_statusline" "Install Claude Code statusline" OFF)
 
-  # Passwordless sudo - only show if running as root or with sudo
+  # User creation and passwordless sudo - only show if running as root
   if [[ $EUID -eq 0 ]]; then
+    # Check if user creation commands are available
+    local user_creation_available="${DF_USER_CREATION_AVAILABLE:-}"
+    if [[ "$user_creation_available" != "true" ]]; then
+      # Environment variable not set or false, check commands directly
+      if command_exists useradd && command_exists usermod && command_exists visudo; then
+        user_creation_available="true"
+      else
+        user_creation_available="false"
+      fi
+    fi
+
+    if [[ "$user_creation_available" == "true" ]]; then
+      options+=("create_user" "Create New User with Sudo Access" OFF)
+    fi
     options+=("passwordless_sudo" "Setup Passwordless Sudo" OFF)
   fi
 
@@ -1121,6 +1240,8 @@ PY
         prompt_locale_setup || true ;;
       claude_statusline)
         prompt_claude_statusline || true ;;
+      create_user)
+        prompt_create_user || true ;;
       passwordless_sudo)
         prompt_passwordless_sudo || true ;;
       aur_setup)
