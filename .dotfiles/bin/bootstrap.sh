@@ -454,19 +454,15 @@ EODIALOG
 render_art() {
   local width="$1"
   local height="$2"
-  local art_file="$DOTFILES_DIR/assets/pixellated_bw.txt"
   local art_render
   local src_file
 
   art_render=$(mktemp)
   CLEANUP_FILES+=("$art_render")
 
-  if [[ -r "$art_file" ]]; then
-    src_file="$art_file"
-  else
-    src_file=$(mktemp)
-    CLEANUP_FILES+=("$src_file")
-    cat >"$src_file" <<'EOF'
+  src_file=$(mktemp)
+  CLEANUP_FILES+=("$src_file")
+  cat >"$src_file" <<'EOF'
       __
      |__|
      |  |
@@ -486,7 +482,6 @@ render_art() {
      ||||
      ||||
 EOF
-  fi
 
   LC_ALL=C awk -v w="$width" -v h="$height" '
     {
