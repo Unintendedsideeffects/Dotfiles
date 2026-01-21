@@ -492,45 +492,28 @@ EOF
     {
       gsub(/\r$/, "", $0)
       lines[++n] = $0
+      if (length($0) > max) max = length($0)
     }
     END {
-      if (n == 0) {
+      if (n == 0 || max == 0) {
         for (i = 0; i < h; i++) printf "%*s\n", w, ""
         exit
       }
 
-      start = 1
-      if (n > h) {
-        start = int((n - h) / 2) + 1
-        end = start + h - 1
-      } else {
-        end = n
-      }
-
-      pad_top = 0
-      pad_bottom = 0
-      if (n < h) {
-        pad_top = int((h - n) / 2)
-        pad_bottom = h - n - pad_top
-      }
-
-      for (i = 0; i < pad_top; i++) printf "%*s\n", w, ""
-
-      for (i = start; i <= end; i++) {
-        line = lines[i]
-        if (length(line) > w) {
-          left = int((length(line) - w) / 2) + 1
-          line = substr(line, left, w)
-        } else if (length(line) < w) {
-          pad_left = int((w - length(line)) / 2)
-          pad_right = w - length(line) - pad_left
-          line = sprintf("%*s%s%*s", pad_left, "", line, pad_right, "")
+      src_h = n
+      src_w = max
+      for (y = 0; y < h; y++) {
+        sy = int(y * src_h / h) + 1
+        line = lines[sy]
+        if (length(line) < src_w) line = line sprintf("%*s", src_w - length(line), "")
+        out = ""
+        for (x = 0; x < w; x++) {
+          sx = int(x * src_w / w) + 1
+          out = out substr(line, sx, 1)
         }
-        if (length(line) < w) line = sprintf("%-*s", w, line)
-        print line
+        if (length(out) < w) out = out sprintf("%*s", w - length(out), "")
+        print out
       }
-
-      for (i = 0; i < pad_bottom; i++) printf "%*s\n", w, ""
     }
   ' "$src_file" >"$art_render"
 
