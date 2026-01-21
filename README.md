@@ -27,7 +27,9 @@ This will:
 **First-time root setup (creates new user):**
 ```bash
 # Run as root for initial system setup
-curl -fsSL "https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh?$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/\
+Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-\
+install.sh?$(date +%s)" | bash
 # You'll be prompted to:
 #   - Create a new user (optional)
 #   - Set up passwordless sudo (optional, with warning)
@@ -53,7 +55,9 @@ rm -f "$SUMS_FILE" "$SCRIPT_FILE"
 
 **Safer install (review script first):**
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh?$(date +%s)" -o /tmp/quick-install.sh
+curl -fsSL "https://raw.githubusercontent.com/\
+Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-\
+install.sh?$(date +%s)" -o /tmp/quick-install.sh
 less /tmp/quick-install.sh
 bash /tmp/quick-install.sh
 ```
