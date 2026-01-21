@@ -31,7 +31,7 @@ DIALOGRC_PATH=$(mktemp)
 CLEANUP_FILES+=("$DIALOGRC_PATH")
 cat >"$DIALOGRC_PATH" <<'EOF'
 use_shadow = OFF
-use_colors = ON
+use_colors = OFF
 screen_color = (WHITE,BLACK,OFF)
 shadow_color = (WHITE,BLACK,OFF)
 dialog_color = (WHITE,BLACK,OFF)
@@ -967,15 +967,6 @@ EOF
     fi
 
     local use_art=true
-    local art_content_height art_content_width
-    local awk_locale="C"
-    if locale -a 2>/dev/null | grep -qx "C.UTF-8"; then
-      awk_locale="C.UTF-8"
-    elif locale -a 2>/dev/null | grep -qx "C.utf8"; then
-      awk_locale="C.utf8"
-    fi
-    art_content_height=$(wc -l < "$art_file" | tr -d ' ')
-    art_content_width=$(LC_ALL="$awk_locale" awk '{ if (length > max) max = length } END { print max }' "$art_file")
 
     local term_cols term_lines max_menu_height
     term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
@@ -1007,195 +998,34 @@ EOF
 
     art_render_file=$(mktemp)
     CLEANUP_FILES+=("$art_render_file")
-    local errexit_was_set=0
-    case $- in *e*) errexit_was_set=1 ;; esac
-    set +e
-    if command -v python3 >/dev/null 2>&1; then
-      python3 - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
-import re
-import sys
-
-path = sys.argv[1]
-target_w = int(sys.argv[2])
-target_h = int(sys.argv[3])
-
-with open(path, "r", encoding="utf-8", errors="replace") as fh:
-    text = fh.read()
-text = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
-lines = [line.rstrip("\n") for line in text.splitlines()]
-
-if not lines:
-    for _ in range(target_h):
-        print(" " * target_w)
-    raise SystemExit(0)
-
-src_h = len(lines)
-src_w = max(len(line) for line in lines)
-lines = [line.ljust(src_w) for line in lines]
-
-def downsample(lines, target_w, target_h):
-    out = []
-    for y in range(target_h):
-        sy = int(y * src_h / target_h)
-        row = []
-        for x in range(target_w):
-            sx = int(x * src_w / target_w)
-            row.append(lines[sy][sx])
-        out.append("".join(row))
-    return out
-
-def upscale(lines, target_w, target_h):
-    scale_x = max(1, target_w // src_w)
-    scale_y = max(1, target_h // src_h)
-    expanded = []
-    for line in lines:
-        expanded_line = "".join(ch * scale_x for ch in line)
-        for _ in range(scale_y):
-            expanded.append(expanded_line)
-
-    # Center-crop/pad height
-    if len(expanded) > target_h:
-        start = (len(expanded) - target_h) // 2
-        expanded = expanded[start:start + target_h]
-    elif len(expanded) < target_h:
-        pad_top = (target_h - len(expanded)) // 2
-        pad_bottom = target_h - len(expanded) - pad_top
-        expanded = ([" " * len(expanded[0])] * pad_top) + expanded + ([" " * len(expanded[0])] * pad_bottom)
-
-    # Center-crop/pad width
-    out = []
-    for line in expanded:
-        if len(line) > target_w:
-            start = (len(line) - target_w) // 2
-            line = line[start:start + target_w]
-        elif len(line) < target_w:
-            pad_left = (target_w - len(line)) // 2
-            pad_right = target_w - len(line) - pad_left
-            line = (" " * pad_left) + line + (" " * pad_right)
-        out.append(line)
-    return out
-
-if target_w < src_w or target_h < src_h:
-    output = downsample(lines, target_w, target_h)
-else:
-    output = upscale(lines, target_w, target_h)
-
-for line in output:
-    print(line)
-PY
-    elif command -v python >/dev/null 2>&1; then
-      python - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
-import re
-import sys
-
-path = sys.argv[1]
-target_w = int(sys.argv[2])
-target_h = int(sys.argv[3])
-
-with open(path, "r", encoding="utf-8", errors="replace") as fh:
-    text = fh.read()
-text = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
-lines = [line.rstrip("\n") for line in text.splitlines()]
-
-if not lines:
-    for _ in range(target_h):
-        print(" " * target_w)
-    raise SystemExit(0)
-
-src_h = len(lines)
-src_w = max(len(line) for line in lines)
-lines = [line.ljust(src_w) for line in lines]
-
-def downsample(lines, target_w, target_h):
-    out = []
-    for y in range(target_h):
-        sy = int(y * src_h / target_h)
-        row = []
-        for x in range(target_w):
-            sx = int(x * src_w / target_w)
-            row.append(lines[sy][sx])
-        out.append("".join(row))
-    return out
-
-def upscale(lines, target_w, target_h):
-    scale_x = max(1, target_w // src_w)
-    scale_y = max(1, target_h // src_h)
-    expanded = []
-    for line in lines:
-        expanded_line = "".join(ch * scale_x for ch in line)
-        for _ in range(scale_y):
-            expanded.append(expanded_line)
-
-    # Center-crop/pad height
-    if len(expanded) > target_h:
-        start = (len(expanded) - target_h) // 2
-        expanded = expanded[start:start + target_h]
-    elif len(expanded) < target_h:
-        pad_top = (target_h - len(expanded)) // 2
-        pad_bottom = target_h - len(expanded) - pad_top
-        expanded = ([" " * len(expanded[0])] * pad_top) + expanded + ([" " * len(expanded[0])] * pad_bottom)
-
-    # Center-crop/pad width
-    out = []
-    for line in expanded:
-        if len(line) > target_w:
-            start = (len(line) - target_w) // 2
-            line = line[start:start + target_w]
-        elif len(line) < target_w:
-            pad_left = (target_w - len(line)) // 2
-            pad_right = target_w - len(line) - pad_left
-            line = (" " * pad_left) + line + (" " * pad_right)
-        out.append(line)
-    return out
-
-if target_w < src_w or target_h < src_h:
-    output = downsample(lines, target_w, target_h)
-else:
-    output = upscale(lines, target_w, target_h)
-
-for line in output:
-    print(line)
-PY
-    else
-      awk -v width="$art_render_width" -v target="$art_render_height" '
-        {
-          lines[++n] = $0
+    LC_ALL=C awk -v w="$art_render_width" -v h="$art_render_height" '
+      {
+        gsub(/\r$/, "", $0)
+        lines[++n] = $0
+        if (length($0) > max) max = length($0)
+      }
+      END {
+        if (n == 0) {
+          for (y = 0; y < h; y++) printf "%*s\n", w, ""
+          exit
         }
-        END {
-          if (target < 1) target = n
-          if (n > target) {
-            start = int((n - target) / 2) + 1
-            end = start + target - 1
-          } else {
-            start = 1
-            end = n
+        src_h = n
+        src_w = max
+        for (y = 0; y < h; y++) {
+          sy = int(y * src_h / h) + 1
+          line = lines[sy]
+          if (length(line) < src_w) line = line sprintf("%*s", src_w - length(line), "")
+          out = ""
+          for (x = 0; x < w; x++) {
+            sx = int(x * src_w / w) + 1
+            out = out substr(line, sx, 1)
           }
-          shown = end - start + 1
-          if (shown < target) {
-            pad_top = int((target - shown) / 2)
-            pad_bottom = target - shown - pad_top
-          } else {
-            pad_top = 0
-            pad_bottom = 0
-          }
-          for (i = 0; i < pad_top; i++) {
-            printf "%-*s\n", width, ""
-          }
-          for (i = start; i <= end; i++) {
-            line = substr(lines[i], 1, width)
-            printf "%-*s\n", width, line
-          }
-          for (i = 0; i < pad_bottom; i++) {
-            printf "%-*s\n", width, ""
-          }
+          if (length(out) < w) out = out sprintf("%*s", w - length(out), "")
+          print out
         }
-      ' "$art_file" > "$art_render_file"
-    fi
-    local art_rc=$?
-    if ((errexit_was_set)); then
-      set -e
-    fi
-    if ((art_rc != 0)) || [[ ! -s "$art_render_file" ]]; then
+      }
+    ' "$art_file" > "$art_render_file"
+    if [[ ! -s "$art_render_file" ]]; then
       use_art=false
     fi
 
@@ -1216,8 +1046,8 @@ PY
     local dialog_rc=0
     if [[ "$use_art" == true ]]; then
       local art_text
-      art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
-      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      art_text=$(cat "$art_render_file")
+      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
         --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
         --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
         "$menu_height" "$menu_width" "$menu_list_height" \
@@ -1229,7 +1059,7 @@ PY
 
       if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
         export DIALOGRC="/dev/null"
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
           --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
           --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
           "$menu_height" "$menu_width" "$menu_list_height" \
@@ -1240,7 +1070,7 @@ PY
         fi
       fi
     else
-      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
         --checklist "Select components to configure" 20 80 10 \
         "${options[@]}" 2> "$tmpfile"; then
         dialog_rc=0
@@ -1250,7 +1080,7 @@ PY
 
       if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
         export DIALOGRC="/dev/null"
-        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse \
           --checklist "Select components to configure" 20 80 10 \
           "${options[@]}" 2> "$tmpfile"; then
           dialog_rc=0
