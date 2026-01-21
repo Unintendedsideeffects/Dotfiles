@@ -157,9 +157,60 @@ command_exists() {
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" command -v "$1" >/dev/null 2>&1
 }
 
+run_as_root() {
+    if [[ $EUID -eq 0 ]]; then
+        "$@"
+        return $?
+    fi
+
+    if command_exists sudo; then
+        sudo "$@"
+        return $?
+    fi
+
+    return 1
+}
+
+install_git_if_missing() {
+    if command_exists git; then
+        return 0
+    fi
+
+    echo "git not found; attempting to install it."
+
+    if [[ $EUID -ne 0 ]] && ! command_exists sudo; then
+        echo "ERROR: git is missing and sudo is not available to install it."
+        exit 1
+    fi
+
+    if command_exists apt-get; then
+        run_as_root apt-get update
+        run_as_root apt-get install -y git
+    elif command_exists apt; then
+        run_as_root apt update
+        run_as_root apt install -y git
+    elif command_exists dnf; then
+        run_as_root dnf install -y git
+    elif command_exists yum; then
+        run_as_root yum install -y git
+    elif command_exists pacman; then
+        run_as_root pacman -Sy --noconfirm git
+    elif command_exists apk; then
+        run_as_root apk add git
+    else
+        echo "ERROR: git is missing and no supported package manager was found."
+        exit 1
+    fi
+
+    if ! command_exists git; then
+        echo "ERROR: git is still missing after the install attempt."
+        exit 1
+    fi
+}
+
 # Check all required dependencies upfront
 # Core commands needed for basic operation
-required_commands=("git" "sudo" "awk" "grep" "getent")
+required_commands=("sudo" "awk" "grep" "getent")
 missing_commands=()
 
 for cmd in "${required_commands[@]}"; do
@@ -173,6 +224,8 @@ if [[ ${#missing_commands[@]} -gt 0 ]]; then
     echo "Please install missing dependencies and try again."
     exit 1
 fi
+
+install_git_if_missing
 
 # Check optional commands for user creation flow
 # These are only needed when creating a new user as root
