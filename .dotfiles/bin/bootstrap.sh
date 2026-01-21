@@ -1226,6 +1226,19 @@ PY
       else
         dialog_rc=$?
       fi
+
+      if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
+        export DIALOGRC="/dev/null"
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+          --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
+          --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
+          "$menu_height" "$menu_width" "$menu_list_height" \
+          "${options[@]}" 2> "$tmpfile"; then
+          dialog_rc=0
+        else
+          dialog_rc=$?
+        fi
+      fi
     else
       if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
         --checklist "Select components to configure" 20 80 10 \
@@ -1233,6 +1246,17 @@ PY
         dialog_rc=0
       else
         dialog_rc=$?
+      fi
+
+      if [[ $dialog_rc -eq 255 && -n "${DIALOGRC:-}" && "$DIALOGRC" != "/dev/null" ]]; then
+        export DIALOGRC="/dev/null"
+        if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+          --checklist "Select components to configure" 20 80 10 \
+          "${options[@]}" 2> "$tmpfile"; then
+          dialog_rc=0
+        else
+          dialog_rc=$?
+        fi
       fi
     fi
     if [[ $dialog_rc -eq 0 ]]; then
