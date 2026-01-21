@@ -456,9 +456,37 @@ render_art() {
   local height="$2"
   local art_file="$DOTFILES_DIR/assets/pixellated_bw.txt"
   local art_render
+  local src_file
 
   art_render=$(mktemp)
   CLEANUP_FILES+=("$art_render")
+
+  if [[ -r "$art_file" ]]; then
+    src_file="$art_file"
+  else
+    src_file=$(mktemp)
+    CLEANUP_FILES+=("$src_file")
+    cat >"$src_file" <<'EOF'
+      __
+     |__|
+     |  |
+   __|  |__
+  /  |  |  \
+  |  |  |  |
+  |  |  |  |
+  |  |__|  |
+  |   __   |
+  |  /  \  |
+  |  \__/  |
+  |   /\   |
+  |  /  \  |
+  |_/____\_|
+     ||||
+     ||||
+     ||||
+     ||||
+EOF
+  fi
 
   LC_ALL=C awk -v w="$width" -v h="$height" '
     {
@@ -504,7 +532,11 @@ render_art() {
 
       for (i = 0; i < pad_bottom; i++) printf "%*s\n", w, ""
     }
-  ' "$art_file" >"$art_render"
+  ' "$src_file" >"$art_render"
+
+  if [[ ! -s "$art_render" ]]; then
+    printf "%*s\n" "$width" "" >"$art_render"
+  fi
 
   cat "$art_render"
 }
