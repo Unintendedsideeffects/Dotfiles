@@ -187,7 +187,7 @@ for cmd in "${user_creation_commands[@]}"; do
     fi
 done
 
-if [[ "$USER_CREATION_AVAILABLE" == false ]]; then
+if [[ "$USER_CREATION_AVAILABLE" != true ]]; then
     echo "WARNING: User creation commands not available: ${missing_user_commands[*]}"
     echo "User creation flow will be skipped."
 fi
