@@ -14,7 +14,8 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 
 **One command install:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
+COMMIT=$(curl -fsSL https://api.github.com/repos/Unintendedsideeffects/Dotfiles/commits/master | grep -m1 '"sha"' | cut -d'"' -f4)
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.dotfiles/bin/quick-install.sh | bash
 ```
 This will:
 - Clone the dotfiles repository
