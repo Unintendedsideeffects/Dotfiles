@@ -151,6 +151,8 @@ trap cleanup_on_error EXIT
 
 # Helper function to check for commands with extended PATH
 # /usr/sbin is not in default PATH for non-root users on Debian
+# Args: $1 - command name to check
+# Returns: 0 if command exists, 1 otherwise
 command_exists() {
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" command -v "$1" >/dev/null 2>&1
 }
