@@ -890,8 +890,8 @@ main_menu() {
   if [[ $EUID -eq 0 ]]; then
     # Check if user creation commands are available
     local user_creation_available="${DF_USER_CREATION_AVAILABLE:-}"
-    if [[ "$user_creation_available" == "true" ]]; then
-      # Check if commands exist (in case environment variable not set)
+    if [[ "$user_creation_available" != "true" ]]; then
+      # Environment variable not set or false, check commands directly
       if command_exists useradd && command_exists usermod && command_exists visudo; then
         user_creation_available="true"
       else
