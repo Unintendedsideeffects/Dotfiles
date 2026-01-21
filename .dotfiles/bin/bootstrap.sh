@@ -965,6 +965,7 @@ main_menu() {
 EOF
     fi
 
+    local use_art=true
     local art_content_height art_content_width
     local awk_locale="C"
     if locale -a 2>/dev/null | grep -qx "C.UTF-8"; then
@@ -1005,6 +1006,9 @@ EOF
 
     art_render_file=$(mktemp)
     CLEANUP_FILES+=("$art_render_file")
+    local errexit_was_set=0
+    case $- in *e*) errexit_was_set=1 ;; esac
+    set +e
     if command -v python3 >/dev/null 2>&1; then
       python3 - "$art_file" "$art_render_width" "$art_render_height" > "$art_render_file" <<'PY'
 import re
@@ -1186,6 +1190,13 @@ PY
         }
       ' "$art_file" > "$art_render_file"
     fi
+    local art_rc=$?
+    if ((errexit_was_set)); then
+      set -e
+    fi
+    if ((art_rc != 0)) || [[ ! -s "$art_render_file" ]]; then
+      use_art=false
+    fi
 
     menu_col=$((art_width + 2))
     menu_width=$((term_cols - menu_col - 2))
@@ -1201,15 +1212,21 @@ PY
       menu_list_height=5
     fi
 
-    local art_text
-    art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
-
     local dialog_rc=0
-    if dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
-      --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
-      --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
-      "$menu_height" "$menu_width" "$menu_list_height" \
-      "${options[@]}" 2> "$tmpfile"; then
+    if [[ "$use_art" == true ]]; then
+      local art_text
+      art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
+      dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+        --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
+        --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
+        "$menu_height" "$menu_width" "$menu_list_height" \
+        "${options[@]}" 2> "$tmpfile"
+    else
+      dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+        --checklist "Select components to configure" 20 80 10 \
+        "${options[@]}" 2> "$tmpfile"
+    fi
+    if [[ $? -eq 0 ]]; then
       dialog_rc=0
     else
       dialog_rc=$?
