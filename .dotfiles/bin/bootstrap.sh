@@ -1217,20 +1217,23 @@ PY
     if [[ "$use_art" == true ]]; then
       local art_text
       art_text=$(printf '\\Zr%s\\Zn' "$(cat "$art_render_file")")
-      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
         --begin 0 0 --no-shadow --infobox "$art_text" "$art_height" "$art_width" \
         --and-widget --begin 0 "$menu_col" --checklist "Select components to configure" \
         "$menu_height" "$menu_width" "$menu_list_height" \
-        "${options[@]}" 2> "$tmpfile"
+        "${options[@]}" 2> "$tmpfile"; then
+        dialog_rc=0
+      else
+        dialog_rc=$?
+      fi
     else
-      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
+      if PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" dialog --backtitle "Dotfiles Bootstrap" --no-collapse --colors \
         --checklist "Select components to configure" 20 80 10 \
-        "${options[@]}" 2> "$tmpfile"
-    fi
-    if [[ $? -eq 0 ]]; then
-      dialog_rc=0
-    else
-      dialog_rc=$?
+        "${options[@]}" 2> "$tmpfile"; then
+        dialog_rc=0
+      else
+        dialog_rc=$?
+      fi
     fi
     if [[ $dialog_rc -eq 0 ]]; then
       selections=$(cat "$tmpfile")
