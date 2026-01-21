@@ -427,6 +427,11 @@ pause_for_enter "Press Enter to continue with interactive setup..."
 exec 1>&3 2>&4
 
 if [[ "$TTY_AVAILABLE" == true ]]; then
+    if command -v tput >/dev/null 2>&1; then
+        if ! tput cols >/dev/null 2>&1; then
+            export TERM="xterm-256color"
+        fi
+    fi
     if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1; then
         :
     else
