@@ -424,10 +424,10 @@ pause_for_enter "Press Enter to continue with interactive setup..."
 
 # Temporarily restore normal stdout/stderr for TUI programs (whiptail/dialog)
 # The tee redirection breaks terminal control needed for arrow keys and proper display
-exec 1>&3 2>&4
+exec 1>&3 2>&4 3>&- 4>&-
 
 if [[ "$TTY_AVAILABLE" == true ]]; then
-    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh" </dev/tty >/dev/tty 2>&1; then
+    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"; then
         :
     else
         bootstrap_rc=$?
@@ -438,6 +438,8 @@ else
     echo "You can run the bootstrap menu later with: ~/.dotfiles/bin/bootstrap.sh" >&2
 fi
 
+# Save terminal file descriptors again for next logging section
+exec 3>&1 4>&2
 exec > >(tee -a "$LOG_FILE") 2>&1 # Re-enable logging after interactive bootstrap completes
 
 # Mark installation as successful
