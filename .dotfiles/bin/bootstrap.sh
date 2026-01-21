@@ -1211,14 +1211,7 @@ PY
     if [[ $dialog_rc -eq 0 ]]; then
       selections=$(cat "$tmpfile")
     else
-      local dialog_error=false
-      if [[ $dialog_rc -ne 1 && $dialog_rc -ne 255 ]]; then
-        dialog_error=true
-      elif [[ $dialog_rc -eq 255 && -s "$tmpfile" ]]; then
-        dialog_error=true
-      fi
-
-      if [[ "$dialog_error" == true ]] && command -v whiptail >/dev/null 2>&1; then
+      if command -v whiptail >/dev/null 2>&1; then
         selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
           "${options[@]}" \
           3>&1 1>&2 2>&3) || return 0
