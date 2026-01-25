@@ -40,6 +40,8 @@ hicolor-icon-theme
 adobe-source-code-pro-fonts
 cantarell-fonts
 ttf-liberation
+ttf-hack-nerd
+ttf-font-awesome
 
 # ===== Everyday desktop apps =====
 firefox

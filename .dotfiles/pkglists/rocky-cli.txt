@@ -33,4 +33,7 @@ man-pages
 texinfo
 ncdu
 curl
-gnupg2 
+gnupg2
+fontawesome-fonts
+nerd-fonts-jetbrains-mono
+ 
