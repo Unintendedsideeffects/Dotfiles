@@ -172,8 +172,11 @@ prompt_validate() {
   CLEANUP_FILES+=("$tmpfile")
   : >"$tmpfile"
 
-  whip --title "Validate" --tailboxbg "$tmpfile" 20 70 &
-  local tail_pid=$!
+  local tail_pid=""
+  if command_exists dialog; then
+    dialog --title "Validate" --tailboxbg "$tmpfile" 20 70 &
+    tail_pid=$!
+  fi
 
   local status=0
   {
@@ -323,8 +326,11 @@ prompt_locale_setup() {
     : >"$tmpfile"
     echo "Checking locale configuration..." >>"$tmpfile"
 
-    whip --title "Locale Setup" --tailboxbg "$tmpfile" 20 80 &
-    local tail_pid=$!
+    local tail_pid=""
+    if command_exists dialog; then
+      dialog --title "Locale Setup" --tailboxbg "$tmpfile" 20 80 &
+      tail_pid=$!
+    fi
 
     local status=0
     {
