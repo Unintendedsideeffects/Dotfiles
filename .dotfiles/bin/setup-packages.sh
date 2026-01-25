@@ -294,11 +294,6 @@ ensure_zsh_default_shell() {
     return
   fi
 
-  if ! command -v chsh >/dev/null 2>&1; then
-    echo "chsh command not found, cannot set default shell"
-    return
-  fi
-
   local target_user
   target_user=${SUDO_USER:-$USER}
 
@@ -318,12 +313,28 @@ ensure_zsh_default_shell() {
 
   echo "Setting default shell to zsh for $target_user"
 
+  # Prefer usermod over chsh when available - chsh uses PAM which prompts
+  # for password even with passwordless sudo (fails on Android Termux, etc.)
   if [[ $EUID -eq 0 ]]; then
-    chsh -s "$zsh_path" "$target_user"
-  elif [[ "$USER" == "$target_user" ]]; then
-    chsh -s "$zsh_path"
+    if command -v usermod >/dev/null 2>&1; then
+      usermod -s "$zsh_path" "$target_user"
+    elif command -v chsh >/dev/null 2>&1; then
+      chsh -s "$zsh_path" "$target_user"
+    else
+      echo "Neither usermod nor chsh available, cannot change shell"
+      return
+    fi
   elif command -v sudo >/dev/null 2>&1; then
-    sudo chsh -s "$zsh_path" "$target_user"
+    if sudo -n true 2>/dev/null && command -v usermod >/dev/null 2>&1; then
+      # Passwordless sudo available - use usermod to avoid PAM password prompt
+      sudo usermod -s "$zsh_path" "$target_user"
+    elif command -v chsh >/dev/null 2>&1 && [[ "$USER" == "$target_user" ]]; then
+      # Fall back to chsh for current user (will prompt for password)
+      echo "Note: chsh may prompt for your password"
+      chsh -s "$zsh_path" || echo "Shell change skipped (password required)"
+    else
+      echo "Cannot change shell without password prompt, skipping"
+    fi
   else
     echo "Insufficient permissions to change shell for $target_user"
   fi
