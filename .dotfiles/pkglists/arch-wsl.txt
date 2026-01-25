@@ -43,6 +43,8 @@ pkgconf
 noto-fonts
 noto-fonts-emoji
 ttf-jetbrains-mono
+ttf-hack-nerd
+ttf-font-awesome
 
 # WSL-specific additions (aur-prefixed entries require yay)
 aur:wslu

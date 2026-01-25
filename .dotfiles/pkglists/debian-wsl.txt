@@ -37,6 +37,7 @@ pkg-config
 fonts-noto
 fonts-noto-color-emoji
 fonts-jetbrains-mono
+fonts-font-awesome
 
 # WSL-specific additions for Debian/Ubuntu
 wslu
