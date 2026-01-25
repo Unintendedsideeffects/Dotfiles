@@ -346,14 +346,29 @@ config() {
 configure_sparse_checkout() {
     local apply="${1:-false}"
 
-    if config sparse-checkout init --cone >/dev/null 2>&1; then
-        config sparse-checkout set .dotfiles .config >/dev/null 2>&1 || true
-        return 0
-    fi
-
+    # Use non-cone mode for explicit pattern control
+    # Include dotfiles directories and shell/git configs; exclude repo metadata
     config config core.sparseCheckout true
+    config config core.sparseCheckoutCone false
     run_as_user mkdir -p "$CONFIG_DIR/info"
-    run_as_user bash -c "printf '/.dotfiles/\\n/.config/\\n' > '$CONFIG_DIR/info/sparse-checkout'"
+    run_as_user bash -c "cat > '$CONFIG_DIR/info/sparse-checkout' << 'EOF'
+/.dotfiles/
+/.config/
+/.claude/
+/.bashrc
+/.zshrc
+/.zprofile
+/.gitconfig
+/.gitconfig-aliases
+/.gitconfig.local.example
+/.gitattributes
+/.gitignore
+/.envrc
+/.xbindkeysrc
+/.xinitrc
+/.Xresources
+/.SHA256SUMS
+EOF"
 
     if [[ "$apply" == "true" ]]; then
         config read-tree -mu HEAD >/dev/null 2>&1 || config checkout -f >/dev/null 2>&1 || true
@@ -392,6 +407,12 @@ if [[ "$SKIP_INSTALL" != true ]]; then
 
     # Limit checkout to .dotfiles and .config to keep repo metadata (README, etc.) out of $HOME
     configure_sparse_checkout false
+
+    # Preserve user's existing gitconfig as .gitconfig.local before checkout
+    if [[ -f "$TARGET_HOME/.gitconfig" && ! -f "$TARGET_HOME/.gitconfig.local" ]]; then
+        echo "Preserving existing .gitconfig as .gitconfig.local..."
+        run_as_user mv "$TARGET_HOME/.gitconfig" "$TARGET_HOME/.gitconfig.local"
+    fi
 
     # Handle existing dotfiles
     echo "Installing dotfiles (will overwrite existing files)..."
