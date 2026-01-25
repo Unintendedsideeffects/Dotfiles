@@ -1,170 +1,87 @@
 # Malcolm's Dotfiles
 
-Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Proxmox, and WSL2.
+Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Rocky Linux/RHEL, Proxmox, and WSL2.
 
 ## Features
 
-- **Universal**: Works on Arch, Debian/Ubuntu, Proxmox, and WSL2
-- **Smart Detection**: Automatically configures for your environment
-- **Interactive Bootstrap**: TUI for selecting components to install
-- **Optimized Packages**: Curated package lists per environment
-- **WSL Ready**: Special handling for WSL2 with Windows integration
+- **Universal Support**: Arch, Debian/Ubuntu, Rocky Linux (RHEL), Proxmox, and WSL2.
+- **Smart Detection**: Automatically configures for your specific environment.
+- **Interactive Bootstrap**: TUI menu to select components (Packages, VPN, Git, etc.).
+- **Modern Toolchain**: Neovim, Ghostty, Yazi, Zellij, Atuin, Starship.
+- **Headless Power**: Specialized setups for headless GUIs (Xvfb/VNC) and remote Obsidian.
+- **WSL Ready**: Deep integration for WSL2 (systemd, Windows paths, `wsl.conf` fixes).
 
 ## Quick Setup
 
-**One command install:**
 ```bash
-COMMIT=$(curl -fsSL https://api.github.com/repos/Unintendedsideeffects/Dotfiles/commits/master | grep -m1 '"sha"' | cut -d'"' -f4)
-curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.dotfiles/bin/quick-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.SHA256SUMS -o .SHA256SUMS && \
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh -o quick-install.sh && \
+grep 'quick-install.sh' .SHA256SUMS | sha256sum -c - && \
+bash quick-install.sh && rm .SHA256SUMS quick-install.sh
 ```
+
 This will:
-- Clone the dotfiles repository
-- Back up any conflicting files to `~/.local/backups/dotfiles/` (keeping 5 most recent)
-- Install shell configuration
-- Skip interactive bootstrap (no TTY available when piped)
-- To access the full setup menu, run `~/.dotfiles/bin/bootstrap.sh` after installation
+- Clone the repository to `~/.cfg` (bare repo pattern).
+- Back up conflicting files to `~/.local/backups/dotfiles/`.
+- Install core shell configuration (Zsh, Starship).
 
-**First-time root setup (creates new user):**
-```bash
-# Run as root for initial system setup
-curl -fsSL "https://raw.githubusercontent.com/\
-Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-\
-install.sh?$(date +%s)" | bash
-# You'll be prompted to:
-#   - Create a new user (optional)
-#   - Set up passwordless sudo (optional, with warning)
-#   - Install dotfiles for root or the new user
-```
+## Managing Dotfiles
 
-**Safer one-liner (pin commit + verify checksum):**
-```bash
-COMMIT=<commit>
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
-SUMS_FILE="$(mktemp "$CACHE_DIR/dotfiles.SHA256SUMS.XXXXXX")"
-SCRIPT_FILE="$(mktemp "$CACHE_DIR/dotfiles.quick-install.XXXXXX")"
-curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.SHA256SUMS \
-  -o "$SUMS_FILE" &&
-curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/$COMMIT/.dotfiles/bin/quick-install.sh \
-  -o "$SCRIPT_FILE" &&
-grep 'quick-install.sh' "$SUMS_FILE" | sha256sum -c - &&
-bash "$SCRIPT_FILE"
-rm -f "$SUMS_FILE" "$SCRIPT_FILE"
-```
+This repo uses the "bare git repository" technique.
 
-**Safer install (review script first):**
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/\
-Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-\
-install.sh?$(date +%s)" -o /tmp/quick-install.sh
-less /tmp/quick-install.sh
-bash /tmp/quick-install.sh
-```
-
-**Or manual setup:**
-```bash
-git clone --bare https://github.com/Unintendedsideeffects/Dotfiles.git "$HOME/.cfg"
-alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-# Back up conflicting files
-cd "$HOME"
-backup_dir="$HOME/.local/backups/dotfiles/.dotfiles-backup.$(date +%s)"
-mkdir -p "$backup_dir"
-config checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} bash -c "mkdir -p '$backup_dir/\$(dirname \"{}\")' && mv \"$HOME/{}\" '$backup_dir/{}'" || true
-config checkout
-source "$HOME/.dotfiles/cli/config.sh"
-"$HOME/.dotfiles/shell/install.sh"
-"$HOME/.dotfiles/bin/bootstrap.sh"
+config status           # Check for changes
+config add .zshrc       # Add a file
+config commit -m "..."  # Commit
+config push             # Push changes
 ```
 
 ## What You Get
 
-**Packages automatically installed based on your environment:**
-- **Development tools**: git, neovim, build tools, language runtimes
-- **Modern CLI tools**: ripgrep, fd, fzf, bat, eza, zoxide, atuin
-- **Shell setup**: zsh with smart completion and history
-- **WSL integration**: Windows path integration, WSL utilities
-- **X11 forwarding**: For remote GUI applications
+**Core Environment:**
+- **Shell**: Zsh configured with `antidote`, `starship` prompt, and `atuin` shell history.
+- **Navigation**: `zoxide` (smart cd), `yazi` (file manager), `ranger` (classic FM).
+- **Editors**: Neovim (Lua config), Cursor (settings/keybindings).
+- **Terminal Multiplexers**: `zellij` and `tmux` (flexoki themed).
+- **Terminals**: `ghostty` config, plus support for others.
 
-**Environment-specific packages:**
-- **Arch/Arch WSL**: Uses pacman, includes AUR build tools
-- **Debian/Ubuntu/Ubuntu WSL**: Uses apt, includes build-essential
-- **Proxmox**: Conservative package set for server environments
+**CLI Tools:**
+- Modern replacements: `ripgrep` (grep), `fd` (find), `bat` (cat), `eza` (ls), `fzf`.
+- Git: Configured with `delta` for diffs and `rerere` enabled.
+
+**GUI (Linux):**
+- Tiling WMs: `i3` and `sway` configurations.
+- Utilities: `rofi` (launcher), `dunst` (notifications), `picom` (compositor).
+
+**Environment-Specifics:**
+- **Arch**: Pacman/Yay, AUR support.
+- **Debian/Ubuntu**: Apt, build-essential.
+- **Rocky/RHEL**: Dnf/Yum support.
+- **WSL**: `wslu`, systemd integration, Windows path management.
 
 ## Interactive Bootstrap
 
-The bootstrap script provides a TUI menu to install:
+The `bootstrap.sh` script provides a TUI to manage your setup:
 
-1. **AUR Helper Setup** - Installs yay for AUR package management (Arch only)
-2. **Package Installation** - Automatically detects your environment and installs appropriate packages
-3. **WSL Configuration** - Fixes common WSL configuration issues (WSL only)
-4. **Headless GUI Setup** - X11 forwarding for remote desktop (Arch only)
-5. **Obsidian Headless** - Containerized Obsidian setup
+1.  **Install Packages**: Auto-detects distro and installs curated toolsets.
+2.  **AUR Setup**: Installs `yay` (Arch only).
+3.  **Locale Setup**: Configures UTF-8 locale (essential for Starship/Glyphs).
+4.  **Git Config**: Sets global user/email and credentials.
+5.  **Claude Code**: Installs statusline integration for Claude CLI.
+6.  **Tailscale**: Installs and configures Tailscale VPN.
+7.  **WSL Setup**: Fixes `/etc/wsl.conf` and enables systemd (WSL only).
+8.  **GUI Autologin**: Configures auto-start for X11/Wayland.
+9.  **Headless GUI**: Sets up Xvfb/Openbox/VNC for remote GUI apps (Arch).
+10. **Headless Obsidian**: Specialized container-like setup for Obsidian on servers.
+11. **Validate**: Checks environment health and missing tools.
 
-## WSL2 Special Features
 
-**Automatic WSL detection and configuration:**
-- Fixes common `/etc/wsl.conf` issues (invalid key formats)
-- Enables systemd support in WSL2
-- Includes Windows path integration
-- Adds WSL utilities (`wslu`) for Windows integration
 
-**WSL-optimized package lists:**
-- `arch-wsl.txt` - Arch WSL with WSL integration tools
-- `debian-wsl.txt` - Ubuntu/Debian WSL with WSL integration tools
-
-## Managing Your Dotfiles
-
-After installation, use the `config` command for git operations:
-```bash
-config status           # Check dotfile changes
-config add .file        # Add a new dotfile
-config commit -m "msg"  # Commit changes
-config push             # Push to remote
-```
-
-## Git Configuration
-
-This dotfiles repository includes git rerere (reuse recorded resolution) configuration to automatically resolve merge conflicts you've resolved before. Learn more: [Git Tools - Rerere](https://git-scm.com/book/en/v2/Git-Tools-Rerere)
 
 ## Customization
 
-- **Local settings**: Create `~/.zshrc.local` for machine-specific config
-- **Additional packages**: Add to `.dotfiles/pkglists/*.txt` files
-- **Environment tweaks**: Modify `.dotfiles/shell/zshrc.d/` files
+- **Local Config**: Create `~/.zshrc.local` for machine-specific shell overrides.
+- **Git**: Use `~/.gitconfig.local` for private git settings (auto-created by bootstrap).
+- **Packages**: Add packages to `.dotfiles/pkglists/*.txt`.
 
-## Manual Commands
 
-If you prefer manual installation:
-```bash
-./.dotfiles/shell/install.sh      # Install shell configuration
-./.dotfiles/bin/setup-aur.sh      # Install yay AUR helper (Arch only)
-./.dotfiles/bin/setup-packages.sh # Install packages for your environment  
-./.dotfiles/bin/setup-wsl.sh      # Configure WSL (WSL only)
-./.dotfiles/bin/validate.sh       # Verify installation
-```
-
-## Maintainer Notes
-
-When `quick-install.sh` changes, regenerate checksums:
-```bash
-./.dotfiles/bin/update-sha256sums.sh
-```
-
-## X11 Forwarding
-
-For remote GUI applications:
-1. Run `./.dotfiles/bin/setup-xforward.sh`
-2. Connect with `ssh -X user@host`
-3. Test with `xclock`
-
-## Troubleshooting
-
-**Common issues:**
-- Make scripts executable: `chmod +x .dotfiles/bin/* .dotfiles/shell/*`
-- WSL configuration errors: Run `./.dotfiles/bin/setup-wsl.sh`
-- Missing packages: Check `.dotfiles/bin/validate.sh` output
-
-**WSL-specific:**
-- After WSL configuration changes: `wsl --shutdown` then restart
-- Windows path issues: Check `.dotfiles/shell/zshrc.d/wsl.zsh`
