@@ -1,4 +1,5 @@
 git
+eza
 gnupg
 pass
 zsh
