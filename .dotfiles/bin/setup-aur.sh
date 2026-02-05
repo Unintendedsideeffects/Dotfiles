@@ -95,6 +95,32 @@ if command -v yay >/dev/null 2>&1; then
     echo "   - Install AUR packages: yay -S package-name"
     echo "   - Update all packages: yay -Syu"
     echo "   - Search packages: yay -Ss search-term"
+
+    # Set up cache cleanup
+    echo ""
+    echo "Setting up package cache cleanup..."
+
+    # Install pacman-contrib for paccache
+    run_cmd pacman -S --needed --noconfirm pacman-contrib
+
+    # Enable paccache timer (keeps only last 3 versions of each package)
+    # This runs weekly and cleans /var/cache/pacman/pkg/
+    run_cmd systemctl enable --now paccache.timer
+    echo "OK: paccache.timer enabled (weekly cleanup, keeps 3 versions)"
+
+    # Clean yay's AUR build cache (keeps last 3 builds per package)
+    # This is a one-time cleanup; cleanAfter handles ongoing cleanup
+    if [[ -d "$HOME/.cache/yay" ]]; then
+        echo "Cleaning old AUR build cache..."
+        # Remove build directories older than 30 days
+        find "$HOME/.cache/yay" -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} \; 2>/dev/null || true
+        echo "OK: Old AUR build cache cleaned"
+    fi
+
+    echo ""
+    echo "Cache cleanup configured:"
+    echo "   - paccache.timer: weekly, keeps 3 package versions"
+    echo "   - yay cleanAfter: auto-cleans after each build"
 else
     echo "ERROR: yay installation failed"
     exit 1
