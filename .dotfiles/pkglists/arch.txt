@@ -93,6 +93,7 @@ swayidle 1.8.0-2
 swaylock 1.8.2-1
 telegram-desktop 5.13.1-4
 tree 2.2.1-1
+ueberzug 18.3.1-5
 unzip 6.0-22
 usbutils 018-1
 vercel 39.2.2-1

@@ -17,6 +17,7 @@ yq
 direnv
 atuin
 ranger
+ueberzug
 yazi
 zip
 unzip
