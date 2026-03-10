@@ -41,8 +41,9 @@ confirm() {
 
 if confirm "Install/enable headless Obsidian services now?"; then
   prompt USER_NAME "Linux username to run services as" "$USER_NAME"
+  USER_HOME="$(eval echo "~${USER_NAME}")"
   if [[ -z "$VAULT_PATH" ]]; then
-    VAULT_PATH="/home/${USER_NAME}/Code/Obsidian/ObsidianVault"
+    VAULT_PATH="${USER_HOME}/Code/Obsidian/ObsidianVault"
   fi
   prompt DISPLAY_NUM "Xvfb display number" "$DISPLAY_NUM"
   prompt VNC_PORT "VNC port" "$VNC_PORT"

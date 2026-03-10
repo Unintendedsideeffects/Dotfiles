@@ -1,5 +1,5 @@
 #!/bin/bash
-# Quick install script for Malcolm's Dotfiles
+# Quick install script for Dotfiles
 set -euo pipefail
 
 REINSTALL=false
@@ -318,7 +318,7 @@ if [[ -f "$INSTALL_MARKER" ]]; then
 fi
 
 echo ""
-echo "Installing Malcolm's Dotfiles for user: $TARGET_USER"
+echo "Installing Dotfiles for user: $TARGET_USER"
 echo "Home directory: $TARGET_HOME"
 echo "Log file: $LOG_FILE"
 echo ""

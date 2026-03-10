@@ -1,4 +1,4 @@
-# Malcolm's Dotfiles
+# Dotfiles
 
 Cross-platform dotfiles for Linux development environments. Works on Arch, Debian/Ubuntu, Rocky Linux/RHEL, Proxmox, and WSL2.
 

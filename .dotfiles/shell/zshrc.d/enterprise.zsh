@@ -17,15 +17,15 @@ export MAVEN_HOME="/opt/maven"
 export PATH="$MAVEN_HOME/bin:$PATH"
 
 # Corporate Git configuration
-export GIT_AUTHOR_NAME="Malcolm (Work)"
-export GIT_AUTHOR_EMAIL="malcolm@company.com"
+export GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-Work Profile}"
+export GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-user@company.com}"
 
 # Enterprise-specific functions
 function corp-vpn() {
   echo "Connecting to corporate VPN..."
-  sudo openconnect --user=malcolm vpn.corp.local
+  sudo openconnect --user="${CORP_VPN_USER:-$USER}" "${CORP_VPN_HOST:-vpn.corp.local}"
 }
 
 function corp-ssh() {
-  ssh -i ~/.ssh/corp_key malcolm@$1.corp.local
+  ssh -i "${CORP_SSH_KEY:-$HOME/.ssh/corp_key}" "${CORP_SSH_USER:-$USER}@$1.${CORP_SSH_DOMAIN:-corp.local}"
 } 
