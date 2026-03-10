@@ -8,8 +8,9 @@ has_cmd() { command -v "$1" >/dev/null 2>&1; }
 USER_NAME="${SUDO_USER:-$(whoami)}"
 DISPLAY_NUM=5
 VNC_PORT=5900
-SCREEN="1280x800x16"
-OBS_VER="1.6.7"
+SCREEN="1280x800x24"
+OBS_VER="1.12.4"
+VAULT_PATH=""
 
 prompt() {
   local var="$1" prompt_msg="$2" default="$3"
@@ -40,11 +41,15 @@ confirm() {
 
 if confirm "Install/enable headless Obsidian services now?"; then
   prompt USER_NAME "Linux username to run services as" "$USER_NAME"
+  if [[ -z "$VAULT_PATH" ]]; then
+    VAULT_PATH="/home/${USER_NAME}/Code/Obsidian/ObsidianVault"
+  fi
   prompt DISPLAY_NUM "Xvfb display number" "$DISPLAY_NUM"
   prompt VNC_PORT "VNC port" "$VNC_PORT"
   prompt SCREEN "Screen geometry (WxHxDepth)" "$SCREEN"
   prompt OBS_VER "Obsidian version (tag without 'v')" "$OBS_VER"
+  prompt VAULT_PATH "Vault path to open and sync" "$VAULT_PATH"
 
   sudo .dotfiles/bin/install-obsidian-headless.sh \
-    -u "$USER_NAME" -d "$DISPLAY_NUM" -p "$VNC_PORT" -s "$SCREEN" -o "$OBS_VER"
+    -u "$USER_NAME" -d "$DISPLAY_NUM" -p "$VNC_PORT" -s "$SCREEN" -o "$OBS_VER" -v "$VAULT_PATH"
 fi

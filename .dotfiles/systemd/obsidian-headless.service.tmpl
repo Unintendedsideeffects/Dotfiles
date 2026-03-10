@@ -1,18 +1,21 @@
 [Unit]
 Description=Headless Obsidian
-After=obsidian-headless-wm.service
+After=__WM_UNIT__
 
 [Service]
 User=__USER__
 Group=__GROUP__
 WorkingDirectory=__HOME__
-ExecStart=/usr/bin/obsidian --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --password-store=basic --user-data-dir=__HOME__/.config/obsidian
-KillSignal=SIGINT
+ExecStart=__HOME__/.local/bin/obsidian-wrapper --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --password-store=basic --user-data-dir=__HOME__/.config/obsidian __VAULT__
+KillSignal=SIGTERM
+TimeoutStopSec=15s
 Environment="DISPLAY=:__DISPLAY__"
+Environment="XDG_RUNTIME_DIR=/run/user/__UID__"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/__UID__/bus"
 Environment="ELECTRON_OZONE_PLATFORM_HINT=x11"
-Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="PATH=__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin"
 Type=simple
-Restart=on-failure
+Restart=always
 RestartSec=5s
 
 [Install]

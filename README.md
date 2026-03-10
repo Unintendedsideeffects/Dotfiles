@@ -75,13 +75,32 @@ The `bootstrap.sh` script provides a TUI to manage your setup:
 10. **Headless Obsidian**: Specialized container-like setup for Obsidian on servers.
 11. **Validate**: Checks environment health and missing tools.
 
+## Headless Obsidian
 
+The dedicated headless Obsidian installer now uses the official AppImage plus a local wrapper instead of the distro package. That matches the working homelab setup and avoids the Arch `electron` process-name mismatch that breaks Obsidian CLI registration.
 
+```bash
+sudo .dotfiles/bin/install-obsidian-headless.sh \
+  -u "$USER" \
+  -o 1.12.4 \
+  -v "$HOME/Code/Obsidian/ObsidianVault"
+```
+
+What it installs:
+- `~/Applications/Obsidian-<version>.AppImage`
+- `~/.local/bin/obsidian-wrapper` and `~/.local/bin/obsidian`
+- systemd services for `Xvfb`, the window manager, `x11vnc`, Obsidian, and `ob sync`
+- `obsidian-headless` (`ob`) in `~/.local/bin`
+
+Post-install:
+- Open Obsidian over VNC and enable `Settings -> General -> Command line interface`
+- Run `ob login --email <email>`
+- Run `ob sync-setup --vault <remote-vault-name-or-id> --path <vault-path> --device-name <name>`
+- Enable `sudo systemctl enable --now obsidian-headless-sync.service` if the installer left it disabled
+- Google Drive sync is still a separate vault-local flow built around `rclone bisync`, `obsidian-sync.service`, and `obsidian-sync-watcher.service`
 
 ## Customization
 
 - **Local Config**: Create `~/.zshrc.local` for machine-specific shell overrides.
 - **Git**: Use `~/.gitconfig.local` for private git settings (auto-created by bootstrap).
 - **Packages**: Add packages to `.dotfiles/pkglists/*.txt`.
-
-

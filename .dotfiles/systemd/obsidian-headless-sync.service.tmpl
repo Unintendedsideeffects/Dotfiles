@@ -1,0 +1,17 @@
+[Unit]
+Description=Obsidian Headless Continuous Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__VAULT__
+Environment="PATH=__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=__HOME__/.local/bin/ob sync --path __VAULT__ --continuous
+Restart=always
+RestartSec=10s
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
