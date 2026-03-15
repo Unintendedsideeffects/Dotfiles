@@ -22,6 +22,3 @@ export PATH="$HOME/.local/bin:$PATH"
 # Arch Linux specific environment variables
 export EDITOR="vim"
 export VISUAL="vim"
-
-# Zoxide initialization
-eval "$(zoxide init zsh)" 

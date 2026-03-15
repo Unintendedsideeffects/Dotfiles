@@ -22,4 +22,8 @@ if [[ -d $HOME/.dotfiles/shell/zshrc.d ]]; then
           fi
           ;;
   esac
-fi 
+fi
+
+if [[ -o interactive ]] && command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh 2>/dev/null)"
+fi
