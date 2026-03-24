@@ -393,32 +393,62 @@ install_single_pkg() {
 # Fallback: install packages one-by-one when a batch fails
 install_individually() {
   local -n _pkgs=$1
+  local total=${#_pkgs[@]}
+  local i=0
   for pkg in "${_pkgs[@]}"; do
+    ((i++))
     if pkg_is_installed "$pkg"; then
       PKG_SKIPPED+=("$pkg")
+      printf '  [%d/%d] %s (already installed)\n' "$i" "$total" "$pkg"
       continue
     fi
     if ! pkg_exists "$pkg"; then
       PKG_NOT_FOUND+=("$pkg")
-      echo "  NOT FOUND: $pkg"
+      printf '  [%d/%d] %s — NOT FOUND in repos\n' "$i" "$total" "$pkg"
       continue
     fi
-    echo "  Installing: $pkg"
+    printf '  [%d/%d] Installing %s...' "$i" "$total" "$pkg"
     if install_single_pkg "$pkg" >/dev/null 2>&1; then
       PKG_INSTALLED+=("$pkg")
+      printf ' OK\n'
     else
       PKG_FAILED+=("$pkg")
-      echo "  FAILED: $pkg"
+      printf ' FAILED\n'
     fi
   done
 }
 
+# Classify packages after a successful batch install
+classify_batch() {
+  local check_cmd="$1"
+  shift
+  local batch=("$@")
+  local total=${#batch[@]}
+  local i=0
+  for pkg in "${batch[@]}"; do
+    ((i++))
+    if $check_cmd "$pkg" &>/dev/null; then
+      PKG_INSTALLED+=("$pkg")
+    else
+      PKG_SKIPPED+=("$pkg")
+    fi
+    # Print a dot every 10 packages so long lists show life
+    if ((i % 10 == 0)); then
+      printf '  Verified %d/%d packages\n' "$i" "$total"
+    fi
+  done
+  if ((total >= 10)); then
+    printf '  Verified %d/%d packages\n' "$total" "$total"
+  fi
+}
+
 print_summary() {
+  local total=$((${#PKG_INSTALLED[@]} + ${#PKG_SKIPPED[@]} + ${#PKG_FAILED[@]} + ${#PKG_NOT_FOUND[@]}))
   echo ""
   echo "========================================"
   echo "Package Installation Summary"
   echo "========================================"
-  echo "  Requested:  $((${#PKG_INSTALLED[@]} + ${#PKG_SKIPPED[@]} + ${#PKG_FAILED[@]} + ${#PKG_NOT_FOUND[@]}))"
+  echo "  Requested:  $total"
   echo "  Installed:  ${#PKG_INSTALLED[@]}"
   echo "  Already OK: ${#PKG_SKIPPED[@]}"
   if ((${#PKG_NOT_FOUND[@]})); then
@@ -428,6 +458,9 @@ print_summary() {
   if ((${#PKG_FAILED[@]})); then
     echo "  Failed:     ${#PKG_FAILED[@]}"
     printf '    - %s\n' "${PKG_FAILED[@]}"
+  fi
+  if ((${#PKG_NOT_FOUND[@]} == 0 && ${#PKG_FAILED[@]} == 0)); then
+    echo "  Status:     ALL OK"
   fi
   echo "========================================"
 }
@@ -466,14 +499,7 @@ install_pkgs() {
         echo "Batch install failed; falling back to per-package install..."
         install_individually pacman_pkgs
       else
-        # Batch succeeded — classify each package for the summary
-        for pkg in "${pacman_pkgs[@]}"; do
-          if pacman -Qi "$pkg" &>/dev/null; then
-            PKG_INSTALLED+=("$pkg")
-          else
-            PKG_SKIPPED+=("$pkg")
-          fi
-        done
+        classify_batch "pacman -Qi" "${pacman_pkgs[@]}"
       fi
     fi
 
@@ -488,13 +514,7 @@ install_pkgs() {
           echo "Batch AUR install failed; falling back to per-package install..."
           install_individually aur_pkgs
         else
-          for pkg in "${aur_pkgs[@]}"; do
-            if pacman -Qi "$pkg" &>/dev/null; then
-              PKG_INSTALLED+=("$pkg")
-            else
-              PKG_SKIPPED+=("$pkg")
-            fi
-          done
+          classify_batch "pacman -Qi" "${aur_pkgs[@]}"
         fi
       fi
     fi
@@ -511,13 +531,7 @@ install_pkgs() {
         echo "Batch install failed; falling back to per-package install..."
         install_individually pkgs
       else
-        for pkg in "${pkgs[@]}"; do
-          if rpm -q "$pkg" &>/dev/null; then
-            PKG_INSTALLED+=("$pkg")
-          else
-            PKG_SKIPPED+=("$pkg")
-          fi
-        done
+        classify_batch "rpm -q" "${pkgs[@]}"
       fi
     fi
   else
@@ -538,13 +552,7 @@ install_pkgs() {
         echo "Batch install failed; falling back to per-package install..."
         install_individually pkgs
       else
-        for pkg in "${pkgs[@]}"; do
-          if dpkg -s "$pkg" &>/dev/null 2>&1; then
-            PKG_INSTALLED+=("$pkg")
-          else
-            PKG_SKIPPED+=("$pkg")
-          fi
-        done
+        classify_batch "dpkg -s" "${pkgs[@]}"
       fi
     fi
   fi
