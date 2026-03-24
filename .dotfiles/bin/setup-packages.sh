@@ -340,6 +340,98 @@ ensure_zsh_default_shell() {
   fi
 }
 
+# Result tracking arrays
+PKG_INSTALLED=()
+PKG_SKIPPED=()
+PKG_FAILED=()
+PKG_NOT_FOUND=()
+
+# Check if a package exists in the repos (without installing)
+pkg_exists() {
+  local pkg="$1"
+  case "$ENV" in
+    arch)
+      pacman -Si "$pkg" &>/dev/null
+      ;;
+    rocky)
+      local mgr
+      mgr=$(select_rhel_pkg_manager)
+      "$mgr" info "$pkg" &>/dev/null
+      ;;
+    *)
+      apt-cache show "$pkg" &>/dev/null
+      ;;
+  esac
+}
+
+# Check if a package is already installed
+pkg_is_installed() {
+  local pkg="$1"
+  case "$ENV" in
+    arch)
+      pacman -Qi "$pkg" &>/dev/null
+      ;;
+    rocky)
+      rpm -q "$pkg" &>/dev/null
+      ;;
+    *)
+      dpkg -s "$pkg" &>/dev/null 2>&1
+      ;;
+  esac
+}
+
+# Install a single package, returning 0 on success
+install_single_pkg() {
+  local pkg="$1"
+  case "$ENV" in
+    arch)   run_cmd pacman -S --needed --noconfirm "$pkg" 2>&1 ;;
+    rocky)  run_cmd "$(select_rhel_pkg_manager)" install -y "$pkg" 2>&1 ;;
+    *)      run_cmd apt-get install -y "$pkg" 2>&1 ;;
+  esac
+}
+
+# Fallback: install packages one-by-one when a batch fails
+install_individually() {
+  local -n _pkgs=$1
+  for pkg in "${_pkgs[@]}"; do
+    if pkg_is_installed "$pkg"; then
+      PKG_SKIPPED+=("$pkg")
+      continue
+    fi
+    if ! pkg_exists "$pkg"; then
+      PKG_NOT_FOUND+=("$pkg")
+      echo "  NOT FOUND: $pkg"
+      continue
+    fi
+    echo "  Installing: $pkg"
+    if install_single_pkg "$pkg" >/dev/null 2>&1; then
+      PKG_INSTALLED+=("$pkg")
+    else
+      PKG_FAILED+=("$pkg")
+      echo "  FAILED: $pkg"
+    fi
+  done
+}
+
+print_summary() {
+  echo ""
+  echo "========================================"
+  echo "Package Installation Summary"
+  echo "========================================"
+  echo "  Requested:  $((${#PKG_INSTALLED[@]} + ${#PKG_SKIPPED[@]} + ${#PKG_FAILED[@]} + ${#PKG_NOT_FOUND[@]}))"
+  echo "  Installed:  ${#PKG_INSTALLED[@]}"
+  echo "  Already OK: ${#PKG_SKIPPED[@]}"
+  if ((${#PKG_NOT_FOUND[@]})); then
+    echo "  Not found:  ${#PKG_NOT_FOUND[@]}"
+    printf '    - %s\n' "${PKG_NOT_FOUND[@]}"
+  fi
+  if ((${#PKG_FAILED[@]})); then
+    echo "  Failed:     ${#PKG_FAILED[@]}"
+    printf '    - %s\n' "${PKG_FAILED[@]}"
+  fi
+  echo "========================================"
+}
+
 install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")
   echo "Packages to install: ${#pkgs[@]}"
@@ -370,16 +462,40 @@ install_pkgs() {
       echo "Refreshing package databases and mirrors..."
       run_cmd pacman -Syy --noconfirm
       echo "Installing pacman packages..."
-      run_cmd pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
+      if ! run_cmd pacman -S --needed --noconfirm "${pacman_pkgs[@]}" 2>&1; then
+        echo "Batch install failed; falling back to per-package install..."
+        install_individually pacman_pkgs
+      else
+        # Batch succeeded — classify each package for the summary
+        for pkg in "${pacman_pkgs[@]}"; do
+          if pacman -Qi "$pkg" &>/dev/null; then
+            PKG_INSTALLED+=("$pkg")
+          else
+            PKG_SKIPPED+=("$pkg")
+          fi
+        done
+      fi
     fi
 
     if ((${#aur_pkgs[@]})); then
       if ! command -v yay >/dev/null 2>&1; then
-        echo "WARNING: Skipping AUR packages (missing yay): ${aur_pkgs[*]}"
+        echo "WARNING: Skipping AUR packages (missing yay)"
         echo "    Run setup-aur.sh to install yay, then rerun this script."
+        PKG_SKIPPED+=("${aur_pkgs[@]}")
       else
         echo "Installing AUR packages with yay..."
-        yay -S --needed --noconfirm "${aur_pkgs[@]}"
+        if ! yay -S --needed --noconfirm "${aur_pkgs[@]}" 2>&1; then
+          echo "Batch AUR install failed; falling back to per-package install..."
+          install_individually aur_pkgs
+        else
+          for pkg in "${aur_pkgs[@]}"; do
+            if pacman -Qi "$pkg" &>/dev/null; then
+              PKG_INSTALLED+=("$pkg")
+            else
+              PKG_SKIPPED+=("$pkg")
+            fi
+          done
+        fi
       fi
     fi
   elif [[ "$ENV" == "rocky" ]]; then
@@ -391,7 +507,18 @@ install_pkgs() {
     if [[ "$DRY" == true ]]; then
       echo "[DRY-RUN] $pkg_manager install -y ${pkgs[*]}"
     else
-      run_cmd "$pkg_manager" install -y "${pkgs[@]}"
+      if ! run_cmd "$pkg_manager" install -y "${pkgs[@]}" 2>&1; then
+        echo "Batch install failed; falling back to per-package install..."
+        install_individually pkgs
+      else
+        for pkg in "${pkgs[@]}"; do
+          if rpm -q "$pkg" &>/dev/null; then
+            PKG_INSTALLED+=("$pkg")
+          else
+            PKG_SKIPPED+=("$pkg")
+          fi
+        done
+      fi
     fi
   else
     if [[ "$SKIP_PREFLIGHT" != true ]]; then
@@ -407,7 +534,18 @@ install_pkgs() {
         run_cmd apt-get update -y
         APT_UPDATED=true
       fi
-      run_cmd apt-get install -y "${pkgs[@]}"
+      if ! run_cmd apt-get install -y "${pkgs[@]}" 2>&1; then
+        echo "Batch install failed; falling back to per-package install..."
+        install_individually pkgs
+      else
+        for pkg in "${pkgs[@]}"; do
+          if dpkg -s "$pkg" &>/dev/null 2>&1; then
+            PKG_INSTALLED+=("$pkg")
+          else
+            PKG_SKIPPED+=("$pkg")
+          fi
+        done
+      fi
     fi
   fi
 
@@ -415,4 +553,4 @@ install_pkgs() {
 }
 
 install_pkgs
-echo "Package installation completed!"
+print_summary
