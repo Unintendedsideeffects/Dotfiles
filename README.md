@@ -47,7 +47,7 @@ Run `~/.dotfiles/bin/bootstrap.sh` to launch the TUI menu. Available options ada
 
 | Option | Description | Availability |
 |--------|-------------|--------------|
-| Install Packages | Curated toolsets, auto-detects distro | All |
+| Install Packages | Curated toolsets, auto-detects distro + Nerd Fonts, starship, atuin, eza on Debian/Proxmox | All |
 | AUR Setup | Installs `yay` | Arch only |
 | Locale Setup | UTF-8 locale (needed for Starship/glyphs) | All |
 | Git Config | Global user/email and credentials | All |

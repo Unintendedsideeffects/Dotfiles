@@ -1,8 +1,14 @@
+# Core tools
 git
 gnupg
 pass
 zsh
 curl
+zip
+unzip
+xz-utils
+
+# CLI replacements
 ripgrep
 fd-find
 fzf
@@ -12,16 +18,21 @@ tree
 direnv
 jq
 zoxide
-ccache
-atuin
-zip
-unzip
-xz-utils
+
+# Dev toolchain
 neovim
 python3
 python3-pip
+ccache
 build-essential
 cmake
 ninja-build
 pkg-config
 
+# Fonts (Nerd Fonts installed separately via setup-nerdfonts.sh)
+fontconfig
+
+# Tools installed via standalone installers (setup-packages.sh extras):
+#   starship  — https://starship.rs/install.sh
+#   atuin     — https://setup.atuin.sh
+#   eza       — cargo install eza

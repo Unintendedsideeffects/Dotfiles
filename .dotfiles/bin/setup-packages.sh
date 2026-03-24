@@ -558,6 +558,66 @@ install_pkgs() {
   fi
 
   ensure_zsh_default_shell
+
+  # Post-install: tools that need special handling on non-Arch distros
+  if [[ "$ENV" != "arch" && "$DRY" != true ]]; then
+    install_extras
+  fi
+}
+
+# Install tools that aren't in Debian/Proxmox/Rocky repos via official installers
+install_extras() {
+  echo ""
+  echo "Checking for tools that need standalone install..."
+
+  # starship — not in Debian repos
+  if ! command -v starship >/dev/null 2>&1; then
+    echo "  Installing starship via official installer..."
+    if curl -fsSL https://starship.rs/install.sh | sh -s -- -y >/dev/null 2>&1; then
+      echo "  OK: starship"
+      PKG_INSTALLED+=("starship (standalone)")
+    else
+      echo "  FAILED: starship"
+      PKG_FAILED+=("starship (standalone)")
+    fi
+  fi
+
+  # atuin — not in Debian repos
+  if ! command -v atuin >/dev/null 2>&1; then
+    echo "  Installing atuin via official installer..."
+    if curl -fsSL https://setup.atuin.sh | sh -s -- --yes >/dev/null 2>&1; then
+      echo "  OK: atuin"
+      PKG_INSTALLED+=("atuin (standalone)")
+    else
+      echo "  FAILED: atuin"
+      PKG_FAILED+=("atuin (standalone)")
+    fi
+  fi
+
+  # eza — not in older Debian repos
+  if ! command -v eza >/dev/null 2>&1; then
+    echo "  Installing eza via cargo..."
+    if command -v cargo >/dev/null 2>&1; then
+      if cargo install eza >/dev/null 2>&1; then
+        echo "  OK: eza"
+        PKG_INSTALLED+=("eza (cargo)")
+      else
+        echo "  FAILED: eza"
+        PKG_FAILED+=("eza (cargo)")
+      fi
+    else
+      echo "  SKIPPED: eza (no cargo — install rustup for cargo-based tools)"
+      PKG_SKIPPED+=("eza (needs cargo)")
+    fi
+  fi
+
+  # Nerd Fonts — needed for starship/eza/yazi glyphs
+  local nf_script="$SCRIPT_DIR/setup-nerdfonts.sh"
+  if [[ -x "$nf_script" ]]; then
+    echo ""
+    echo "Installing Nerd Fonts for terminal glyphs..."
+    bash "$nf_script"
+  fi
 }
 
 install_pkgs
