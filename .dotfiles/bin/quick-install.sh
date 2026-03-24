@@ -445,7 +445,6 @@ configure_sparse_checkout() {
 /.xbindkeysrc
 /.xinitrc
 /.Xresources
-/.SHA256SUMS
 EOF"
 
     if [[ "$apply" == "true" ]]; then

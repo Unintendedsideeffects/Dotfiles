@@ -14,10 +14,7 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 ## Quick Setup
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.SHA256SUMS -o .SHA256SUMS && \
-curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh -o quick-install.sh && \
-grep 'quick-install.sh' .SHA256SUMS | sha256sum -c - && \
-bash quick-install.sh && rm .SHA256SUMS quick-install.sh
+curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
 ```
 
 This will:
