@@ -79,9 +79,9 @@ if ((installed > 0)); then
   echo ""
   echo "  Ghostty:           font-family = JetBrainsMono Nerd Font"
   echo "  Windows Terminal:  Settings → Profiles → Font face"
-  echo "  Android/Pixel:     Terminal → Settings → Font → select Nerd Font"
   echo "  Kitty:             font_family JetBrainsMono Nerd Font"
   echo "  Alacritty:         font.normal.family = 'JetBrainsMono Nerd Font'"
+  echo "  Pixel/ChromeOS:    Restart Terminal — it picks up Linux container fonts automatically"
   echo ""
   echo "  Without a Nerd Font, starship/eza/yazi will show broken glyphs."
 fi
