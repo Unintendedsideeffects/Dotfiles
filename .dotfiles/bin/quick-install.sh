@@ -299,6 +299,7 @@ fi
     echo "Installation started: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "User: $TARGET_USER"
     echo "Home: $TARGET_HOME"
+    echo "Repo:  $REPO_URL"
     echo "========================================"
     echo ""
 } >> "$LOG_FILE" 2>&1
@@ -538,7 +539,9 @@ fi
 
 # Verify repository and show what will be executed
 echo ""
-echo "Repository cloned successfully. Recent commits:"
+echo "Repository cloned successfully."
+echo "Commit: $(config rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "Recent commits:"
 config --no-pager log --oneline -5
 
 echo ""

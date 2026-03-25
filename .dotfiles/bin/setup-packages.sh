@@ -396,7 +396,7 @@ install_individually() {
   local total=${#_pkgs[@]}
   local i=0
   for pkg in "${_pkgs[@]}"; do
-    ((i++))
+    ((i++)) || true
     if pkg_is_installed "$pkg"; then
       PKG_SKIPPED+=("$pkg")
       printf '  [%d/%d] %s (already installed)\n' "$i" "$total" "$pkg"
@@ -426,7 +426,7 @@ classify_batch() {
   local total=${#batch[@]}
   local i=0
   for pkg in "${batch[@]}"; do
-    ((i++))
+    ((i++)) || true
     if $check_cmd "$pkg" &>/dev/null; then
       PKG_INSTALLED+=("$pkg")
     else
@@ -447,6 +447,8 @@ INSTALL_LOG="${HOME}/.dotfiles/install.log"
 
 print_summary() {
   local total=$((${#PKG_INSTALLED[@]} + ${#PKG_SKIPPED[@]} + ${#PKG_FAILED[@]} + ${#PKG_NOT_FOUND[@]}))
+  local commit_sha
+  commit_sha=$(git --git-dir="${HOME}/.cfg" rev-parse --short HEAD 2>/dev/null || echo "unknown")
   local summary
   summary=$(cat <<EOSUMMARY
 
@@ -454,6 +456,7 @@ print_summary() {
 Package Installation Summary ($(date '+%Y-%m-%d %H:%M:%S'))
 ========================================
   Distro:     $ENV ($PACKAGE_TYPE)
+  Commit:     $commit_sha
   Requested:  $total
   Installed:  ${#PKG_INSTALLED[@]}
   Already OK: ${#PKG_SKIPPED[@]}
