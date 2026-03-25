@@ -629,10 +629,14 @@ install_extras() {
 
   # Nerd Fonts — needed for starship/eza/yazi glyphs
   local nf_script="$SCRIPT_DIR/setup-nerdfonts.sh"
-  if [[ -x "$nf_script" ]]; then
+  if [[ -f "$nf_script" ]]; then
     echo ""
     echo "Installing Nerd Fonts for terminal glyphs..."
     bash "$nf_script"
+  else
+    echo ""
+    echo "WARNING: setup-nerdfonts.sh not found at $nf_script"
+    echo "  Run: ~/.dotfiles/bin/setup-nerdfonts.sh manually for terminal glyphs"
   fi
 }
 
