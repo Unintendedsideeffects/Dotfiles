@@ -8,16 +8,20 @@ zip
 unzip
 xz-utils
 
-# CLI replacements
+# CLI replacements (starship/atuin/eza available in Debian 13+;
+# older releases get them via standalone installers in setup-packages.sh)
 ripgrep
 fd-find
 fzf
 bat
+eza
 htop
 tree
 direnv
 jq
 zoxide
+starship
+atuin
 ranger
 
 # Dev toolchain
@@ -38,7 +42,7 @@ fonts-noto
 fonts-noto-color-emoji
 fontconfig
 
-# Tools installed via standalone installers (setup-packages.sh extras):
+# Fallback installers for older Debian (setup-packages.sh extras):
 #   starship  — https://starship.rs/install.sh
 #   atuin     — https://setup.atuin.sh
 #   eza       — cargo install eza

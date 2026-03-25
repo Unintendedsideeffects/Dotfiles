@@ -148,12 +148,22 @@ prompt_packages() {
   bash "$script" --skip-preflight "$(df_package_family 2>/dev/null || true)" 2>&1 | tee "$tmpfile"
   local status=${PIPESTATUS[0]}
 
+  # Append full output to the persistent install log
+  local install_log="$HOME/.dotfiles/install.log"
+  if [[ -d "$(dirname "$install_log")" ]]; then
+    {
+      echo ""
+      echo "--- Package install output ($(date '+%Y-%m-%d %H:%M:%S')) ---"
+      cat "$tmpfile"
+    } >> "$install_log" 2>/dev/null || true
+  fi
+
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --msgbox "Package installation completed.\n\nLog file:\n$tmpfile" 12 70
+    whip --title "Package Installation" --msgbox "Package installation completed.\n\nFull log: $install_log" 12 70
   else
     local output
     output=$(tail -n 200 "$tmpfile" 2>/dev/null || true)
-    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed. Log file:\n$tmpfile}" 20 80
+    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed.}\n\nFull log: $install_log" 20 80
   fi
 }
 

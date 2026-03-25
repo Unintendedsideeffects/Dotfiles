@@ -71,3 +71,16 @@ fi
 echo ""
 echo "Nerd Fonts: $installed installed, $skipped already present"
 echo "Location: $FONT_DIR"
+
+if ((installed > 0)); then
+  echo ""
+  echo "ACTION REQUIRED: Set your terminal font to a Nerd Font."
+  echo "  Recommended: 'JetBrainsMono Nerd Font' or 'Hack Nerd Font'"
+  echo ""
+  echo "  Ghostty:           font-family = JetBrainsMono Nerd Font"
+  echo "  Windows Terminal:  Settings → Profiles → Font face"
+  echo "  Kitty:             font_family JetBrainsMono Nerd Font"
+  echo "  Alacritty:         font.normal.family = 'JetBrainsMono Nerd Font'"
+  echo ""
+  echo "  Without a Nerd Font, starship/eza/yazi will show broken glyphs."
+fi

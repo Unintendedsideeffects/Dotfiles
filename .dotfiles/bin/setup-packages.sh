@@ -442,27 +442,43 @@ classify_batch() {
   fi
 }
 
+# Determine the persistent log file location
+INSTALL_LOG="${HOME}/.dotfiles/install.log"
+
 print_summary() {
   local total=$((${#PKG_INSTALLED[@]} + ${#PKG_SKIPPED[@]} + ${#PKG_FAILED[@]} + ${#PKG_NOT_FOUND[@]}))
-  echo ""
-  echo "========================================"
-  echo "Package Installation Summary"
-  echo "========================================"
-  echo "  Requested:  $total"
-  echo "  Installed:  ${#PKG_INSTALLED[@]}"
-  echo "  Already OK: ${#PKG_SKIPPED[@]}"
-  if ((${#PKG_NOT_FOUND[@]})); then
+  local summary
+  summary=$(cat <<EOSUMMARY
+
+========================================
+Package Installation Summary ($(date '+%Y-%m-%d %H:%M:%S'))
+========================================
+  Distro:     $ENV ($PACKAGE_TYPE)
+  Requested:  $total
+  Installed:  ${#PKG_INSTALLED[@]}
+  Already OK: ${#PKG_SKIPPED[@]}
+$(if ((${#PKG_NOT_FOUND[@]})); then
     echo "  Not found:  ${#PKG_NOT_FOUND[@]}"
     printf '    - %s\n' "${PKG_NOT_FOUND[@]}"
-  fi
-  if ((${#PKG_FAILED[@]})); then
+  fi)
+$(if ((${#PKG_FAILED[@]})); then
     echo "  Failed:     ${#PKG_FAILED[@]}"
     printf '    - %s\n' "${PKG_FAILED[@]}"
-  fi
-  if ((${#PKG_NOT_FOUND[@]} == 0 && ${#PKG_FAILED[@]} == 0)); then
+  fi)
+$(if ((${#PKG_NOT_FOUND[@]} == 0 && ${#PKG_FAILED[@]} == 0)); then
     echo "  Status:     ALL OK"
+  fi)
+========================================
+EOSUMMARY
+)
+
+  # Print to stdout (visible in terminal / TUI)
+  echo "$summary"
+
+  # Always append to the persistent install log
+  if [[ -d "$(dirname "$INSTALL_LOG")" ]]; then
+    echo "$summary" >> "$INSTALL_LOG" 2>/dev/null || true
   fi
-  echo "========================================"
 }
 
 install_pkgs() {
