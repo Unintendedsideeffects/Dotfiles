@@ -83,5 +83,6 @@ if ((installed > 0)); then
   echo "  Alacritty:         font.normal.family = 'JetBrainsMono Nerd Font'"
   echo "  Pixel/ChromeOS:    Restart Terminal — it picks up Linux container fonts automatically"
   echo ""
-  echo "  Without a Nerd Font, starship/eza/yazi will show broken glyphs."
+  echo "  If your terminal can't use Nerd Fonts (e.g. Pixel/ChromeOS),"
+  echo "  starship will auto-switch to an ASCII-safe prompt on next shell start."
 fi

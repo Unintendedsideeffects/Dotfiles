@@ -133,7 +133,7 @@ if command -v fc-list >/dev/null 2>&1; then
   if fc-list 2>/dev/null | grep -qi "nerd\|NF"; then
     ok "Nerd Font detected"
   else
-    hint "fonts" "no Nerd Font found — run setup-nerdfonts.sh for starship/eza glyphs"
+    hint "fonts" "no Nerd Font found — starship will use ASCII fallback (run setup-nerdfonts.sh for full glyphs)"
   fi
 else
   hint "fc-list" "fontconfig not available, cannot check fonts"

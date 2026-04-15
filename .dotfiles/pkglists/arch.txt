@@ -77,6 +77,7 @@ python-pyparsing 3.2.2-1
 python-pyserial 3.5-7
 python-requests 2.32.3-4
 python-rich 14.0.0-1
+ripgrep 14.1.1-1
 python-six 1.17.0-1
 python-typer 0.15.2-1
 python-yaml 6.0.2-2

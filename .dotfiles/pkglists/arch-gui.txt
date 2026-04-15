@@ -19,6 +19,7 @@ rofi
 dunst
 flameshot            # screenshots with GUI
 feh                  # image viewer / wallpaper
+ripgrep
 
 # ===== Audio / PipeWire stack ====
 pipewire

@@ -1,4 +1,5 @@
 openssh
+ripgrep
 xorg-xauth
 xorg-xhost
 xorg-xclock

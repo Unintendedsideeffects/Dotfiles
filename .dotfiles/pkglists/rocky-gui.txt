@@ -64,6 +64,7 @@ nerd-fonts-symbols-only
 # Development Tools
 vscode
 cursor
+ripgrep
 obsidian
 postman
 dbeaver

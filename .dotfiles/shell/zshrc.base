@@ -114,6 +114,25 @@ esac
 # Initialize Starship prompt
 # Only initialize if running in an interactive shell to avoid breaking TUI tools
 if [[ -o interactive ]] && command -v starship >/dev/null 2>&1; then
+  # Auto-detect Nerd Font availability and use ASCII-safe config if missing.
+  # Checks: (1) known Nerd-Font-capable terminals, (2) fc-list for installed Nerd Fonts.
+  if [[ -z "${STARSHIP_CONFIG:-}" ]]; then
+    _has_nerd_font=false
+    # Some terminals are known to ship/configure Nerd Fonts
+    if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" ]] || \
+       [[ "${TERM_PROGRAM:-}" == "WezTerm" ]] || \
+       [[ "${TERM:-}" == "xterm-kitty" ]]; then
+      _has_nerd_font=true
+    elif command -v fc-list >/dev/null 2>&1 && \
+         fc-list 2>/dev/null | grep -qi "nerd font"; then
+      _has_nerd_font=true
+    fi
+    if [[ "$_has_nerd_font" == false ]]; then
+      _ascii_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/starship-ascii.toml"
+      [[ -f "$_ascii_cfg" ]] && export STARSHIP_CONFIG="$_ascii_cfg"
+    fi
+    unset _has_nerd_font _ascii_cfg
+  fi
   eval "$(starship init zsh 2>/dev/null)"
 fi
 
