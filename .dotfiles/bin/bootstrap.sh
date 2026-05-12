@@ -46,6 +46,10 @@ command_exists() {
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH" command -v "$1" >/dev/null 2>&1
 }
 
+has_interactive_terminal() {
+  [[ -t 0 && -t 1 ]]
+}
+
 run_with_sudo_if_needed() {
   if [[ $EUID -ne 0 ]]; then
     sudo "$@"
@@ -55,6 +59,10 @@ run_with_sudo_if_needed() {
 }
 
 ensure_tui() {
+  if ! has_interactive_terminal; then
+    return 0
+  fi
+
   if command_exists dialog || command_exists whiptail; then
     return 0
   fi
@@ -74,6 +82,72 @@ ensure_tui() {
 }
 
 whip() {
+  if ! has_interactive_terminal; then
+    local title=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --title)
+          title="${2:-}"
+          shift 2
+          ;;
+        --msgbox)
+          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
+          printf '%b\n' "${2:-}" >&2
+          return 0
+          ;;
+        --yesno)
+          local prompt="${2:-}"
+          local reply=""
+          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
+          printf '%b\n' "$prompt" >&2
+          read -r -p "> " reply || return 1
+          [[ "$reply" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]
+          return $?
+          ;;
+        --inputbox)
+          local prompt="${2:-}"
+          local default="${5:-}"
+          local reply=""
+          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
+          printf '%b\n' "$prompt" >&2
+          read -r -p "> " reply || return 1
+          if [[ -z "$reply" ]]; then
+            reply="$default"
+          fi
+          printf '%s\n' "$reply"
+          return 0
+          ;;
+        --menu)
+          local prompt="${2:-}"
+          shift 5
+          local choices=("$@")
+          local idx=1
+          local tags=()
+          local reply=""
+          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
+          printf '%b\n' "$prompt" >&2
+          while (( ${#choices[@]} >= 2 )); do
+            tags+=("${choices[0]}")
+            printf '  [%d] %s\n' "$idx" "${choices[1]}" >&2
+            choices=("${choices[@]:2}")
+            ((idx++))
+          done
+          read -r -p "> " reply || return 1
+          if [[ "$reply" =~ ^[0-9]+$ ]] && (( reply >= 1 && reply <= ${#tags[@]} )); then
+            printf '%s\n' "${tags[reply-1]}"
+            return 0
+          fi
+          return 1
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+
+    return 1
+  fi
+
   local rc=0
   local errexit_was_set=0
   case $- in *e*) errexit_was_set=1 ;; esac
@@ -183,7 +257,7 @@ prompt_validate() {
   : >"$tmpfile"
 
   local tail_pid=""
-  if command_exists dialog; then
+  if has_interactive_terminal && command_exists dialog; then
     dialog --title "Validate" --tailboxbg "$tmpfile" 20 70 &
     tail_pid=$!
   fi
@@ -337,7 +411,7 @@ prompt_locale_setup() {
     echo "Checking locale configuration..." >>"$tmpfile"
 
     local tail_pid=""
-    if command_exists dialog; then
+    if has_interactive_terminal && command_exists dialog; then
       dialog --title "Locale Setup" --tailboxbg "$tmpfile" 20 80 &
       tail_pid=$!
     fi
@@ -666,22 +740,18 @@ run_dialog_menu() {
 
 run_plain_menu() {
   local options=("$@")
-  echo "Dotfiles Bootstrap (no TUI available)"
-  echo "Select components by number (space-separated), or press Enter to quit:"
+  echo "Dotfiles Bootstrap (no TUI available)" >&2
+  echo "Select components by number (space-separated), or press Enter to quit:" >&2
   local keys=()
   local idx=1
   for ((i=0; i<${#options[@]}; i+=3)); do
     keys+=("${options[i]}")
-    printf '  [%d] %s\n' "$idx" "${options[i+1]}"
+    printf '  [%d] %s\n' "$idx" "${options[i+1]}" >&2
     ((idx++))
   done
 
   local reply
-  if [[ -r /dev/tty ]]; then
-    read -r -p "> " reply < /dev/tty || return 1
-  else
-    read -r -p "> " reply || return 1
-  fi
+  read -r -p "> " reply || return 1
 
   if [[ -z "$reply" ]]; then
     return 1
@@ -733,7 +803,9 @@ main_menu() {
   fi
 
   local selections=""
-  if command_exists dialog; then
+  if ! has_interactive_terminal; then
+    selections=$(run_plain_menu "${options[@]}") || return 0
+  elif command_exists dialog; then
     setup_dialog_theme
     local tmpfile
     tmpfile=$(mktemp)
@@ -776,8 +848,6 @@ main_menu() {
     selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" \
       3>&1 1>&2 2>&3) || return 0
-  else
-    selections=$(run_plain_menu "${options[@]}") || return 0
   fi
 
   if [[ -z "$selections" ]]; then

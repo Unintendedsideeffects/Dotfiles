@@ -8,7 +8,7 @@ Cross-platform dotfiles for Linux development environments. Works on Arch, Debia
 curl -fsSL https://raw.githubusercontent.com/Unintendedsideeffects/Dotfiles/master/.dotfiles/bin/quick-install.sh | bash
 ```
 
-This clones the repo as a bare git repository to `~/.cfg`, backs up any conflicting files to `~/.local/backups/dotfiles/`, installs shell configuration, and launches the interactive bootstrap menu.
+This clones the repo as a bare git repository to `~/.cfg`, backs up any conflicting files to `~/.local/backups/dotfiles/`, installs shell configuration, and launches the bootstrap menu.
 
 To reinstall over an existing setup:
 
@@ -43,7 +43,7 @@ config push             # Push to remote
 
 ## Interactive Bootstrap
 
-Run `~/.dotfiles/bin/bootstrap.sh` to launch the TUI menu. Available options adapt to your platform:
+Run `~/.dotfiles/bin/bootstrap.sh` to launch the bootstrap menu. It uses a TUI when a terminal is available and falls back to shell prompts otherwise. Available options adapt to your platform:
 
 | Option | Description | Availability |
 |--------|-------------|--------------|

@@ -591,8 +591,14 @@ if [[ "$TTY_AVAILABLE" == true ]]; then
         echo "WARNING: Interactive bootstrap exited with code $bootstrap_rc; continuing installation." >&2
     fi
 else
-    echo "WARNING: No TTY available; skipping interactive bootstrap." >&2
-    echo "You can run the bootstrap menu later with: ~/.dotfiles/bin/bootstrap.sh" >&2
+    echo "INFO: No TTY available; running bootstrap in shell fallback mode." >&2
+    if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"; then
+        :
+    else
+        bootstrap_rc=$?
+        echo "WARNING: Shell bootstrap exited with code $bootstrap_rc; continuing installation." >&2
+        echo "You can run the bootstrap menu later with: ~/.dotfiles/bin/bootstrap.sh" >&2
+    fi
 fi
 
 exec > >(tee -a "$LOG_FILE") 2>&1 # Re-enable logging after interactive bootstrap completes
