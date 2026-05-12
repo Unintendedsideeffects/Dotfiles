@@ -28,10 +28,12 @@ REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 TTY_AVAILABLE=false
 TTY_IN_FD=""
 TTY_OUT_FD=""
-if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
-    TTY_AVAILABLE=true
-    TTY_IN_FD=5
-    TTY_OUT_FD=6
+if tty -s 2>/dev/null; then
+    if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
+        TTY_AVAILABLE=true
+        TTY_IN_FD=5
+        TTY_OUT_FD=6
+    fi
 fi
 
 read_tty_line() {
@@ -339,9 +341,15 @@ run_as_user() {
     fi
 }
 
+# Helper to run git commands without loading the user's global gitconfig.
+# This keeps installation/resume flows working even if existing includes are broken.
+run_git_as_user() {
+    run_as_user env GIT_CONFIG_GLOBAL=/dev/null /usr/bin/git "$@"
+}
+
 # Config helper for managing dotfiles directly (no shell setup required).
 config() {
-    run_as_user /usr/bin/git --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
+    run_git_as_user --git-dir="$CONFIG_DIR" --work-tree="$TARGET_HOME" "$@"
 }
 
 create_local_gitconfig_from_existing() {
@@ -481,7 +489,7 @@ if [[ "$SKIP_INSTALL" != true ]]; then
 
     # Clone the bare repository
     echo "Cloning dotfiles repository..."
-    run_as_user git clone --bare "$REPO_URL" "$CONFIG_DIR"
+    run_git_as_user clone --bare "$REPO_URL" "$CONFIG_DIR"
 
     # Limit checkout to .dotfiles and .config to keep repo metadata (README, etc.) out of $HOME
     configure_sparse_checkout false

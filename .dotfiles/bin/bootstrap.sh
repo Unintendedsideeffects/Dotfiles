@@ -750,7 +750,30 @@ main_menu() {
       selections=""
     fi
   elif command_exists whiptail; then
-    selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" 20 80 10 \
+    local term_cols term_lines menu_height menu_width menu_list_height option_count
+    term_cols=$(tput cols 2>/dev/null || stty size 2>/dev/null | awk '{print $2}' || echo 80)
+    term_lines=$(tput lines 2>/dev/null || stty size 2>/dev/null | awk '{print $1}' || echo 24)
+    option_count=$((${#options[@]} / 3))
+    menu_width=$((term_cols - 4))
+    if ((menu_width > 80)); then
+      menu_width=80
+    elif ((menu_width < 48)); then
+      menu_width=48
+    fi
+    menu_height=$((term_lines - 4))
+    if ((menu_height > 20)); then
+      menu_height=20
+    elif ((menu_height < 12)); then
+      menu_height=12
+    fi
+    menu_list_height=$option_count
+    if ((menu_list_height > menu_height - 8)); then
+      menu_list_height=$((menu_height - 8))
+    fi
+    if ((menu_list_height < 5)); then
+      menu_list_height=5
+    fi
+    selections=$(whip --title "Dotfiles Bootstrap" --checklist "Select components to configure" "$menu_height" "$menu_width" "$menu_list_height" \
       "${options[@]}" \
       3>&1 1>&2 2>&3) || return 0
   else
