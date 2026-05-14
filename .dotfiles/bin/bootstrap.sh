@@ -747,6 +747,12 @@ run_plain_menu() {
     ((idx++))
   done
 
+  local reply
+  if ! read -r reply; then
+    echo "No shell input available; skipping fallback menu." >&2
+    return 1
+  fi
+
   echo "Dotfiles Bootstrap (no TUI available)" >&2
   echo "Select components by number (space-separated), or press Enter to quit:" >&2
   idx=1
@@ -754,19 +760,6 @@ run_plain_menu() {
     printf '  [%d] %s\n' "$idx" "${options[i+1]}" >&2
     ((idx++))
   done
-
-  local reply=""
-  if IFS= read -r reply; then
-    :
-  elif [[ -p /dev/stdin ]] && [[ -r /dev/tty ]] && [[ -w /dev/tty ]] && : >/dev/tty 2>/dev/null; then
-    if ! IFS= read -r reply < /dev/tty; then
-      echo "No shell input available; skipping fallback menu." >&2
-      return 1
-    fi
-  else
-    echo "No shell input available; skipping fallback menu." >&2
-    return 1
-  fi
 
   if [[ -z "$reply" ]]; then
     return 1
