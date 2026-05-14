@@ -108,13 +108,13 @@ whip() {
           local prompt="${2:-}"
           local default="${5:-}"
           local reply=""
-          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
-          printf '%b\n' "$prompt" >&2
+          [[ -n "$title" ]] && printf '%s\n' "$title"
+          printf '%b\n' "$prompt"
           read -r -p "> " reply || return 1
           if [[ -z "$reply" ]]; then
             reply="$default"
           fi
-          printf '%s\n' "$reply"
+          printf '%s\n' "$reply" >&2
           return 0
           ;;
         --menu)
@@ -124,17 +124,17 @@ whip() {
           local idx=1
           local tags=()
           local reply=""
-          [[ -n "$title" ]] && printf '%s\n' "$title" >&2
-          printf '%b\n' "$prompt" >&2
+          [[ -n "$title" ]] && printf '%s\n' "$title"
+          printf '%b\n' "$prompt"
           while (( ${#choices[@]} >= 2 )); do
             tags+=("${choices[0]}")
-            printf '  [%d] %s\n' "$idx" "${choices[1]}" >&2
+            printf '  [%d] %s\n' "$idx" "${choices[1]}"
             choices=("${choices[@]:2}")
             ((idx++))
           done
           read -r -p "> " reply || return 1
           if [[ "$reply" =~ ^[0-9]+$ ]] && (( reply >= 1 && reply <= ${#tags[@]} )); then
-            printf '%s\n' "${tags[reply-1]}"
+            printf '%s\n' "${tags[reply-1]}" >&2
             return 0
           fi
           return 1
