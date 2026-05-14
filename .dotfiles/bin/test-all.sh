@@ -31,6 +31,18 @@ if grep -q "should not be used in shell fallback" <<< "$bootstrap_output"; then
   exit 1
 fi
 
+echo "== Bootstrap shell fallback without input =="
+bootstrap_no_input_output="$("$ROOT_DIR/.dotfiles/bin/bootstrap.sh" < /dev/null 2>&1 || true)"
+printf '%s\n' "$bootstrap_no_input_output"
+if ! grep -q "No shell input available; skipping fallback menu." <<< "$bootstrap_no_input_output"; then
+  echo "Bootstrap no-input fallback message not found in output." >&2
+  exit 1
+fi
+if grep -q "Dotfiles Bootstrap (no TUI available)" <<< "$bootstrap_no_input_output"; then
+  echo "Bootstrap displayed fallback menu despite no shell input." >&2
+  exit 1
+fi
+
 echo "== Bootstrap shell fallback input capture =="
 bootstrap_capture_output="$(printf '3\nTest User\ntest@example.com\nyes\n\n' | HOME="$tmp_home" PATH="$tmpdir:$PATH" "$ROOT_DIR/.dotfiles/bin/bootstrap.sh" 2>&1 || true)"
 printf '%s\n' "$bootstrap_capture_output"

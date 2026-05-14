@@ -740,18 +740,26 @@ run_dialog_menu() {
 
 run_plain_menu() {
   local options=("$@")
-  echo "Dotfiles Bootstrap (no TUI available)" >&2
-  echo "Select components by number (space-separated), or press Enter to quit:" >&2
   local keys=()
   local idx=1
   for ((i=0; i<${#options[@]}; i+=3)); do
     keys+=("${options[i]}")
-    printf '  [%d] %s\n' "$idx" "${options[i+1]}" >&2
     ((idx++))
   done
 
   local reply
-  read -r -p "> " reply || return 1
+  if ! read -r reply; then
+    echo "No shell input available; skipping fallback menu." >&2
+    return 1
+  fi
+
+  echo "Dotfiles Bootstrap (no TUI available)" >&2
+  echo "Select components by number (space-separated), or press Enter to quit:" >&2
+  idx=1
+  for ((i=0; i<${#options[@]}; i+=3)); do
+    printf '  [%d] %s\n' "$idx" "${options[i+1]}" >&2
+    ((idx++))
+  done
 
   if [[ -z "$reply" ]]; then
     return 1
