@@ -756,12 +756,14 @@ run_plain_menu() {
   done
 
   local reply=""
-  if [[ ! -t 0 ]] && [[ -r /dev/tty ]] && [[ -w /dev/tty ]] && : >/dev/tty 2>/dev/null; then
+  if IFS= read -r reply; then
+    :
+  elif [[ -p /dev/stdin ]] && [[ -r /dev/tty ]] && [[ -w /dev/tty ]] && : >/dev/tty 2>/dev/null; then
     if ! IFS= read -r reply < /dev/tty; then
       echo "No shell input available; skipping fallback menu." >&2
       return 1
     fi
-  elif ! IFS= read -r reply; then
+  else
     echo "No shell input available; skipping fallback menu." >&2
     return 1
   fi
