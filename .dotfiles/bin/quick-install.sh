@@ -28,12 +28,10 @@ REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
 TTY_AVAILABLE=false
 TTY_IN_FD=""
 TTY_OUT_FD=""
-if tty -s 2>/dev/null; then
-    if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
-        TTY_AVAILABLE=true
-        TTY_IN_FD=5
-        TTY_OUT_FD=6
-    fi
+if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
+    TTY_AVAILABLE=true
+    TTY_IN_FD=5
+    TTY_OUT_FD=6
 fi
 
 read_tty_line() {
