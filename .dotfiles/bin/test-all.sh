@@ -11,7 +11,8 @@ echo "== Bootstrap dry-run =="
 
 echo "== Bootstrap shell fallback =="
 tmpdir="$(mktemp -d)"
-trap 'rm -rf "$tmpdir"' EXIT
+tmp_home="$(mktemp -d)"
+trap 'rm -rf "$tmpdir" "$tmp_home"' EXIT
 cat > "$tmpdir/dialog" <<'EOF'
 #!/usr/bin/env bash
 echo "dialog should not be used in shell fallback" >&2
@@ -21,9 +22,24 @@ cp "$tmpdir/dialog" "$tmpdir/whiptail"
 chmod +x "$tmpdir/dialog" "$tmpdir/whiptail"
 bootstrap_output="$(printf '\n' | PATH="$tmpdir:$PATH" "$ROOT_DIR/.dotfiles/bin/bootstrap.sh" 2>&1 || true)"
 printf '%s\n' "$bootstrap_output"
-grep -q "Dotfiles Bootstrap (no TUI available)" <<< "$bootstrap_output"
+if ! grep -q "Dotfiles Bootstrap (no TUI available)" <<< "$bootstrap_output"; then
+  echo "Bootstrap shell fallback banner not found in output." >&2
+  exit 1
+fi
 if grep -q "should not be used in shell fallback" <<< "$bootstrap_output"; then
   echo "Bootstrap attempted to use dialog/whiptail without a terminal." >&2
+  exit 1
+fi
+
+echo "== Bootstrap shell fallback input capture =="
+bootstrap_capture_output="$(printf '3\nTest User\ntest@example.com\nyes\n\n' | HOME="$tmp_home" PATH="$tmpdir:$PATH" "$ROOT_DIR/.dotfiles/bin/bootstrap.sh" 2>&1 || true)"
+printf '%s\n' "$bootstrap_capture_output"
+if ! grep -q '^	name = Test User$' "$tmp_home/.gitconfig.local"; then
+  echo "Bootstrap shell fallback failed to capture Git username input correctly." >&2
+  exit 1
+fi
+if ! grep -q '^	email = test@example.com$' "$tmp_home/.gitconfig.local"; then
+  echo "Bootstrap shell fallback failed to capture Git email input correctly." >&2
   exit 1
 fi
 
