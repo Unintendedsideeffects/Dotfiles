@@ -21,6 +21,7 @@ PREFLIGHT=false
 SKIP_PREFLIGHT=false
 APT_UPDATED=false
 PROXMOX_REPOS_CHANGED=false
+TEST_ENSURE_ZSH_DEFAULT_SHELL=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -35,6 +36,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-preflight)
       SKIP_PREFLIGHT=true
+      shift
+      ;;
+    --test-ensure-zsh-default-shell)
+      TEST_ENSURE_ZSH_DEFAULT_SHELL=true
       shift
       ;;
     *)
@@ -327,16 +332,31 @@ ensure_zsh_default_shell() {
   elif command -v sudo >/dev/null 2>&1; then
     if sudo -n true 2>/dev/null && command -v usermod >/dev/null 2>&1; then
       # Passwordless sudo available - use usermod to avoid PAM password prompt
-      sudo usermod -s "$zsh_path" "$target_user"
+      if ! sudo -n usermod -s "$zsh_path" "$target_user"; then
+        echo "Passwordless sudo is available, but usermod failed for $target_user"
+        return
+      fi
+    elif sudo -n true 2>/dev/null; then
+      echo "Passwordless sudo is available, but usermod is missing; cannot change shell safely"
+      return
     elif command -v chsh >/dev/null 2>&1 && [[ "$USER" == "$target_user" ]]; then
       # Fall back to chsh for current user (will prompt for password)
       echo "Note: chsh may prompt for your password"
       chsh -s "$zsh_path" || echo "Shell change skipped (password required)"
     else
       echo "Cannot change shell without password prompt, skipping"
+      return
     fi
   else
     echo "Insufficient permissions to change shell for $target_user"
+    return
+  fi
+
+  current_shell="$(getent passwd "$target_user" | cut -d: -f7)"
+  if [[ "$current_shell" == "$zsh_path" ]]; then
+    echo "Default shell set to zsh for $target_user"
+  else
+    echo "Shell change did not persist for $target_user (current: ${current_shell:-unknown})"
   fi
 }
 
@@ -483,6 +503,11 @@ EOSUMMARY
     echo "$summary" >> "$INSTALL_LOG" 2>/dev/null || true
   fi
 }
+
+if [[ "$TEST_ENSURE_ZSH_DEFAULT_SHELL" == true ]]; then
+  ensure_zsh_default_shell
+  exit $?
+fi
 
 install_pkgs() {
   mapfile -t pkgs < <(grep -vE '^(#|\s*$)' "$PKGLIST")

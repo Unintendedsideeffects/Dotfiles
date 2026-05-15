@@ -20,6 +20,8 @@ for arg in "$@"; do
   fi
 done
 
+INSTALL_LOG_FILE="${DF_INSTALL_LOG_FILE:-$HOME/.dotfiles/install.log}"
+
 # Track temp files for cleanup
 CLEANUP_FILES=()
 
@@ -56,6 +58,75 @@ run_with_sudo_if_needed() {
   else
     "$@"
   fi
+}
+
+bootstrap_log_enabled() {
+  [[ -n "${INSTALL_LOG_FILE:-}" && -d "$(dirname "$INSTALL_LOG_FILE")" ]]
+}
+
+bootstrap_log() {
+  bootstrap_log_enabled || return 0
+  printf '[%s] [bootstrap] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$INSTALL_LOG_FILE" 2>/dev/null || true
+}
+
+bootstrap_append_text() {
+  local title="$1"
+  local text="${2:-}"
+  bootstrap_log_enabled || return 0
+  {
+    echo ""
+    echo "--- ${title} ($(date '+%Y-%m-%d %H:%M:%S')) ---"
+    printf '%s\n' "$text"
+  } >> "$INSTALL_LOG_FILE" 2>/dev/null || true
+}
+
+bootstrap_append_file() {
+  local title="$1"
+  local file="$2"
+  [[ -f "$file" ]] || return 0
+  bootstrap_log_enabled || return 0
+  {
+    echo ""
+    echo "--- ${title} ($(date '+%Y-%m-%d %H:%M:%S')) ---"
+    cat "$file"
+  } >> "$INSTALL_LOG_FILE" 2>/dev/null || true
+}
+
+bootstrap_log_context() {
+  local tty_mode="no"
+  local package_family="unknown"
+
+  if has_interactive_terminal; then
+    tty_mode="yes"
+  fi
+
+  package_family="$(df_package_family 2>/dev/null || echo unknown)"
+  bootstrap_log "Bootstrap started: user=${USER:-unknown} home=${HOME:-unknown} tty=${tty_mode} distro=$(df_os_pretty) package_family=${package_family}"
+
+  if [[ -r /etc/os-release ]]; then
+    bootstrap_log "Contents of /etc/os-release:"
+    while IFS= read -r line; do
+      bootstrap_log "  $line"
+    done < /etc/os-release
+  else
+    bootstrap_log "/etc/os-release not available"
+  fi
+}
+
+run_selected_action() {
+  local key="$1"
+  local label="$2"
+  local function_name="$3"
+
+  bootstrap_log "Starting action: ${key} (${label})"
+  if "$function_name"; then
+    bootstrap_log "Completed action: ${key}"
+    return 0
+  fi
+
+  local rc=$?
+  bootstrap_log "Action failed: ${key} (exit ${rc})"
+  return "$rc"
 }
 
 ensure_tui() {
@@ -222,22 +293,14 @@ prompt_packages() {
   bash "$script" --skip-preflight "$(df_package_family 2>/dev/null || true)" 2>&1 | tee "$tmpfile"
   local status=${PIPESTATUS[0]}
 
-  # Append full output to the persistent install log
-  local install_log="$HOME/.dotfiles/install.log"
-  if [[ -d "$(dirname "$install_log")" ]]; then
-    {
-      echo ""
-      echo "--- Package install output ($(date '+%Y-%m-%d %H:%M:%S')) ---"
-      cat "$tmpfile"
-    } >> "$install_log" 2>/dev/null || true
-  fi
+  bootstrap_append_file "Package install output" "$tmpfile"
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --msgbox "Package installation completed.\n\nFull log: $install_log" 12 70
+    whip --title "Package Installation" --msgbox "Package installation completed.\n\nFull log: $INSTALL_LOG_FILE" 12 70
   else
     local output
     output=$(tail -n 200 "$tmpfile" 2>/dev/null || true)
-    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed.}\n\nFull log: $install_log" 20 80
+    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed.}\n\nFull log: $INSTALL_LOG_FILE" 20 80
   fi
 }
 
@@ -283,6 +346,7 @@ prompt_validate() {
 
   local output
   output=$(cat "$tmpfile")
+  bootstrap_append_file "Validation output" "$tmpfile"
 
   if [[ $status -eq 0 ]]; then
     whip --title "Validation Results" --msgbox "$output" 20 70
@@ -304,8 +368,10 @@ prompt_claude_statusline() {
   if whip --title "Claude Statusline" --yesno "Install Claude Code statusline configuration?\n\nThis will:\n- Copy statusline-command.sh to ~/.claude\n- Install settings.json if missing\n\nRequires: jq" 16 70; then
     local output
     if output=$("$script" 2>&1); then
+      bootstrap_append_text "Claude statusline output" "$output"
       whip --title "Claude Statusline" --msgbox "$output" 18 70
     else
+      bootstrap_append_text "Claude statusline output" "$output"
       whip --title "Claude Statusline Failed" --msgbox "$output" 20 80
     fi
   fi
@@ -366,6 +432,8 @@ prompt_git_config() {
 	email = $git_email
 EOF
 
+  bootstrap_log "Git configuration saved to $HOME/.gitconfig.local"
+
   whip --title "Git Configuration" --msgbox "Git configuration saved to ~/.gitconfig.local\n\nName: $git_username\nEmail: $git_email" 12 60
 }
 
@@ -386,8 +454,10 @@ prompt_wsl_setup() {
 
   if whip --title "WSL Setup" --yesno "Configure WSL settings (/etc/wsl.conf)?\n\nThis will:\n- Fix invalid configuration keys\n- Set up proper WSL2 settings\n- Enable systemd support" 15 70; then
     if output=$("$script" 2>&1); then
+      bootstrap_append_text "WSL setup output" "$output"
       whip --title "WSL Setup" --msgbox "WSL configuration completed.\n\nYou may need to restart WSL:\n  wsl --shutdown\n  wsl" 12 60
     else
+      bootstrap_append_text "WSL setup output" "$output"
       whip --title "WSL Setup Failed" --msgbox "$output" 20 80
     fi
   fi
@@ -437,6 +507,7 @@ prompt_locale_setup() {
 
     local output
     output=$(cat "$tmpfile")
+    bootstrap_append_file "Locale setup output" "$tmpfile"
 
     if [[ $status -eq 0 ]]; then
       whip --title "Locale Setup" --msgbox "$output\n\nYou may need to log out and back in for changes to take effect.\nOr run: export LANG=en_US.UTF-8" 20 80
@@ -458,8 +529,10 @@ prompt_gui_autologin() {
 
   if whip --title "GUI Autostart" --yesno "Configure GUI autostart (X11/Wayland)?" 10 60; then
     if output=$("$script" 2>&1); then
+      bootstrap_append_text "GUI autostart output" "$output"
       whip --title "GUI Autostart" --msgbox "$output" 18 70
     else
+      bootstrap_append_text "GUI autostart output" "$output"
       whip --title "GUI Autostart Failed" --msgbox "$output" 20 80
     fi
   fi
@@ -497,6 +570,7 @@ prompt_tailscale() {
 
   local output
   output=$(cat "$tmpfile")
+  bootstrap_append_file "Tailscale output" "$tmpfile"
 
   if [[ $status -eq 0 ]]; then
     whip --title "Tailscale Setup" --msgbox "Tailscale installed successfully!\n\nNext steps:\n1. Start Tailscale:\n   sudo tailscale up\n\n2. Authenticate in your browser\n\n3. Check status:\n   tailscale status" 18 70
@@ -742,6 +816,8 @@ run_plain_menu() {
   local options=("$@")
   local keys=()
   local idx=1
+
+  bootstrap_log "Using shell fallback menu"
   for ((i=0; i<${#options[@]}; i+=3)); do
     keys+=("${options[i]}")
     ((idx++))
@@ -749,6 +825,7 @@ run_plain_menu() {
 
   local reply
   if ! read -r reply; then
+    bootstrap_log "No shell input available; skipping fallback menu."
     echo "No shell input available; skipping fallback menu." >&2
     return 1
   fi
@@ -762,6 +839,7 @@ run_plain_menu() {
   done
 
   if [[ -z "$reply" ]]; then
+    bootstrap_log "Shell fallback menu exited without a selection."
     return 1
   fi
 
@@ -773,8 +851,11 @@ run_plain_menu() {
   done
 
   if [[ ${#selection_array[@]} -eq 0 ]]; then
+    bootstrap_log "Shell fallback input did not map to any action: $reply"
     return 1
   fi
+
+  bootstrap_log "Shell fallback selected actions: ${selection_array[*]}"
 
   printf '%s\n' "${selection_array[@]}"
 }
@@ -811,7 +892,11 @@ main_menu() {
   fi
 
   local selections=""
-  if ! has_interactive_terminal; then
+  local selection_array=()
+  if [[ -n "${DF_BOOTSTRAP_SELECTIONS:-}" ]]; then
+    read -r -a selection_array <<< "${DF_BOOTSTRAP_SELECTIONS}"
+    bootstrap_log "Using DF_BOOTSTRAP_SELECTIONS preset: ${selection_array[*]}"
+  elif ! has_interactive_terminal; then
     selections=$(run_plain_menu "${options[@]}") || return 0
   elif command_exists dialog; then
     setup_dialog_theme
@@ -859,30 +944,36 @@ main_menu() {
   fi
 
   if [[ -z "$selections" ]]; then
-    return 0
+    if [[ ${#selection_array[@]} -eq 0 ]]; then
+      return 0
+    fi
+  else
+    eval "selection_array=($selections)"
   fi
 
-  local selection_array=()
-  eval "selection_array=($selections)"
+  bootstrap_log "Resolved action order: ${selection_array[*]}"
 
   for sel in "${selection_array[@]}"; do
     case "$sel" in
-      git_config) prompt_git_config || true ;;
-      locale_setup) prompt_locale_setup || true ;;
-      claude_statusline) prompt_claude_statusline || true ;;
-      tailscale) prompt_tailscale || true ;;
-      aur_setup) prompt_aur_setup || true ;;
-      packages) prompt_packages || true ;;
-      gui_autologin) prompt_gui_autologin || true ;;
-      validate) prompt_validate || true ;;
-      wsl_setup) prompt_wsl_setup || true ;;
-      headless_gui) prompt_headless_gui || true ;;
-      headless_obsidian) prompt_headless_obsidian || true ;;
+      git_config) run_selected_action "$sel" "Configure Git User Settings" prompt_git_config || true ;;
+      locale_setup) run_selected_action "$sel" "Configure UTF-8 Locale" prompt_locale_setup || true ;;
+      claude_statusline) run_selected_action "$sel" "Install Claude Code statusline" prompt_claude_statusline || true ;;
+      tailscale) run_selected_action "$sel" "Install Tailscale VPN" prompt_tailscale || true ;;
+      aur_setup) run_selected_action "$sel" "Install AUR Helper (yay) [Arch]" prompt_aur_setup || true ;;
+      packages) run_selected_action "$sel" "Install Packages" prompt_packages || true ;;
+      gui_autologin) run_selected_action "$sel" "Configure GUI autostart (X11/Wayland)" prompt_gui_autologin || true ;;
+      validate) run_selected_action "$sel" "Validate Environment" prompt_validate || true ;;
+      wsl_setup) run_selected_action "$sel" "WSL Configuration Setup" prompt_wsl_setup || true ;;
+      headless_gui) run_selected_action "$sel" "Headless GUI (Xvfb/WM/VNC/Obsidian) [Arch]" prompt_headless_gui || true ;;
+      headless_obsidian) run_selected_action "$sel" "Headless Obsidian (Xvfb/Openbox/VNC) [Arch]" prompt_headless_obsidian || true ;;
+      *) bootstrap_log "Skipping unknown selection: $sel" ;;
     esac
   done
 
   whip --title "Dotfiles Bootstrap" --msgbox "Completed selected setup steps." 10 60 || true
 }
 
+bootstrap_log_context
 ensure_tui
 main_menu
+bootstrap_log "Bootstrap finished"

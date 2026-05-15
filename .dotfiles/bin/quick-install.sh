@@ -23,12 +23,12 @@ if [[ ! -t 0 ]]; then
     IS_PIPED=true
 fi
 
-REPO_URL="https://github.com/Unintendedsideeffects/Dotfiles.git"
+REPO_URL="${DOTFILES_REPO_URL:-https://github.com/Unintendedsideeffects/Dotfiles.git}"
 
 TTY_AVAILABLE=false
 TTY_IN_FD=""
 TTY_OUT_FD=""
-if exec 5</dev/tty 6>/dev/tty 2>/dev/null; then
+if { exec 5</dev/tty 6>/dev/tty; } 2>/dev/null; then
     TTY_AVAILABLE=true
     TTY_IN_FD=5
     TTY_OUT_FD=6
@@ -300,6 +300,15 @@ fi
     echo "User: $TARGET_USER"
     echo "Home: $TARGET_HOME"
     echo "Repo:  $REPO_URL"
+    echo "TTY available: $TTY_AVAILABLE"
+    echo "stdin piped:   $IS_PIPED"
+    echo "Kernel: $(uname -srmo 2>/dev/null || uname -a)"
+    echo "OS release:"
+    if [[ -r /etc/os-release ]]; then
+        sed 's/^/  /' /etc/os-release
+    else
+        echo "  /etc/os-release not available"
+    fi
     echo "========================================"
     echo ""
 } >> "$LOG_FILE" 2>&1
@@ -333,9 +342,18 @@ run_as_user() {
     fi
 
     if [[ "$TARGET_USER" != "$(whoami)" ]]; then
-        sudo -u "$TARGET_USER" HOME="$TARGET_HOME" -- "$@"
+        sudo -u "$TARGET_USER" \
+            HOME="$TARGET_HOME" \
+            DF_INSTALL_LOG_FILE="$LOG_FILE" \
+            DF_BOOTSTRAP_SELECTIONS="${DF_BOOTSTRAP_SELECTIONS:-}" \
+            DEBIAN_FRONTEND="${DEBIAN_FRONTEND:-}" \
+            -- "$@"
     else
-        "$@"
+        env \
+            DF_INSTALL_LOG_FILE="$LOG_FILE" \
+            DF_BOOTSTRAP_SELECTIONS="${DF_BOOTSTRAP_SELECTIONS:-}" \
+            DEBIAN_FRONTEND="${DEBIAN_FRONTEND:-}" \
+            "$@"
     fi
 }
 
@@ -569,6 +587,7 @@ echo ""
 echo "Starting interactive setup..."
 echo "   - Select 'Install Packages' to get development tools"
 echo "   - Select 'WSL Configuration Setup' if you're on WSL"
+echo "   - Bootstrap action logs will be appended to: $LOG_FILE"
 echo ""
 pause_for_enter "Press Enter to continue with interactive setup..."
 
@@ -576,7 +595,11 @@ pause_for_enter "Press Enter to continue with interactive setup..."
 # The tee redirection breaks terminal control needed for arrow keys and proper display
 exec 1>&3 2>&4
 
+bootstrap_rc=0
+bootstrap_mode="shell fallback"
+
 if [[ "$TTY_AVAILABLE" == true ]]; then
+    bootstrap_mode="interactive"
     if command -v tput >/dev/null 2>&1; then
         if ! tput cols >/dev/null 2>&1; then
             export TERM="xterm-256color"
@@ -589,6 +612,7 @@ if [[ "$TTY_AVAILABLE" == true ]]; then
         echo "WARNING: Interactive bootstrap exited with code $bootstrap_rc; continuing installation." >&2
     fi
 else
+    bootstrap_mode="shell fallback"
     echo "INFO: No TTY available; running bootstrap in shell fallback mode." >&2
     if run_as_user "$TARGET_HOME/.dotfiles/bin/bootstrap.sh"; then
         :
@@ -600,6 +624,12 @@ else
 fi
 
 exec > >(tee -a "$LOG_FILE") 2>&1 # Re-enable logging after interactive bootstrap completes
+
+if [[ $bootstrap_rc -eq 0 ]]; then
+    echo "Bootstrap completed successfully ($bootstrap_mode)."
+else
+    echo "WARNING: Bootstrap exited with code $bootstrap_rc during $bootstrap_mode mode."
+fi
 
 # Mark installation as successful
 INSTALL_MARKER="$TARGET_HOME/.dotfiles/.installed"

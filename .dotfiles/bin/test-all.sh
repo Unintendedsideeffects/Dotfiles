@@ -44,7 +44,7 @@ if grep -q "Dotfiles Bootstrap (no TUI available)" <<< "$bootstrap_no_input_outp
 fi
 
 echo "== Bootstrap shell fallback input capture =="
-bootstrap_capture_output="$(printf '3\nTest User\ntest@example.com\nyes\n\n' | HOME="$tmp_home" PATH="$tmpdir:$PATH" "$ROOT_DIR/.dotfiles/bin/bootstrap.sh" 2>&1 || true)"
+bootstrap_capture_output="$(printf 'Test User\ntest@example.com\nyes\n' | HOME="$tmp_home" PATH="$tmpdir:$PATH" DF_BOOTSTRAP_SELECTIONS='git_config' "$ROOT_DIR/.dotfiles/bin/bootstrap.sh" 2>&1 || true)"
 printf '%s\n' "$bootstrap_capture_output"
 if ! grep -q '^	name = Test User$' "$tmp_home/.gitconfig.local"; then
   echo "Bootstrap shell fallback failed to capture Git username input correctly." >&2
@@ -57,5 +57,72 @@ fi
 
 echo "== X-forwarding dry-run =="
 "$ROOT_DIR/.dotfiles/bin/setup-xforward.sh" --dry-run || true
+
+echo "== Default shell update prefers passwordless sudo usermod =="
+shell_test_dir="$(mktemp -d)"
+shell_state_file="$shell_test_dir/current-shell"
+sudo_log_file="$shell_test_dir/sudo.log"
+usermod_log_file="$shell_test_dir/usermod.log"
+trap 'rm -rf "$tmpdir" "$tmp_home" "$shell_test_dir"' EXIT
+printf '/bin/bash\n' > "$shell_state_file"
+
+cat > "$shell_test_dir/zsh" <<EOF
+#!/usr/bin/env bash
+exit 0
+EOF
+
+cat > "$shell_test_dir/getent" <<EOF
+#!/usr/bin/env bash
+if [[ "\${1:-}" == "passwd" && "\${2:-}" == "testuser" ]]; then
+  printf 'testuser:x:1000:1000::/home/testuser:%s\n' "\$(cat "$shell_state_file")"
+  exit 0
+fi
+exit 1
+EOF
+
+cat > "$shell_test_dir/sudo" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "$sudo_log_file"
+if [[ "\${1:-}" == "-n" && "\${2:-}" == "true" ]]; then
+  exit 0
+fi
+if [[ "\${1:-}" == "-n" ]]; then
+  shift
+fi
+"\$@"
+EOF
+
+cat > "$shell_test_dir/usermod" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "$usermod_log_file"
+if [[ "\${1:-}" == "-s" && -n "\${2:-}" ]]; then
+  printf '%s\n' "\$2" > "$shell_state_file"
+  exit 0
+fi
+exit 1
+EOF
+
+cat > "$shell_test_dir/chsh" <<'EOF'
+#!/usr/bin/env bash
+echo "chsh should not be used when passwordless sudo usermod is available" >&2
+exit 99
+EOF
+
+chmod +x "$shell_test_dir/zsh" "$shell_test_dir/getent" "$shell_test_dir/sudo" "$shell_test_dir/usermod" "$shell_test_dir/chsh"
+shell_update_output="$(PATH="$shell_test_dir:$PATH" USER="testuser" HOME="$tmp_home" "$ROOT_DIR/.dotfiles/bin/setup-packages.sh" --test-ensure-zsh-default-shell 2>&1 || true)"
+printf '%s\n' "$shell_update_output"
+expected_zsh_path="$shell_test_dir/zsh"
+if [[ "$(cat "$shell_state_file")" != "$expected_zsh_path" ]]; then
+  echo "Default shell update did not switch to the expected zsh path." >&2
+  exit 1
+fi
+if ! grep -Fxq -- "-n usermod -s $expected_zsh_path testuser" "$sudo_log_file"; then
+  echo "Default shell update did not use sudo -n usermod for passwordless sudo." >&2
+  exit 1
+fi
+if grep -q "chsh should not be used" <<< "$shell_update_output"; then
+  echo "Default shell update incorrectly fell back to chsh." >&2
+  exit 1
+fi
 
 echo "All dry-runs completed."

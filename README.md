@@ -91,6 +91,13 @@ Installs `~/Applications/Obsidian-<version>.AppImage`, wrapper scripts in `~/.lo
 # Docker (Arch)
 docker build -t dotfiles-test .
 
-# Dev container (Debian)
+# Baseline repository validation
+bash .dotfiles/bin/test-all.sh
+
+# Dev container (Debian trixie full install)
 # Open in VS Code / Codespaces with the .devcontainer config
+# The post-create hook runs the full quick-install + bootstrap verification.
+
+# Re-run the Debian install check manually inside the container
+bash .devcontainer/run-debian-install-check.sh
 ```
