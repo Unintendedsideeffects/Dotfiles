@@ -12,6 +12,8 @@ echo "== Bootstrap dry-run =="
 echo "== Bootstrap shell fallback =="
 tmpdir="$(mktemp -d)"
 tmp_home="$(mktemp -d)"
+shell_test_dir=""
+nerd_home=""
 trap 'rm -rf "$tmpdir" "$tmp_home"' EXIT
 cat > "$tmpdir/dialog" <<'EOF'
 #!/usr/bin/env bash
@@ -57,6 +59,19 @@ fi
 
 echo "== X-forwarding dry-run =="
 "$ROOT_DIR/.dotfiles/bin/setup-xforward.sh" --dry-run || true
+
+echo "== Nerd Fonts script succeeds when fonts are already installed =="
+nerd_home="$(mktemp -d)"
+trap 'rm -rf "$tmpdir" "$tmp_home" "$shell_test_dir" "$nerd_home"' EXIT
+mkdir -p "$nerd_home/.local/share/fonts/NerdFonts/JetBrainsMono" "$nerd_home/.local/share/fonts/NerdFonts/Hack"
+touch "$nerd_home/.local/share/fonts/NerdFonts/JetBrainsMono/JetBrainsMonoNerdFont-Regular.ttf"
+touch "$nerd_home/.local/share/fonts/NerdFonts/Hack/HackNerdFont-Regular.ttf"
+nerd_fonts_output="$(HOME="$nerd_home" "$ROOT_DIR/.dotfiles/bin/setup-nerdfonts.sh" 2>&1)"
+printf '%s\n' "$nerd_fonts_output"
+if ! grep -q "Nerd Fonts: 0 installed, 2 already present" <<< "$nerd_fonts_output"; then
+  echo "Nerd Fonts script did not report the already-installed summary correctly." >&2
+  exit 1
+fi
 
 echo "== Default shell update prefers passwordless sudo usermod =="
 shell_test_dir="$(mktemp -d)"

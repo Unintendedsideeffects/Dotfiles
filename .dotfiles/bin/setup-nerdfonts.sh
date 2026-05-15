@@ -21,21 +21,17 @@ for arg in "$@"; do
   [[ "$arg" == "--dry-run" ]] && DRY=true
 done
 
-if ! command -v unzip >/dev/null 2>&1; then
-  echo "ERROR: unzip is required but not installed."
-  exit 1
-fi
-
 mkdir -p "$FONT_DIR"
 
 installed=0
 skipped=0
+unzip_checked=false
 
 for font in "${FONTS[@]}"; do
   target_dir="$FONT_DIR/$font"
   if [[ -d "$target_dir" ]] && ls "$target_dir"/*.ttf &>/dev/null; then
     echo "  Already installed: $font Nerd Font"
-    ((skipped++))
+    ((skipped+=1))
     continue
   fi
 
@@ -46,6 +42,14 @@ for font in "${FONTS[@]}"; do
     continue
   fi
 
+  if [[ "$unzip_checked" != true ]]; then
+    if ! command -v unzip >/dev/null 2>&1; then
+      echo "ERROR: unzip is required but not installed."
+      exit 1
+    fi
+    unzip_checked=true
+  fi
+
   echo "  Downloading $font Nerd Font..."
   tmpfile=$(mktemp /tmp/nf-XXXXXX.zip)
   if curl -fsSL -o "$tmpfile" "$url"; then
@@ -53,7 +57,7 @@ for font in "${FONTS[@]}"; do
     unzip -qo "$tmpfile" -d "$target_dir"
     rm -f "$tmpfile"
     echo "  Installed: $font Nerd Font"
-    ((installed++))
+    ((installed+=1))
   else
     rm -f "$tmpfile"
     echo "  FAILED: Could not download $font (check version: $NERD_FONT_VERSION)"

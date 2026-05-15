@@ -296,12 +296,14 @@ prompt_packages() {
   bootstrap_append_file "Package install output" "$tmpfile"
 
   if [[ $status -eq 0 ]]; then
-    whip --title "Package Installation" --msgbox "Package installation completed.\n\nFull log: $INSTALL_LOG_FILE" 12 70
+    whip --title "Package Installation" --msgbox "Package installation completed.\n\nFull log: $INSTALL_LOG_FILE" 12 70 || true
   else
     local output
     output=$(tail -n 200 "$tmpfile" 2>/dev/null || true)
-    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed.}\n\nFull log: $INSTALL_LOG_FILE" 20 80
+    whip --title "Package Installation Failed" --msgbox "${output:-Package installation failed.}\n\nFull log: $INSTALL_LOG_FILE" 20 80 || true
   fi
+
+  return "$status"
 }
 
 prompt_validate() {
