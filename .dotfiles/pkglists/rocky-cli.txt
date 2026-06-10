@@ -4,7 +4,7 @@ eza
 fd-find
 fzf
 git
-neofetch
+onefetch
 openssh-clients
 pass
 ripgrep
@@ -36,4 +36,3 @@ curl
 gnupg2
 fontawesome-fonts
 nerd-fonts-jetbrains-mono
- 

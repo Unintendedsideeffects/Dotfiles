@@ -34,8 +34,33 @@ config() {
     # The base command for git with the bare repo setup
     local git_cmd=("/usr/bin/git" "--git-dir=$HOME/.cfg" "--work-tree=$HOME")
 
+    if [[ "${1:-}" == "update" ]]; then
+        if [[ "$#" -gt 2 ]]; then
+            echo "Usage: config update [cli|gui|xforward|wsl]"
+            return 2
+        fi
+
+        local package_type="${2:-}"
+        local package_script="$HOME/.dotfiles/bin/setup-packages.sh"
+
+        config pull || return
+
+        if [[ ! -x "$package_script" ]]; then
+            echo "Error: Package setup script is missing or not executable: $package_script"
+            return 1
+        fi
+
+        echo "Checking package manifest for missing packages..."
+        if [[ -n "$package_type" ]]; then
+            "$package_script" "$package_type"
+        else
+            "$package_script"
+        fi
+        return
+    fi
+
     # Check if the command is 'pull'
-    if [[ "$1" == "pull" && "$#" -eq 1 ]]; then
+    if [[ "${1:-}" == "pull" && "$#" -eq 1 ]]; then
         # Attempt to pull
         local pull_output
         local pull_exit_code

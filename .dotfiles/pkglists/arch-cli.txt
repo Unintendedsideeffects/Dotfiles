@@ -23,6 +23,7 @@ zip
 unzip
 xz
 neovim
+onefetch
 python
 python-pip
 go
